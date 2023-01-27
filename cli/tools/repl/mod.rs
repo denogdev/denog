@@ -145,7 +145,7 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
         "{}",
         colors::yellow("REPL is running with all permissions allowed.")
       );
-      println!("To specify permissions, run `deno repl` with allow flags.")
+      println!("To specify permissions, run `denox repl` with allow flags.")
     }
   }
 

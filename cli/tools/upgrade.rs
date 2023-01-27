@@ -1,6 +1,7 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-//! This module provides feature to upgrade deno executable
+//! This module provides feature to upgrade denox executable
 
 use crate::args::Flags;
 use crate::args::UpgradeFlags;
@@ -27,9 +28,9 @@ use std::process::Command;
 use std::time::Duration;
 
 static ARCHIVE_NAME: Lazy<String> =
-  Lazy::new(|| format!("deno-{}.zip", env!("TARGET")));
+  Lazy::new(|| format!("denox-{}.zip", env!("TARGET")));
 
-const RELEASE_URL: &str = "https://github.com/denoland/deno/releases";
+const RELEASE_URL: &str = "https://github.com/jbatez/denox/releases";
 
 // How often query server for new version. In hours.
 const UPGRADE_CHECK_INTERVAL: i64 = 24;
@@ -170,13 +171,8 @@ fn print_release_notes(current_version: &str, new_version: &str) {
   if get_minor_version(current_version) != get_minor_version(new_version) {
     log::info!(
       "{}{}",
-      "Release notes: https://github.com/denoland/deno/releases/tag/v",
+      "Release notes: https://github.com/jbatez/denox/releases/tag/",
       &new_version,
-    );
-    log::info!(
-      "{}{}",
-      "Blog post: https://deno.com/blog/v",
-      get_minor_version(new_version)
     );
   }
 }
@@ -207,22 +203,22 @@ pub fn check_for_upgrades(http_client: HttpClient, cache_file_path: PathBuf) {
       if version::is_canary() {
         eprint!(
           "{} ",
-          colors::green("A new canary release of Deno is available.")
+          colors::green("A new canary release of Denox is available.")
         );
         eprintln!(
           "{}",
-          colors::italic_gray("Run `deno upgrade --canary` to install it.")
+          colors::italic_gray("Run `denox upgrade --canary` to install it.")
         );
       } else {
         eprint!(
           "{} {} → {} ",
-          colors::green("A new release of Deno is available:"),
+          colors::green("A new release of Denox is available:"),
           colors::cyan(version::deno()),
           colors::cyan(&upgrade_version)
         );
         eprintln!(
           "{}",
-          colors::italic_gray("Run `deno upgrade` to install it.")
+          colors::italic_gray("Run `denox upgrade` to install it.")
         );
         print_release_notes(&version::deno(), &upgrade_version);
       }
@@ -278,8 +274,8 @@ pub async fn upgrade(
   {
     bail!(concat!(
       "You don't have write permission to {} because it's owned by root.\n",
-      "Consider updating deno through your package manager if its installed from it.\n",
-      "Otherwise run `deno upgrade` as root.",
+      "Consider updating denox through your package manager if its installed from it.\n",
+      "Otherwise run `denox upgrade` as root.",
     ), current_exe_path.display());
   }
 
@@ -340,7 +336,7 @@ pub async fn upgrade(
         && current_is_most_recent
       {
         log::info!(
-          "Local deno version {} is the most recent release",
+          "Local denox version {} is the most recent release",
           if upgrade_flags.canary {
             crate::version::GIT_COMMIT_HASH.to_string()
           } else {
@@ -361,7 +357,7 @@ pub async fn upgrade(
     }
 
     format!(
-      "https://dl.deno.land/canary/{}/{}",
+      "https://jbatez.github.io/denox/canary/{}/{}",
       install_version, *ARCHIVE_NAME
     )
   } else {
@@ -375,7 +371,7 @@ pub async fn upgrade(
     .await
     .with_context(|| format!("Failed downloading {}", download_url))?;
 
-  log::info!("Deno is upgrading to version {}", &install_version);
+  log::info!("Denox is upgrading to version {}", &install_version);
 
   let new_exe_path = unpack(archive_data, cfg!(windows))?;
   fs::set_permissions(&new_exe_path, permissions)?;
@@ -402,9 +398,9 @@ pub async fn upgrade(
         return Err(err).with_context(|| {
           format!(
             concat!(
-              "Could not replace the deno executable. This may be because an ",
-              "existing deno process is running. Please ensure there are no ",
-              "running deno processes (ex. Stop-Process -Name deno ; deno {}), ",
+              "Could not replace the denox executable. This may be because an ",
+              "existing denox process is running. Please ensure there are no ",
+              "running denox processes (ex. Stop-Process -Name denox ; denox {}), ",
               "close any editors before upgrading, and ensure you have ",
               "sufficient permission to '{}'."
             ),
@@ -430,7 +426,7 @@ async fn get_latest_release_version(
   client: &HttpClient,
 ) -> Result<String, AnyError> {
   let text = client
-    .download_text("https://dl.deno.land/release-latest.txt")
+    .download_text("https://jbatez.github.io/denox/release-latest.txt")
     .await?;
   let version = text.trim().to_string();
   Ok(version.replace('v', ""))
@@ -440,7 +436,7 @@ async fn get_latest_canary_version(
   client: &HttpClient,
 ) -> Result<String, AnyError> {
   let text = client
-    .download_text("https://dl.deno.land/canary-latest.txt")
+    .download_text("https://jbatez.github.io/denox/canary-latest.txt")
     .await?;
   let version = text.trim().to_string();
   Ok(version)
@@ -473,7 +469,7 @@ pub fn unpack(
   archive_data: Vec<u8>,
   is_windows: bool,
 ) -> Result<PathBuf, std::io::Error> {
-  const EXE_NAME: &str = "deno";
+  const EXE_NAME: &str = "denox";
   // We use into_path so that the tempdir is not automatically deleted. This is
   // useful for debugging upgrade, but also so this function can return a path
   // to the newly uncompressed file without fear of the tempdir being deleted.
@@ -542,7 +538,7 @@ pub fn unpack(
 fn replace_exe(from: &Path, to: &Path) -> Result<(), std::io::Error> {
   if cfg!(windows) {
     // On windows you cannot replace the currently running executable.
-    // so first we rename it to deno.old.exe
+    // so first we rename it to denox.old.exe
     fs::rename(to, to.with_extension("old.exe"))?;
   } else {
     fs::remove_file(to)?;

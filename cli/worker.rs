@@ -786,6 +786,7 @@ mod tests {
       shared_array_buffer_store: None,
       compiled_wasm_module_store: None,
       stdio: Default::default(),
+      wsi_event_loop_proxy: None,
     };
 
     MainWorker::bootstrap_from_options(main_module, permissions, options)

@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use crate::args::CaData;
 use crate::args::CompileFlags;
@@ -94,7 +95,7 @@ async fn get_base_binary(
   }
 
   let target = target.unwrap_or_else(|| env!("TARGET").to_string());
-  let binary_name = format!("deno-{}.zip", target);
+  let binary_name = format!("denox-{}.zip", target);
 
   let binary_path_suffix = if crate::version::is_canary() {
     format!("canary/{}/{}", crate::version::GIT_COMMIT_HASH, binary_name)
@@ -122,7 +123,7 @@ async fn download_base_binary(
   output_directory: &Path,
   binary_path_suffix: &str,
 ) -> Result<(), AnyError> {
-  let download_url = format!("https://dl.deno.land/{}", binary_path_suffix);
+  let download_url = format!("https://jbatez.github.io/denox/{}", binary_path_suffix);
   let maybe_bytes = {
     let progress_bars = ProgressBar::new(ProgressBarStyle::DownloadBars);
     let progress = progress_bars.update(&download_url);

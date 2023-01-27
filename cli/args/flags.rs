@@ -567,7 +567,7 @@ static DENO_HELP: Lazy<String> = Lazy::new(|| {
 
 Docs: https://deno.land/manual@v{}
 Modules: https://deno.land/std/ https://deno.land/x/
-Bugs: https://github.com/denoland/deno/issues
+Bugs: https://github.com/jbatez/denox/issues
 
 To start the REPL:
 
@@ -660,8 +660,8 @@ fn handle_repl_flags(flags: &mut Flags, repl_flags: ReplFlags) {
 }
 
 fn clap_root(version: &str) -> Command {
-  clap::Command::new("deno")
-    .bin_name("deno")
+  clap::Command::new("denox")
+    .bin_name("denox")
     .color(ColorChoice::Never)
     .max_term_width(80)
     .version(version)
@@ -1736,19 +1736,19 @@ The declaration file could be saved and used for typing information.",
 
 fn upgrade_subcommand<'a>() -> Command<'a> {
   Command::new("upgrade")
-    .about("Upgrade deno executable to given version")
+    .about("Upgrade denox executable to given version")
     .long_about(
-      "Upgrade deno executable to the given version.
+      "Upgrade denox executable to the given version.
 Defaults to latest.
 
 The version is downloaded from
-https://github.com/denoland/deno/releases
+https://github.com/jbatez/denox/releases
 and is used to replace the current executable.
 
-If you want to not replace the current Deno executable but instead download an
+If you want to not replace the current Denox executable but instead download an
 update to a different location, use the --output flag
 
-  deno upgrade --output $HOME/my_deno",
+  denox upgrade --output $HOME/my_deno",
     )
     .arg(
       Arg::new("version")
