@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::path::Path;
 
@@ -53,7 +54,7 @@ impl TypeCheckCache {
 
   fn try_new(db_file_path: &Path) -> Result<Self, AnyError> {
     let conn = Connection::open(db_file_path)?;
-    Self::from_connection(conn, crate::version::deno())
+    Self::from_connection(conn, crate::version::denox_long())
   }
 
   fn from_connection(

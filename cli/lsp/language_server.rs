@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use deno_ast::MediaType;
 use deno_core::anyhow::anyhow;
@@ -849,7 +850,7 @@ impl Inner {
 
     let version = format!(
       "{} ({}, {})",
-      crate::version::deno(),
+      crate::version::denox_long(),
       env!("PROFILE"),
       env!("TARGET")
     );

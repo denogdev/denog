@@ -25,7 +25,7 @@ use super::flags_allow_net;
 static LONG_VERSION: Lazy<String> = Lazy::new(|| {
   format!(
     "{} ({}, {})\nv8 {}\ntypescript {}",
-    crate::version::deno(),
+    crate::version::denox_short(),
     if crate::version::is_canary() {
       "canary"
     } else {
@@ -38,7 +38,7 @@ static LONG_VERSION: Lazy<String> = Lazy::new(|| {
 });
 
 static SHORT_VERSION: Lazy<String> = Lazy::new(|| {
-  crate::version::deno()
+  crate::version::denox_short()
     .split('+')
     .next()
     .unwrap()
@@ -563,31 +563,29 @@ static ENV_VARIABLES_HELP: &str = r#"ENVIRONMENT VARIABLES:
 
 static DENO_HELP: Lazy<String> = Lazy::new(|| {
   format!(
-    "A modern JavaScript and TypeScript runtime
+    "A fork of Deno with built-in window system integration
 
-Docs: https://deno.land/manual@v{}
-Modules: https://deno.land/std/ https://deno.land/x/
+Repository: https://github.com/jbatez/denox
 Bugs: https://github.com/jbatez/denox/issues
 
 To start the REPL:
 
-  deno
+  denox
 
 To execute a script:
 
-  deno run https://deno.land/std/examples/welcome.ts
+  denox run https://deno.land/std/examples/welcome.ts
 
 To evaluate code in the shell:
 
-  deno eval \"console.log(30933 + 404)\"
-",
-    SHORT_VERSION.as_str()
+  denox eval \"console.log(30933 + 404)\"
+"
   )
 });
 
 /// Main entry point for parsing deno's command line flags.
 pub fn flags_from_vec(args: Vec<String>) -> clap::Result<Flags> {
-  let version = crate::version::deno();
+  let version = crate::version::denox_short();
   let mut app = clap_root(&version);
   let matches = app.try_get_matches_from_mut(&args)?;
 

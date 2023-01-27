@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::path::PathBuf;
 
@@ -29,7 +30,7 @@ impl EmitCache {
   pub fn new(disk_cache: DiskCache) -> Self {
     Self {
       disk_cache,
-      cli_version: crate::version::deno(),
+      cli_version: crate::version::denox_long(),
     }
   }
 

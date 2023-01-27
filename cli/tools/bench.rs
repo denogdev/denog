@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use crate::args::BenchOptions;
 use crate::args::CliOptions;
@@ -177,8 +178,8 @@ impl BenchReporter for ConsoleReporter {
       println!(
         "{}\n",
         colors::gray(format!(
-          "runtime: deno {} ({})",
-          crate::version::deno(),
+          "runtime: denox {} ({})",
+          crate::version::denox_short(),
           env!("TARGET")
         ))
       );

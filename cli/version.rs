@@ -4,11 +4,17 @@
 pub const GIT_COMMIT_HASH: &str = env!("GIT_COMMIT_HASH");
 pub const TYPESCRIPT: &str = env!("TS_VERSION");
 
-pub fn deno() -> String {
+pub fn denox_short() -> String {
   let semver = env!("CARGO_PKG_VERSION");
-  option_env!("DENO_CANARY").map_or(format!("x{semver}"), |_| {
+  option_env!("DENO_CANARY").map_or(semver.to_string(), |_| {
     format!("{}+{}", semver, &GIT_COMMIT_HASH[..7])
   })
+}
+
+// Use when you need a string that's clearly distinct from
+// upstream Deno, e.g. to keep Deno and Denox caches separate.
+pub fn denox_long() -> String {
+  format!("denox-{}", denox_short())
 }
 
 pub fn is_canary() -> bool {
@@ -24,5 +30,5 @@ pub fn release_version_or_canary_commit_hash() -> &'static str {
 }
 
 pub fn get_user_agent() -> String {
-  format!("Deno/{}", deno())
+  format!("Deno/{}", denox_long())
 }

@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::sync::Arc;
 
@@ -98,7 +99,7 @@ pub fn check(
   // that data here.
   let hash_data = vec![
     options.ts_config.as_bytes(),
-    version::deno().as_bytes().to_owned(),
+    version::denox_long().as_bytes().to_owned(),
   ];
 
   let response = tsc::exec(tsc::Request {

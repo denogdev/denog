@@ -265,7 +265,7 @@ pub async fn run(
       location: metadata.location,
       no_color: !colors::use_color(),
       is_tty: colors::is_tty(),
-      runtime_version: version::deno(),
+      runtime_version: version::denox_long(),
       ts_version: version::TYPESCRIPT.to_string(),
       unstable: metadata.unstable,
       user_agent: version::get_user_agent(),

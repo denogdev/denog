@@ -171,7 +171,7 @@ fn print_release_notes(current_version: &str, new_version: &str) {
   if get_minor_version(current_version) != get_minor_version(new_version) {
     log::info!(
       "{}{}",
-      "Release notes: https://github.com/jbatez/denox/releases/tag/",
+      "Release notes: https://github.com/jbatez/denox/releases/tag/v",
       &new_version,
     );
   }
@@ -213,14 +213,14 @@ pub fn check_for_upgrades(http_client: HttpClient, cache_file_path: PathBuf) {
         eprint!(
           "{} {} → {} ",
           colors::green("A new release of Denox is available:"),
-          colors::cyan(version::deno()),
+          colors::cyan(version::denox_short()),
           colors::cyan(&upgrade_version)
         );
         eprintln!(
           "{}",
           colors::italic_gray("Run `denox upgrade` to install it.")
         );
-        print_release_notes(&version::deno(), &upgrade_version);
+        print_release_notes(&version::denox_short(), &upgrade_version);
       }
 
       update_checker.store_prompted();
@@ -296,7 +296,7 @@ pub async fn upgrade(
       let current_is_passed = if upgrade_flags.canary {
         crate::version::GIT_COMMIT_HASH == passed_version
       } else if !crate::version::is_canary() {
-        crate::version::deno() == passed_version
+        crate::version::denox_short() == passed_version
       } else {
         false
       };
@@ -305,7 +305,7 @@ pub async fn upgrade(
         && upgrade_flags.output.is_none()
         && current_is_passed
       {
-        log::info!("Version {} is already installed", crate::version::deno());
+        log::info!("Version {} is already installed", crate::version::denox_short());
         return Ok(());
       } else {
         passed_version
@@ -324,7 +324,7 @@ pub async fn upgrade(
         let latest_hash = latest_version.clone();
         crate::version::GIT_COMMIT_HASH == latest_hash
       } else if !crate::version::is_canary() {
-        let current = semver::Version::parse(&crate::version::deno()).unwrap();
+        let current = semver::Version::parse(&crate::version::denox_short()).unwrap();
         let latest = semver::Version::parse(&latest_version).unwrap();
         current >= latest
       } else {
@@ -340,7 +340,7 @@ pub async fn upgrade(
           if upgrade_flags.canary {
             crate::version::GIT_COMMIT_HASH.to_string()
           } else {
-            crate::version::deno()
+            crate::version::denox_short()
           }
         );
         return Ok(());
@@ -381,7 +381,7 @@ pub async fn upgrade(
     fs::remove_file(&new_exe_path)?;
     log::info!("Upgraded successfully (dry run)");
     if !upgrade_flags.canary {
-      print_release_notes(&version::deno(), &install_version);
+      print_release_notes(&version::denox_short(), &install_version);
     }
   } else {
     let output_exe_path =
@@ -415,7 +415,7 @@ pub async fn upgrade(
     }
     log::info!("Upgraded successfully");
     if !upgrade_flags.canary {
-      print_release_notes(&version::deno(), &install_version);
+      print_release_notes(&version::denox_short(), &install_version);
     }
   }
 

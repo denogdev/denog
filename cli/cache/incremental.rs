@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -166,7 +167,7 @@ impl SqlIncrementalCache {
   pub fn new(db_file_path: &Path, state_hash: u64) -> Result<Self, AnyError> {
     log::debug!("Loading incremental cache.");
     let conn = Connection::open(db_file_path)?;
-    Self::from_connection(conn, state_hash, crate::version::deno())
+    Self::from_connection(conn, state_hash, crate::version::denox_long())
   }
 
   fn from_connection(

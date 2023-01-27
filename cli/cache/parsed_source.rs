@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -62,7 +63,7 @@ impl ParsedSourceCache {
   pub fn new(sql_cache_path: Option<PathBuf>) -> Self {
     Self {
       db_cache_path: sql_cache_path,
-      cli_version: crate::version::deno(),
+      cli_version: crate::version::denox_long(),
       sources: Default::default(),
     }
   }

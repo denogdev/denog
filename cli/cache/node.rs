@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::path::Path;
 
@@ -102,7 +103,7 @@ impl NodeAnalysisCache {
       None => {
         let maybe_inner = match NodeAnalysisCacheInner::new(
           self.db_file_path.as_deref(),
-          crate::version::deno(),
+          crate::version::denox_long(),
         ) {
           Ok(cache) => Some(cache),
           Err(err) => {
