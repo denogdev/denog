@@ -1,7 +1,3 @@
-# Deno CLI Crate
+# Denox CLI Crate
 
-[![crates](https://img.shields.io/crates/v/deno.svg)](https://crates.io/crates/deno)
-
-This provides the actual deno executable and the user-facing APIs.
-
-The deno crate uses the deno_core to provide the executable.
+A fork of [Deno CLI](https://github.com/denoland/deno/tree/main/cli) with built-in window system integration.

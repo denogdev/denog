@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::env;
 use std::path::Path;
@@ -335,6 +336,7 @@ fn create_cli_snapshot(snapshot_path: PathBuf, files: Vec<PathBuf>) {
     deno_napi::init::<PermissionsContainer>(false),
     deno_http::init(),
     deno_flash::init::<PermissionsContainer>(false), // No --unstable
+    deno_wsi::init(None),
   ];
 
   create_snapshot(CreateSnapshotOptions {
@@ -400,13 +402,13 @@ fn main() {
 
   #[cfg(target_os = "windows")]
   println!(
-    "cargo:rustc-link-arg-bin=deno=/DEF:{}",
+    "cargo:rustc-link-arg-bin=denox=/DEF:{}",
     symbols_path.display()
   );
 
   #[cfg(target_os = "macos")]
   println!(
-    "cargo:rustc-link-arg-bin=deno=-Wl,-exported_symbols_list,{}",
+    "cargo:rustc-link-arg-bin=denox=-Wl,-exported_symbols_list,{}",
     symbols_path.display()
   );
 
@@ -418,10 +420,10 @@ fn main() {
     // Here, we assume that if a custom compiler is used, that it will be modern enough to support a dynamic symbol list.
     if env::var("CC").is_err() && ver.major <= 2 && ver.minor < 35 {
       println!("cargo:warning=Compiling with all symbols exported, this will result in a larger binary. Please use glibc 2.35 or later for an optimised build.");
-      println!("cargo:rustc-link-arg-bin=deno=-rdynamic");
+      println!("cargo:rustc-link-arg-bin=denox=-rdynamic");
     } else {
       println!(
-        "cargo:rustc-link-arg-bin=deno=-Wl,--export-dynamic-symbol-list={}",
+        "cargo:rustc-link-arg-bin=denox=-Wl,--export-dynamic-symbol-list={}",
         symbols_path.display()
       );
     }

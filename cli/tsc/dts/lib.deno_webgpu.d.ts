@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 // deno-lint-ignore-file no-explicit-any no-empty-interface
 
@@ -85,6 +86,7 @@ declare class GPU {
 declare interface GPURequestAdapterOptions {
   powerPreference?: GPUPowerPreference;
   forceFallbackAdapter?: boolean;
+  compatibleSurface?: GPUSurface;
 }
 
 /** @category WebGPU */
@@ -1320,3 +1322,19 @@ declare interface GPUExtent3DDict {
 
 /** @category WebGPU */
 declare type GPUExtent3D = number[] | GPUExtent3DDict;
+
+/** @category WebGPU */
+declare class GPUSurface {
+  configure(configuration: GPUSurfaceConfiguration): void;
+  getCurrentTexture(): GPUTexture;
+  present(): void;
+}
+
+/** @category WebGPU */
+declare interface GPUSurfaceConfiguration {
+  device: GPUDevice;
+  format: GPUTextureFormat;
+  usage?: GPUTextureUsageFlags;
+  width: number;
+  height: number;
+}

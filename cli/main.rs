@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 mod args;
 mod auth_tokens;
@@ -39,12 +40,18 @@ use deno_core::anyhow::Context;
 use deno_core::error::AnyError;
 use deno_core::error::JsError;
 use deno_runtime::colors;
+use deno_runtime::deno_wsi;
+use deno_runtime::deno_wsi::event_loop::WsiEventLoopProxy;
 use deno_runtime::fmt_errors::format_js_error;
-use deno_runtime::tokio_util::run_local;
+use deno_runtime::tokio_util::create_basic_runtime;
 use std::env;
 use std::path::PathBuf;
+use std::rc::Rc;
 
-async fn run_subcommand(flags: Flags) -> Result<i32, AnyError> {
+async fn run_subcommand(
+  flags: Flags,
+  wsi_event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
+) -> Result<i32, AnyError> {
   match flags.subcommand.clone() {
     DenoSubcommand::Bench(bench_flags) => {
       let cli_options = CliOptions::from_flags(flags)?;
@@ -128,9 +135,9 @@ async fn run_subcommand(flags: Flags) -> Result<i32, AnyError> {
     }
     DenoSubcommand::Run(run_flags) => {
       if run_flags.is_stdin() {
-        tools::run::run_from_stdin(flags).await
+        tools::run::run_from_stdin(flags, wsi_event_loop_proxy).await
       } else {
-        tools::run::run_script(flags, run_flags).await
+        tools::run::run_script(flags, run_flags, wsi_event_loop_proxy).await
       }
     }
     DenoSubcommand::Task(task_flags) => {
@@ -240,36 +247,58 @@ pub fn main() {
 
   let args: Vec<String> = env::args().collect();
 
-  let future = async move {
-    let standalone_res =
-      match standalone::extract_standalone(args.clone()).await {
-        Ok(Some((metadata, eszip))) => standalone::run(eszip, metadata).await,
-        Ok(None) => Ok(()),
-        Err(err) => Err(err),
-      };
-    // TODO(bartlomieju): doesn't handle exit code set by the runtime properly
-    unwrap_or_exit(standalone_res);
+  let rt = create_basic_runtime();
+  let local = tokio::task::LocalSet::new();
 
-    let flags = match flags_from_vec(args) {
-      Ok(flags) => flags,
-      Err(err @ clap::Error { .. })
-        if err.kind() == clap::ErrorKind::DisplayHelp
-          || err.kind() == clap::ErrorKind::DisplayVersion =>
-      {
-        err.print().unwrap();
-        std::process::exit(0);
-      }
-      Err(err) => unwrap_or_exit(Err(AnyError::from(err))),
-    };
+  let standalone_res = local.block_on(&rt, async {
+    match standalone::extract_standalone(args.clone()).await {
+      Ok(Some((metadata, eszip))) => standalone::run(eszip, metadata).await,
+      Ok(None) => Ok(()),
+      Err(err) => Err(err),
+    }
+  });
+  // TODO(bartlomieju): doesn't handle exit code set by the runtime properly
+  unwrap_or_exit(standalone_res);
 
-    init_v8_flags(&flags.v8_flags, get_v8_flags_from_env());
-
-    util::logger::init(flags.log_level);
-
-    run_subcommand(flags).await
+  let flags = match flags_from_vec(args) {
+    Ok(flags) => flags,
+    Err(err @ clap::Error { .. })
+      if err.kind() == clap::ErrorKind::DisplayHelp
+        || err.kind() == clap::ErrorKind::DisplayVersion =>
+    {
+      err.print().unwrap();
+      std::process::exit(0);
+    }
+    Err(err) => unwrap_or_exit(Err(AnyError::from(err))),
   };
 
-  let exit_code = unwrap_or_exit(run_local(future));
+  init_v8_flags(&flags.v8_flags, get_v8_flags_from_env());
 
-  std::process::exit(exit_code);
+  util::logger::init(flags.log_level);
+
+  if flags.wsi {
+    drop(local);
+    deno_wsi::event_loop::hijack_main_and_spawn_proxy(|wsi_event_loop_proxy| {
+      let local = tokio::task::LocalSet::new();
+      run(rt, local, flags, Some(wsi_event_loop_proxy));
+    });
+  } else {
+    run(rt, local, flags, None);
+  }
+
+  fn run(
+    rt: tokio::runtime::Runtime,
+    local: tokio::task::LocalSet,
+    flags: Flags,
+    wsi_event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
+  ) -> ! {
+    let exit_code = unwrap_or_exit(
+      local.block_on(&rt, run_subcommand(flags, wsi_event_loop_proxy)),
+    );
+
+    drop(local);
+    drop(rt);
+
+    std::process::exit(exit_code);
+  }
 }

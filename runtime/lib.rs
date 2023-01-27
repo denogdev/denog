@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 pub use deno_broadcast_channel;
 pub use deno_cache;
@@ -19,6 +20,7 @@ pub use deno_webgpu;
 pub use deno_webidl;
 pub use deno_websocket;
 pub use deno_webstorage;
+pub use deno_wsi;
 
 pub mod colors;
 pub mod errors;

@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 // @ts-check
 /// <reference path="../../core/lib.deno_core.d.ts" />
@@ -68,6 +69,8 @@
   const _encoders = Symbol("[[encoders]]");
   const _encoder = Symbol("[[encoder]]");
   const _descriptor = Symbol("[[descriptor]]");
+  const _configuration = Symbol("[[configuration]]");
+  const _currentTexture = Symbol("[[current_texture]]");
 
   /**
    * @param {any} self
@@ -239,6 +242,7 @@
         "op_webgpu_request_adapter",
         options.powerPreference,
         options.forceFallbackAdapter,
+        options.compatibleSurface?.[_rid],
       );
 
       if (err) {
@@ -5136,6 +5140,83 @@
   GPUObjectBaseMixin("GPUQuerySet", GPUQuerySet);
   const GPUQuerySetPrototype = GPUQuerySet.prototype;
 
+  function createGPUSurface(rid) {
+    const surface = webidl.createBranded(GPUSurface);
+    surface[_rid] = rid;
+    return surface;
+  }
+
+  class GPUSurface {
+    /** @type {number} */
+    [_rid];
+    /** @type {InnerGPUDevice} */
+    [_device];
+    [_configuration];
+    /** @type {GPUTexture | undefined} */
+    [_currentTexture];
+
+    constructor() {
+      webidl.illegalConstructor();
+    }
+
+    configure(configuration) {
+      webidl.assertBranded(this, GPUSurfacePrototype);
+      const prefix = "Failed to execute 'configure' on 'GPUSurface'";
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      configuration = webidl.converters.GPUSurfaceConfiguration(configuration, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      this[_device] = configuration.device[_device];
+      this[_configuration] = configuration;
+      const device = assertDevice(this, { prefix, context: "configuration.device" });
+
+      const { err } = ops.op_webgpu_surface_configure({
+        surfaceRid: this[_rid],
+        deviceRid: device.rid,
+        format: configuration.format,
+        usage: configuration.usage,
+        width: configuration.width,
+        height: configuration.height,
+      });
+
+      device.pushError(err);
+    }
+
+    getCurrentTexture() {
+      webidl.assertBranded(this, GPUSurfacePrototype);
+      const prefix = "Failed to execute 'getCurrentTexture' on 'GPUSurface'";
+
+      if (this[_configuration] === null) {
+        throw new DOMException("surface is not configured.", "InvalidStateError");
+      }
+
+      const device = assertDevice(this, { prefix, context: "this" });
+
+      if (this[_currentTexture]) {
+        return this[_currentTexture];
+      }
+
+      const { rid } = ops.op_webgpu_surface_get_current_texture(device.rid, this[_rid]);
+
+      const texture = createGPUTexture(null, device, rid);
+      device.trackResource(texture);
+      this[_currentTexture] = texture;
+      return texture;
+    }
+
+    present() {
+      webidl.assertBranded(this, GPUSurfacePrototype);
+      const prefix = "Failed to execute 'present' on 'GPUSurface'";
+      const device = assertDevice(this[_currentTexture], { prefix, context: "this" });
+      ops.op_webgpu_surface_present(device.rid, this[_rid]);
+      this[_currentTexture].destroy();
+      this[_currentTexture] = undefined;
+    }
+  }
+  const GPUSurfacePrototype = GPUSurface.prototype;
+
   window.__bootstrap.webgpu = {
     gpu: webidl.createBranded(GPU),
     GPU,
@@ -5169,5 +5250,7 @@
     GPUError,
     GPUOutOfMemoryError,
     GPUValidationError,
+    createGPUSurface,
+    GPUSurface,
   };
 })(this);

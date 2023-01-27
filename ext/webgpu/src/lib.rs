@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use deno_core::error::AnyError;
 use deno_core::include_js_files;
@@ -65,6 +66,7 @@ pub mod queue;
 pub mod render_pass;
 pub mod sampler;
 pub mod shader;
+pub mod surface;
 pub mod texture;
 
 pub struct Unstable(pub bool);
@@ -80,7 +82,27 @@ fn check_unstable(state: &OpState, api_name: &str) {
   }
 }
 
-type Instance = wgpu_core::hub::Global<wgpu_core::hub::IdentityManagerFactory>;
+pub type Instance =
+  wgpu_core::hub::Global<wgpu_core::hub::IdentityManagerFactory>;
+
+fn choose_backends() -> wgpu_types::Backends {
+  std::env::var("DENO_WEBGPU_BACKEND").map_or_else(
+    |_| wgpu_types::Backends::all(),
+    |s| wgpu_core::instance::parse_backends_from_comma_list(&s),
+  )
+}
+
+pub fn create_instance() -> Instance {
+  create_instance_internal(choose_backends())
+}
+
+fn create_instance_internal(backends: wgpu_types::Backends) -> Instance {
+  wgpu_core::hub::Global::new(
+    "webgpu",
+    wgpu_core::hub::IdentityManagerFactory,
+    backends,
+  )
+}
 
 struct WebGpuAdapter(wgpu_core::id::AdapterId);
 impl Resource for WebGpuAdapter {
@@ -104,10 +126,10 @@ impl Resource for WebGpuQuerySet {
 }
 
 pub fn init(unstable: bool) -> Extension {
-  Extension::builder(env!("CARGO_PKG_NAME"))
+  Extension::builder("deno_webgpu")
     .dependencies(vec!["deno_webidl", "deno_web"])
     .js(include_js_files!(
-      prefix "deno:ext/webgpu",
+      prefix "denox:ext/webgpu",
       "01_webgpu.js",
       "02_idl_types.js",
     ))
@@ -231,28 +253,28 @@ pub async fn op_webgpu_request_adapter(
   state: Rc<RefCell<OpState>>,
   power_preference: Option<wgpu_types::PowerPreference>,
   force_fallback_adapter: bool,
+  compatible_surface_rid: Option<ResourceId>,
 ) -> Result<GpuAdapterDeviceOrErr, AnyError> {
   let mut state = state.borrow_mut();
   check_unstable(&state, "navigator.gpu.requestAdapter");
-  let backends = std::env::var("DENO_WEBGPU_BACKEND").map_or_else(
-    |_| wgpu_types::Backends::all(),
-    |s| wgpu_core::instance::parse_backends_from_comma_list(&s),
-  );
+  let backends = choose_backends();
   let instance = if let Some(instance) = state.try_borrow::<Instance>() {
     instance
   } else {
-    state.put(wgpu_core::hub::Global::new(
-      "webgpu",
-      wgpu_core::hub::IdentityManagerFactory,
-      backends,
-    ));
+    state.put(create_instance_internal(backends));
     state.borrow::<Instance>()
   };
+  let compatible_surface_resource = match compatible_surface_rid {
+    Some(rid) => Some(state.resource_table.get::<surface::WebGpuSurface>(rid)?),
+    None => None,
+  };
+  let compatible_surface =
+    compatible_surface_resource.map(|resource| resource.0);
 
   let descriptor = wgpu_core::instance::RequestAdapterOptions {
     power_preference: power_preference.unwrap_or_default(),
     force_fallback_adapter,
-    compatible_surface: None, // windowless
+    compatible_surface,
   };
   let res = instance.request_adapter(
     &descriptor,
@@ -656,5 +678,9 @@ fn declare_webgpu_ops() -> Vec<deno_core::OpDecl> {
     queue::op_webgpu_write_texture::decl(),
     // shader
     shader::op_webgpu_create_shader_module::decl(),
+    // surface
+    surface::op_webgpu_surface_configure::decl(),
+    surface::op_webgpu_surface_get_current_texture::decl(),
+    surface::op_webgpu_surface_present::decl(),
   ]
 }

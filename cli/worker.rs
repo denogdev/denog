@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -15,6 +16,7 @@ use deno_core::v8;
 use deno_core::Extension;
 use deno_core::ModuleId;
 use deno_runtime::colors;
+use deno_runtime::deno_wsi::event_loop::WsiEventLoopProxy;
 use deno_runtime::fmt_errors::format_js_error;
 use deno_runtime::ops::worker_host::CreateWebWorkerCb;
 use deno_runtime::ops::worker_host::WorkerEventCb;
@@ -406,11 +408,13 @@ pub async fn create_main_worker(
   ps: &ProcState,
   main_module: ModuleSpecifier,
   permissions: PermissionsContainer,
+  wsi_event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
 ) -> Result<CliMainWorker, AnyError> {
   create_main_worker_internal(
     ps,
     main_module,
     permissions,
+    wsi_event_loop_proxy,
     vec![],
     Default::default(),
     false,
@@ -429,6 +433,7 @@ pub async fn create_main_worker_for_test_or_bench(
     ps,
     main_module,
     permissions,
+    None,
     custom_extensions,
     stdio,
     true,
@@ -440,6 +445,7 @@ async fn create_main_worker_internal(
   ps: &ProcState,
   main_module: ModuleSpecifier,
   permissions: PermissionsContainer,
+  wsi_event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
   mut custom_extensions: Vec<Extension>,
   stdio: deno_runtime::ops::io::Stdio,
   bench_or_test: bool,
@@ -549,6 +555,7 @@ async fn create_main_worker_internal(
     shared_array_buffer_store: Some(ps.shared_array_buffer_store.clone()),
     compiled_wasm_module_store: Some(ps.compiled_wasm_module_store.clone()),
     stdio,
+    wsi_event_loop_proxy,
   };
 
   let mut worker = MainWorker::bootstrap_from_options(

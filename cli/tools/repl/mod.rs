@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use crate::args::Flags;
 use crate::args::ReplFlags;
@@ -88,6 +89,7 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
     PermissionsContainer::new(Permissions::from_options(
       &ps.options.permissions_options(),
     )?),
+    None,
   )
   .await?;
   worker.setup_repl().await?;

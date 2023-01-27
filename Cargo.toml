@@ -1,77 +1,55 @@
 # Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+# Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 [workspace]
 resolver = "2"
 members = [
-  "bench_util",
   "cli",
-  "cli/napi/sym",
-  "core",
-  "ops",
   "runtime",
-  "serde_v8",
-  "test_ffi",
-  "test_napi",
   "test_util",
-  "ext/broadcast_channel",
-  "ext/cache",
-  "ext/console",
-  "ext/crypto",
-  "ext/fetch",
-  "ext/flash",
-  "ext/ffi",
-  "ext/http",
-  "ext/net",
-  "ext/node",
-  "ext/url",
-  "ext/web",
   "ext/webgpu",
-  "ext/webidl",
-  "ext/websocket",
-  "ext/webstorage",
-  "ext/napi",
-  "lockfile",
 ]
 exclude = ["test_util/std/hash/_wasm"]
 
 [workspace.package]
-authors = ["the Deno authors"]
+authors = ["the Deno authors", "Jo Bates"]
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/denoland/deno"
+repository = "https://github.com/jbatez/denox"
 
 [workspace.dependencies]
 v8 = { version = "0.60.1", default-features = false }
 deno_ast = { version = "0.23.2", features = ["transpiling"] }
 
-deno_core = { version = "0.168.0", path = "./core" }
-deno_ops = { version = "0.46.0", path = "./ops" }
-serde_v8 = { version = "0.79.0", path = "./serde_v8" }
-deno_runtime = { version = "0.94.0", path = "./runtime" }
-napi_sym = { version = "0.16.0", path = "./cli/napi/sym" }
-deno_bench_util = { version = "0.80.0", path = "./bench_util" }
+deno_core = { version = "0.168.0" }
+deno_ops = { version = "0.46.0" }
+serde_v8 = { version = "0.79.0" }
+deno_runtime = { version = "0.1.0", path = "./runtime", package = "denox_runtime" }
+napi_sym = { version = "0.16.0" }
+deno_bench_util = { version = "0.80.0" }
 test_util = { path = "./test_util" }
-deno_lockfile = { version = "0.2.0", path = "./lockfile" }
+deno_lockfile = { version = "0.2.0" }
 
 # exts
-deno_broadcast_channel = { version = "0.80.0", path = "./ext/broadcast_channel" }
-deno_cache = { version = "0.18.0", path = "./ext/cache" }
-deno_console = { version = "0.86.0", path = "./ext/console" }
-deno_crypto = { version = "0.100.0", path = "./ext/crypto" }
-deno_fetch = { version = "0.110.0", path = "./ext/fetch" }
-deno_ffi = { version = "0.73.0", path = "./ext/ffi" }
-deno_flash = { version = "0.22.0", path = "./ext/flash" }
-deno_http = { version = "0.81.0", path = "./ext/http" }
-deno_net = { version = "0.78.0", path = "./ext/net" }
-deno_node = { version = "0.23.0", path = "./ext/node" }
-deno_tls = { version = "0.73.0", path = "./ext/tls" }
-deno_url = { version = "0.86.0", path = "./ext/url" }
-deno_web = { version = "0.117.0", path = "./ext/web" }
-deno_webgpu = { version = "0.87.0", path = "./ext/webgpu" }
-deno_webidl = { version = "0.86.0", path = "./ext/webidl" }
-deno_websocket = { version = "0.91.0", path = "./ext/websocket" }
-deno_webstorage = { version = "0.81.0", path = "./ext/webstorage" }
-deno_napi = { version = "0.16.0", path = "./ext/napi" }
+deno_broadcast_channel = { version = "0.80.0" }
+deno_cache = { version = "0.18.0" }
+deno_console = { version = "0.86.0" }
+deno_crypto = { version = "0.100.0" }
+deno_fetch = { version = "0.110.0" }
+deno_ffi = { version = "0.73.0" }
+deno_flash = { version = "0.22.0" }
+deno_http = { version = "0.81.0" }
+deno_net = { version = "0.78.0" }
+deno_node = { version = "0.23.0" }
+deno_tls = { version = "0.73.0" }
+deno_url = { version = "0.86.0" }
+deno_web = { version = "0.117.0" }
+deno_webgpu = { version = "0.1.0", path = "./ext/webgpu", package = "denox_webgpu" }
+deno_webidl = { version = "0.86.0" }
+deno_websocket = { version = "0.91.0" }
+deno_webstorage = { version = "0.81.0" }
+deno_napi = { version = "0.16.0" }
+deno_wsi = { version = "0.1.0", path = "./ext/wsi", package = "denox_wsi" }
 
 anyhow = "1.0.57"
 async-trait = "0.1.51"
@@ -170,7 +148,7 @@ opt-level = 3
 opt-level = 3
 [profile.bench.package.deno_core]
 opt-level = 3
-[profile.bench.package.deno_runtime]
+[profile.bench.package.denox_runtime]
 opt-level = 3
 [profile.bench.package.deno_http]
 opt-level = 3
@@ -236,7 +214,7 @@ opt-level = 3
 opt-level = 3
 [profile.release.package.deno_core]
 opt-level = 3
-[profile.release.package.deno_runtime]
+[profile.release.package.denox_runtime]
 opt-level = 3
 [profile.release.package.deno_http]
 opt-level = 3
@@ -259,8 +237,6 @@ opt-level = 3
 [profile.release.package.deno_websocket]
 opt-level = 3
 [profile.release.package.deno_napi]
-opt-level = 3
-[profile.release.package.test_napi]
 opt-level = 3
 [profile.release.package.num-bigint-dig]
 opt-level = 3

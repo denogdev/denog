@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 "use strict";
 
 ((window) => {
@@ -150,5 +151,7 @@
     serve: __bootstrap.flash.serve,
     upgradeHttp: __bootstrap.http.upgradeHttp,
     upgradeHttpRaw: __bootstrap.flash.upgradeHttpRaw,
+    wsi: __bootstrap.wsi.wsi,
+    WSIWindow: __bootstrap.wsi.WSIWindow,
   };
 })(this);

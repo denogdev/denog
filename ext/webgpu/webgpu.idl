@@ -67,6 +67,7 @@ interface GPU {
 dictionary GPURequestAdapterOptions {
     GPUPowerPreference powerPreference;
     boolean forceFallbackAdapter = false;
+    GPUSurface compatibleSurface;
 };
 
 enum GPUPowerPreference {
@@ -1140,3 +1141,18 @@ dictionary GPUExtent3DDict {
     GPUIntegerCoordinate depthOrArrayLayers = 1;
 };
 typedef (sequence<GPUIntegerCoordinate> or GPUExtent3DDict) GPUExtent3D;
+
+[Exposed=(Window, DedicatedWorker), SecureContext]
+interface GPUSurface {
+    undefined configure(GPUSurfaceConfiguration configuration);
+    GPUTexture getCurrentTexture();
+    undefined present();
+};
+
+dictionary GPUSurfaceConfiguration {
+    required GPUDevice device;
+    required GPUTextureFormat format;
+    GPUTextureUsageFlags usage = 0x10;  // GPUTextureUsage.RENDER_ATTACHMENT
+    required GPUIntegerCoordinate width;
+    required GPUIntegerCoordinate height;
+};

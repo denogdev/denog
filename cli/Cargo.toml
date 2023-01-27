@@ -1,18 +1,19 @@
 # Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+# Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 [package]
-name = "deno"
-version = "1.30.0"
+name = "denox"
+version = "0.1.0"
 authors.workspace = true
-default-run = "deno"
+default-run = "denox"
 edition.workspace = true
 exclude = ["tests/testdata/npm/registry/*"]
 license.workspace = true
 repository.workspace = true
-description = "Provides the deno executable"
+description = "Provides the denox executable"
 
 [[bin]]
-name = "deno"
+name = "denox"
 path = "main.rs"
 doc = false
 
@@ -129,8 +130,8 @@ trust-dns-client = "=0.22.0"
 trust-dns-server = "=0.22.0"
 
 [package.metadata.winres]
-# This section defines the metadata that appears in the deno.exe PE header.
-OriginalFilename = "deno.exe"
-LegalCopyright = "© Deno contributors & Deno Land Inc. MIT licensed."
-ProductName = "Deno"
-FileDescription = "Deno: A secure runtime for JavaScript and TypeScript"
+# This section defines the metadata that appears in the denox.exe PE header.
+OriginalFilename = "denox.exe"
+LegalCopyright = "© Deno contributors & Deno Land Inc & Jo Bates. MIT licensed."
+ProductName = "Denox"
+FileDescription = "Denox: Deno with built-in window system integration"

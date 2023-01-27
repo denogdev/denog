@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use clap::Arg;
 use clap::ArgMatches;
@@ -350,6 +351,7 @@ pub struct Flags {
   pub version: bool,
   pub watch: Option<Vec<PathBuf>>,
   pub no_clear_screen: bool,
+  pub wsi: bool,
 }
 
 fn join_paths(allowlist: &[PathBuf], d: &str) -> String {
@@ -715,7 +717,7 @@ fn clap_root(version: &str) -> Command {
 }
 
 fn bench_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("bench"), true, false)
+  runtime_args(Command::new("bench"), false, true, false)
     .trailing_var_arg(true)
     .arg(
       Arg::new("ignore")
@@ -843,7 +845,7 @@ Unless --reload is specified, this command will not re-download already cached d
 }
 
 fn compile_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("compile"), true, false)
+  runtime_args(Command::new("compile"), false, true, false)
     .trailing_var_arg(true)
     .arg(script_arg().required(true))
     .arg(
@@ -1067,7 +1069,7 @@ Show documentation for runtime built-ins:
 }
 
 fn eval_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("eval"), false, true)
+  runtime_args(Command::new("eval"), false, false, true)
     .about("Eval script")
     .long_about(
       "Evaluate JavaScript from the command line.
@@ -1293,7 +1295,7 @@ TypeScript compiler cache: Subdirectory containing TS compiler output.",
 }
 
 fn install_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("install"), true, true)
+  runtime_args(Command::new("install"), false, true, true)
     .trailing_var_arg(true)
     .arg(Arg::new("cmd").required(true).multiple_values(true).value_hint(ValueHint::FilePath))
     .arg(
@@ -1497,7 +1499,7 @@ Ignore linting a file by adding an ignore comment at the top of the file:
 }
 
 fn repl_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("repl"), true, true)
+  runtime_args(Command::new("repl"), false, true, true)
     .about("Read Eval Print Loop")
     .arg(
       Arg::new("eval-file")
@@ -1519,7 +1521,7 @@ fn repl_subcommand<'a>() -> Command<'a> {
 }
 
 fn run_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("run"), true, true)
+  runtime_args(Command::new("run"), true, true, true)
     .arg(
       watch_arg(true)
         .conflicts_with("inspect")
@@ -1586,7 +1588,7 @@ fn task_subcommand<'a>() -> Command<'a> {
 }
 
 fn test_subcommand<'a>() -> Command<'a> {
-  runtime_args(Command::new("test"), true, true)
+  runtime_args(Command::new("test"), false, true, true)
     .trailing_var_arg(true)
     .arg(
       Arg::new("ignore")
@@ -1860,6 +1862,16 @@ fn compile_args_without_check_args(app: Command) -> Command {
     .arg(ca_file_arg())
 }
 
+fn wsi_args(app: Command) -> Command {
+  app.arg(
+    Arg::new("wsi")
+      .long("wsi")
+      .requires("unstable")
+      .conflicts_with("watch")
+      .help("UNSTABLE: Enable window system integration"),
+  )
+}
+
 fn permission_args(app: Command) -> Command {
   app
     .arg(
@@ -1967,10 +1979,12 @@ fn permission_args(app: Command) -> Command {
 
 fn runtime_args(
   app: Command,
+  include_wsi: bool,
   include_perms: bool,
   include_inspector: bool,
 ) -> Command {
   let app = compile_args(app);
+  let app = if include_wsi { wsi_args(app) } else { app };
   let app = if include_perms {
     permission_args(app)
   } else {
@@ -2315,7 +2329,7 @@ fn unsafely_ignore_certificate_errors_arg<'a>() -> Arg<'a> {
 fn bench_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
   flags.type_check_mode = TypeCheckMode::Local;
 
-  runtime_args_parse(flags, matches, true, false);
+  runtime_args_parse(flags, matches, false, true, false);
 
   // NOTE: `deno bench` always uses `--no-prompt`, tests shouldn't ever do
   // interactive prompts, unless done by user code
@@ -2406,7 +2420,7 @@ fn check_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
 
 fn compile_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
   flags.type_check_mode = TypeCheckMode::Local;
-  runtime_args_parse(flags, matches, true, false);
+  runtime_args_parse(flags, matches, false, true, false);
 
   let mut script: Vec<String> = matches
     .values_of("script_arg")
@@ -2513,7 +2527,7 @@ fn doc_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
 }
 
 fn eval_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
-  runtime_args_parse(flags, matches, false, true);
+  runtime_args_parse(flags, matches, false, false, true);
   flags.allow_net = Some(vec![]);
   flags.allow_env = Some(vec![]);
   flags.allow_run = Some(vec![]);
@@ -2630,7 +2644,7 @@ fn info_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
 }
 
 fn install_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
-  runtime_args_parse(flags, matches, true, true);
+  runtime_args_parse(flags, matches, false, true, true);
 
   let root = matches.value_of("root").map(PathBuf::from);
 
@@ -2707,7 +2721,7 @@ fn lint_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
 }
 
 fn repl_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
-  runtime_args_parse(flags, matches, true, true);
+  runtime_args_parse(flags, matches, false, true, true);
   unsafely_ignore_certificate_errors_parse(flags, matches);
 
   let eval_files: Option<Vec<String>> = matches
@@ -2725,7 +2739,7 @@ fn repl_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
 }
 
 fn run_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
-  runtime_args_parse(flags, matches, true, true);
+  runtime_args_parse(flags, matches, true, true, true);
 
   let mut script: Vec<String> = matches
     .values_of("script_arg")
@@ -2807,7 +2821,7 @@ fn task_parse(
 
 fn test_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
   flags.type_check_mode = TypeCheckMode::Local;
-  runtime_args_parse(flags, matches, true, true);
+  runtime_args_parse(flags, matches, false, true, true);
   // NOTE: `deno test` always uses `--no-prompt`, tests shouldn't ever do
   // interactive prompts, unless done by user code
   flags.no_prompt = true;
@@ -2976,6 +2990,12 @@ fn compile_args_without_no_check_parse(
   ca_file_arg_parse(flags, matches);
 }
 
+fn wsi_args_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
+  if matches.is_present("wsi") {
+    flags.wsi = true;
+  }
+}
+
 fn permission_args_parse(flags: &mut Flags, matches: &clap::ArgMatches) {
   unsafely_ignore_certificate_errors_parse(flags, matches);
   if let Some(read_wl) = matches.values_of("allow-read") {
@@ -3058,11 +3078,15 @@ fn unsafely_ignore_certificate_errors_parse(
 fn runtime_args_parse(
   flags: &mut Flags,
   matches: &clap::ArgMatches,
+  include_wsi: bool,
   include_perms: bool,
   include_inspector: bool,
 ) {
   compile_args_parse(flags, matches);
   cached_only_arg_parse(flags, matches);
+  if include_wsi {
+    wsi_args_parse(flags, matches);
+  }
   if include_perms {
     permission_args_parse(flags, matches);
   }
@@ -5621,8 +5645,12 @@ mod tests {
 
   #[test]
   fn test_no_colon_in_value_name() {
-    let app =
-      runtime_args(Command::new("test_inspect_completion_value"), true, true);
+    let app = runtime_args(
+      Command::new("test_inspect_completion_value"),
+      true,
+      true,
+      true,
+    );
     let inspect_args = app
       .get_arguments()
       .filter(|arg| arg.get_id() == "inspect")

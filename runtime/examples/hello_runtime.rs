@@ -1,19 +1,20 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use deno_core::error::AnyError;
 use deno_core::FsModuleLoader;
-use deno_runtime::deno_broadcast_channel::InMemoryBroadcastChannel;
-use deno_runtime::deno_web::BlobStore;
-use deno_runtime::permissions::PermissionsContainer;
-use deno_runtime::worker::MainWorker;
-use deno_runtime::worker::WorkerOptions;
-use deno_runtime::BootstrapOptions;
+use denox_runtime::deno_broadcast_channel::InMemoryBroadcastChannel;
+use denox_runtime::deno_web::BlobStore;
+use denox_runtime::permissions::PermissionsContainer;
+use denox_runtime::worker::MainWorker;
+use denox_runtime::worker::WorkerOptions;
+use denox_runtime::BootstrapOptions;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
 
 fn get_error_class_name(e: &AnyError) -> &'static str {
-  deno_runtime::errors::get_error_class_name(e).unwrap_or("Error")
+  denox_runtime::errors::get_error_class_name(e).unwrap_or("Error")
 }
 
 #[tokio::main]
@@ -66,6 +67,7 @@ async fn main() -> Result<(), AnyError> {
     shared_array_buffer_store: None,
     compiled_wasm_module_store: None,
     stdio: Default::default(),
+    wsi_event_loop_proxy: None,
   };
 
   let js_path =

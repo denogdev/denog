@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 use crate::colors;
 use crate::inspector_server::InspectorServer;
 use crate::js;
@@ -447,6 +448,7 @@ impl WebWorker {
       ops::http::init(),
       // Permissions ext (worker specific state)
       perm_ext,
+      deno_wsi::init(None),
     ];
 
     // Append exts

@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::env;
 use std::path::Path;
@@ -148,6 +149,7 @@ mod not_docs {
       deno_napi::init::<Permissions>(false),
       deno_http::init(),
       deno_flash::init::<Permissions>(false), // No --unstable
+      deno_wsi::init(None),
     ];
 
     create_snapshot(CreateSnapshotOptions {

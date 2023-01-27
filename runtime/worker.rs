@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::pin::Pin;
 use std::rc::Rc;
@@ -32,6 +33,7 @@ use deno_core::SourceMapGetter;
 use deno_node::RequireNpmResolver;
 use deno_tls::rustls::RootCertStore;
 use deno_web::BlobStore;
+use deno_wsi::event_loop::WsiEventLoopProxy;
 use log::debug;
 
 use crate::inspector_server::InspectorServer;
@@ -142,6 +144,7 @@ pub struct WorkerOptions {
   /// `WebAssembly.Module` objects cannot be serialized.
   pub compiled_wasm_module_store: Option<CompiledWasmModuleStore>,
   pub stdio: Stdio,
+  pub wsi_event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
 }
 
 impl Default for WorkerOptions {
@@ -178,6 +181,7 @@ impl Default for WorkerOptions {
       startup_snapshot: Default::default(),
       bootstrap: Default::default(),
       stdio: Default::default(),
+      wsi_event_loop_proxy: None,
     }
   }
 }
@@ -278,6 +282,7 @@ impl MainWorker {
       ops::http::init(),
       // Permissions ext (worker specific state)
       perm_ext,
+      deno_wsi::init(options.wsi_event_loop_proxy),
     ];
     extensions.extend(std::mem::take(&mut options.extensions));
 

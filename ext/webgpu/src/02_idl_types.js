@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 // @ts-check
 /// <reference path="../web/internal.d.ts" />
@@ -38,6 +39,7 @@
     GPUQuerySet,
     GPUOutOfMemoryError,
     GPUValidationError,
+    GPUSurface,
   } = window.__bootstrap.webgpu;
   const { SymbolIterator, TypeError } = window.__bootstrap.primordials;
 
@@ -83,6 +85,12 @@
     ],
   );
 
+  // INTERFACE: GPUSurface
+  webidl.converters.GPUSurface = webidl.createInterfaceConverter(
+    "GPUSurface",
+    GPUSurface.prototype,
+  );
+
   // DICTIONARY: GPURequestAdapterOptions
   const dictMembersGPURequestAdapterOptions = [
     {
@@ -93,6 +101,10 @@
       key: "forceFallbackAdapter",
       converter: webidl.converters.boolean,
       defaultValue: false,
+    },
+    {
+      key: "compatibleSurface",
+      converter: webidl.converters["GPUSurface"],
     },
   ];
   webidl.converters["GPURequestAdapterOptions"] = webidl
@@ -2038,4 +2050,37 @@
 
   // TYPEDEF: GPUFlagsConstant
   webidl.converters["GPUFlagsConstant"] = webidl.converters["unsigned long"];
+
+  // DICTIONARY: GPUSurfaceConfiguration
+  const dictMembersGPUSurfaceConfiguration = [
+    {
+      key: "device",
+      converter: webidl.converters["GPUDevice"],
+      required: true,
+    },
+    {
+      key: "format",
+      converter: webidl.converters["GPUTextureFormat"],
+      required: true,
+    },
+    {
+      key: "usage",
+      converter: webidl.converters["GPUTextureUsageFlags"],
+      defaultValue: GPUTextureUsage.RENDER_ATTACHMENT,
+    },
+    {
+      key: "width",
+      converter: webidl.converters["GPUIntegerCoordinate"],
+      required: true,
+    },
+    {
+      key: "height",
+      converter: webidl.converters["GPUIntegerCoordinate"],
+      required: true,
+    },
+  ];
+  webidl.converters["GPUSurfaceConfiguration"] = webidl.createDictionaryConverter(
+    "GPUSurfaceConfiguration",
+    dictMembersGPUSurfaceConfiguration,
+  );
 })(this);

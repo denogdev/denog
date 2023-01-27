@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use crate::args::CaData;
 use crate::args::Flags;
@@ -295,6 +296,7 @@ pub async fn run(
     shared_array_buffer_store: None,
     compiled_wasm_module_store: None,
     stdio: Default::default(),
+    wsi_event_loop_proxy: None,
   };
   let mut worker = MainWorker::bootstrap_from_options(
     main_module.clone(),

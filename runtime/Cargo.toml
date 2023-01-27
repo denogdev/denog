@@ -1,13 +1,14 @@
 # Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+# Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 [package]
-name = "deno_runtime"
-version = "0.94.0"
+name = "denox_runtime"
+version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Provides the deno runtime library"
+description = "Provides the denox runtime library"
 
 [features]
 # "fake" feature that allows to generate docs on docs.rs
@@ -16,7 +17,7 @@ docsrs = []
 snapshot_from_snapshot = []
 
 [lib]
-name = "deno_runtime"
+name = "denox_runtime"
 path = "lib.rs"
 
 [[example]]
@@ -33,6 +34,7 @@ deno_fetch.workspace = true
 deno_ffi.workspace = true
 deno_flash.workspace = true
 deno_http.workspace = true
+deno_napi.workspace = true
 deno_net.workspace = true
 deno_node.workspace = true
 deno_tls.workspace = true
@@ -42,7 +44,7 @@ deno_webgpu.workspace = true
 deno_webidl.workspace = true
 deno_websocket.workspace = true
 deno_webstorage.workspace = true
-deno_napi.workspace = true
+deno_wsi.workspace = true
 
 lzzzz.workspace = true
 
@@ -70,6 +72,7 @@ deno_webgpu.workspace = true
 deno_webidl.workspace = true
 deno_websocket.workspace = true
 deno_webstorage.workspace = true
+deno_wsi.workspace = true
 
 atty.workspace = true
 dlopen.workspace = true
