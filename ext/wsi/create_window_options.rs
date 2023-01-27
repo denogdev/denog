@@ -8,7 +8,7 @@ use winit::{
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateWindowArgs {
+pub struct CreateWindowOptions {
   pub inner_size: Option<(u32, u32)>,
   pub min_inner_size: Option<(u32, u32)>,
   pub max_inner_size: Option<(u32, u32)>,
@@ -24,7 +24,7 @@ pub struct CreateWindowArgs {
   // TODO: icon
 }
 
-impl CreateWindowArgs {
+impl CreateWindowOptions {
   pub fn into_window_builder(
     self,
     mut builder: WindowBuilder,

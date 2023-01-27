@@ -1,12 +1,12 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-mod create_window_args;
+mod create_window_options;
 mod event;
 pub mod event_loop;
 mod request;
 
 use crate::{
-  create_window_args::CreateWindowArgs,
+  create_window_options::CreateWindowOptions,
   event::{WsiEvent, WsiWindowEvent},
   event_loop::WsiEventLoopProxy,
 };
@@ -20,10 +20,11 @@ use winit::{
 
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
   Extension::builder("deno_wsi")
-    .dependencies(vec!["deno_webgpu"])
+    .dependencies(vec!["deno_webgpu", "deno_webidl"])
     .js(include_js_files!(
       prefix "denox:ext/wsi",
       "01_wsi.js",
+      "02_idl_types.js",
     ))
     .ops(vec![
       op_wsi_next_event::decl(),
@@ -83,9 +84,9 @@ async fn op_wsi_next_event(
 #[op]
 fn op_wsi_create_window(
   state: &mut OpState,
-  args: Option<Box<CreateWindowArgs>>,
+  options: Option<Box<CreateWindowOptions>>,
 ) -> Result<u64, anyhow::Error> {
-  match state.borrow::<Rc<WsiEventLoopProxy>>().create_window(args) {
+  match state.borrow::<Rc<WsiEventLoopProxy>>().create_window(options) {
     Ok(window_id) => Ok(window_id.into()),
     Err(e) => Err(e.into()),
   }

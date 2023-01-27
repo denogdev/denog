@@ -1,7 +1,7 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use crate::{
-  create_window_args::CreateWindowArgs,
+  create_window_options::CreateWindowOptions,
   event::WsiEvent,
   request::{handle_requests, Request},
 };
@@ -102,10 +102,10 @@ impl WsiEventLoopProxy {
 
   pub(crate) fn create_window(
     &self,
-    args: Option<Box<CreateWindowArgs>>,
+    options: Option<Box<CreateWindowOptions>>,
   ) -> Result<WindowId, OsError> {
     let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::CreateWindow { args, result_tx });
+    self.send_request(Request::CreateWindow { options, result_tx });
     result_rx.recv().unwrap()
   }
 

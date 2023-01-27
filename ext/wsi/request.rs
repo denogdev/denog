@@ -1,6 +1,6 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-use crate::create_window_args::CreateWindowArgs;
+use crate::create_window_options::CreateWindowOptions;
 use deno_webgpu::wgpu_core::id::SurfaceId;
 use std::{
   collections::HashMap,
@@ -20,7 +20,7 @@ pub enum Request {
   NextEvent,
 
   CreateWindow {
-    args: Option<Box<CreateWindowArgs>>,
+    options: Option<Box<CreateWindowOptions>>,
     result_tx: SyncSender<Result<WindowId, OsError>>,
   },
 
@@ -168,9 +168,9 @@ impl Debug for Request {
     match self {
       Request::NextEvent => f.write_str("Request::NextEvent"),
 
-      Request::CreateWindow { args, .. } => f
+      Request::CreateWindow { options, .. } => f
         .debug_struct("Request::CreateWindow")
-        .field("args", args)
+        .field("options", options)
         .finish_non_exhaustive(),
 
       Request::CreateWebGpuSurface { window_id, .. } => f
@@ -363,10 +363,10 @@ pub fn handle_requests(
     match request_rx.recv().unwrap() {
       Request::NextEvent => break,
 
-      Request::CreateWindow { args, result_tx } => {
+      Request::CreateWindow { options, result_tx } => {
         let mut builder = WindowBuilder::new().with_title("Denox");
-        if let Some(args) = args {
-          builder = args.into_window_builder(builder);
+        if let Some(options) = options {
+          builder = options.into_window_builder(builder);
         }
         let result = builder.build(window_target).map(|window| {
           let window_id = window.id();

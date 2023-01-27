@@ -152,6 +152,7 @@
     upgradeHttp: __bootstrap.http.upgradeHttp,
     upgradeHttpRaw: __bootstrap.flash.upgradeHttpRaw,
     wsi: __bootstrap.wsi.wsi,
+    WSI: __bootstrap.wsi.WSI,
     WSIWindow: __bootstrap.wsi.WSIWindow,
   };
 })(this);
