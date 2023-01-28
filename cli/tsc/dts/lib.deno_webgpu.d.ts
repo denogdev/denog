@@ -1326,7 +1326,7 @@ declare type GPUExtent3D = number[] | GPUExtent3DDict;
 /** @category WebGPU */
 declare class GPUSurface {
   configure(configuration: GPUSurfaceConfiguration): void;
-  getCurrentTexture(): GPUTexture;
+  getCurrentTexture(): GPUTexture | null;
   present(): void;
 }
 

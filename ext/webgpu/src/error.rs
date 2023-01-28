@@ -25,7 +25,7 @@ use wgpu_core::device::DeviceError;
 use wgpu_core::pipeline::CreateComputePipelineError;
 use wgpu_core::pipeline::CreateRenderPipelineError;
 use wgpu_core::pipeline::CreateShaderModuleError;
-use wgpu_core::present::ConfigureSurfaceError;
+use wgpu_core::present::SurfaceError;
 use wgpu_core::resource::BufferAccessError;
 use wgpu_core::resource::CreateBufferError;
 use wgpu_core::resource::CreateQuerySetError;
@@ -283,9 +283,12 @@ impl From<ClearError> for WebGpuError {
   }
 }
 
-impl From<ConfigureSurfaceError> for WebGpuError {
-  fn from(err: ConfigureSurfaceError) -> Self {
-    WebGpuError::Validation(fmt_err(&err))
+impl From<SurfaceError> for WebGpuError {
+  fn from(err: SurfaceError) -> Self {
+    match err {
+      SurfaceError::Device(err) => err.into(),
+      err => WebGpuError::Validation(fmt_err(&err)),
+    }
   }
 }
 
