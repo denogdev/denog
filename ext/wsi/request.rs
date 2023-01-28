@@ -386,7 +386,10 @@ pub fn handle_requests(
         result_tx.send(result).unwrap();
       }
 
-      Request::DestroyWindow { window_id, result_tx } => {
+      Request::DestroyWindow {
+        window_id,
+        result_tx,
+      } => {
         windows.remove(&window_id);
         result_tx.send(()).unwrap();
       }

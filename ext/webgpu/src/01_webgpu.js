@@ -5226,7 +5226,7 @@
         context: "device referenced by configuration",
       });
 
-      const errMsg = ops.op_webgpu_surface_configure({
+      ops.op_webgpu_surface_configure({
         surfaceRid: this[_rid],
         deviceRid: device.rid,
         usage: configuration.usage,
@@ -5234,9 +5234,6 @@
         size: normalizeGPUExtent3D(configuration.size),
         presentMode: configuration.presentMode,
       });
-      if (errMsg) {
-        throw new DOMException(`${prefix}: ${errMsg}`, "OperationError");
-      }
 
       this[_device] = device;
       this[_currentTexture]?.destroy();
@@ -5254,13 +5251,10 @@
         return this[_currentTexture];
       }
 
-      const [textureRid, errMsg] = ops.op_webgpu_surface_get_current_texture(
+      const textureRid = ops.op_webgpu_surface_get_current_texture(
         device.rid,
         this[_rid],
       );
-      if (errMsg) {
-        throw new DOMException(`${prefix}: ${errMsg}`, "OperationError");
-      }
 
       const texture = createGPUTexture(null, device, textureRid);
       device.trackResource(texture);
@@ -5284,10 +5278,7 @@
         context: "currentTexture referenced by this",
       });
 
-      const errMsg = ops.op_webgpu_surface_present(device.rid, this[_rid]);
-      if (errMsg) {
-        throw new DOMException(`${prefix}: ${errMsg}`, "OperationError");
-      }
+      ops.op_webgpu_surface_present(device.rid, this[_rid]);
 
       this[_currentTexture].destroy();
       this[_currentTexture] = undefined;

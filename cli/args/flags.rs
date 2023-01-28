@@ -562,8 +562,7 @@ static ENV_VARIABLES_HELP: &str = r#"ENVIRONMENT VARIABLES:
                          (module downloads, fetch)"#;
 
 static DENO_HELP: Lazy<String> = Lazy::new(|| {
-  format!(
-    "A fork of Deno with built-in window system integration
+  "A fork of Deno with built-in window system integration
 
 Repository: https://github.com/jbatez/denox
 Bugs: https://github.com/jbatez/denox/issues
@@ -580,7 +579,7 @@ To evaluate code in the shell:
 
   denox eval \"console.log(30933 + 404)\"
 "
-  )
+  .to_string()
 });
 
 /// Main entry point for parsing deno's command line flags.

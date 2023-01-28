@@ -38,7 +38,8 @@ where
       event_rx: Cell::new(Some(event_rx)),
       request_tx,
     });
-    f(wsi_event_loop_proxy.clone());
+    let _retain = wsi_event_loop_proxy.clone();
+    f(wsi_event_loop_proxy);
   });
 
   // Handle requests until the proxy thread is ready for the first event.

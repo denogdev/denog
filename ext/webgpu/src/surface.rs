@@ -33,10 +33,10 @@ pub fn op_webgpu_surface_get_supported_formats(
     .get::<super::WebGpuAdapter>(adapter_rid)?;
   let adapter = adapter_resource.0;
 
-  let result = gfx_select!(adapter => instance.surface_get_supported_formats(
-    surface, adapter));
-
-  result.map_err(|err| AnyError::from(err))
+  gfx_select!(adapter =>
+    instance.surface_get_supported_formats(surface, adapter)
+  )
+  .map_err(AnyError::from)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -114,7 +114,7 @@ pub struct SurfaceConfigureArgs {
 pub fn op_webgpu_surface_configure(
   state: &mut OpState,
   args: SurfaceConfigureArgs,
-) -> Result<Option<String>, AnyError> {
+) -> Result<(), AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -133,10 +133,12 @@ pub fn op_webgpu_surface_configure(
     present_mode: args.present_mode.into(),
   };
 
-  let err =
-    gfx_select!(device => instance.surface_configure(surface, device, &conf));
-
-  Ok(err.map(|err| err.to_string()))
+  match gfx_select!(device =>
+    instance.surface_configure(surface, device, &conf)
+  ) {
+    None => Ok(()),
+    Some(err) => Err(err.into()),
+  }
 }
 
 #[op]
@@ -144,7 +146,7 @@ pub fn op_webgpu_surface_get_current_texture(
   state: &mut OpState,
   device_rid: ResourceId,
   surface_rid: ResourceId,
-) -> Result<(Option<ResourceId>, Option<String>), AnyError> {
+) -> Result<ResourceId, AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -154,19 +156,18 @@ pub fn op_webgpu_surface_get_current_texture(
     state.resource_table.get::<WebGpuSurface>(surface_rid)?;
   let surface = surface_resource.0;
 
-  match gfx_select!(
-    device => instance.surface_get_current_texture(surface, PhantomData)
+  match gfx_select!(device =>
+    instance.surface_get_current_texture(surface, PhantomData)
   ) {
     Ok(output) => {
-      let texture_rid = output.texture_id.map(|texture_id| {
-        state
-          .resource_table
-          .add(crate::texture::WebGpuTexture(texture_id))
-      });
-      let err_msg = maybe_err_msg_from_status(output.status);
-      Ok((texture_rid, err_msg))
+      check_status(output.status)?;
+      let texture_id = output.texture_id.unwrap();
+      let texture_rid = state
+        .resource_table
+        .add(crate::texture::WebGpuTexture(texture_id));
+      Ok(texture_rid)
     }
-    Err(err) => Ok((None, Some(err.to_string()))),
+    Err(err) => Err(err.into()),
   }
 }
 
@@ -175,7 +176,7 @@ pub fn op_webgpu_surface_present(
   state: &mut OpState,
   device_rid: ResourceId,
   surface_rid: ResourceId,
-) -> Result<Option<String>, AnyError> {
+) -> Result<(), AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -186,20 +187,18 @@ pub fn op_webgpu_surface_present(
   let surface = surface_resource.0;
 
   match gfx_select!(device => instance.surface_present(surface)) {
-    Ok(status) => Ok(maybe_err_msg_from_status(status)),
-    Err(err) => Ok(Some(err.to_string())),
+    Ok(status) => check_status(status),
+    Err(err) => Err(err.into()),
   }
 }
 
-fn maybe_err_msg_from_status(
-  status: wgpu_types::SurfaceStatus,
-) -> Option<String> {
+fn check_status(status: wgpu_types::SurfaceStatus) -> Result<(), AnyError> {
   use wgpu_types::SurfaceStatus::*;
   let msg = match status {
-    Good | Suboptimal => return None,
+    Good | Suboptimal => return Ok(()),
     Timeout => "Unable to get the next frame, timed out.",
     Outdated => "The surface under the swap chain has changed.",
     Lost => "The surface under the swap chain is lost.",
   };
-  Some(msg.to_string())
+  Err(AnyError::msg(msg))
 }
