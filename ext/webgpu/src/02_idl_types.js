@@ -2069,13 +2069,8 @@
       defaultValue: GPUTextureUsage.RENDER_ATTACHMENT,
     },
     {
-      key: "width",
-      converter: webidl.converters["GPUIntegerCoordinate"],
-      required: true,
-    },
-    {
-      key: "height",
-      converter: webidl.converters["GPUIntegerCoordinate"],
+      key: "size",
+      converter: webidl.converters["GPUExtent3D"],
       required: true,
     },
   ];

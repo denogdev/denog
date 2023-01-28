@@ -1325,6 +1325,7 @@ declare type GPUExtent3D = number[] | GPUExtent3DDict;
 
 /** @category WebGPU */
 declare class GPUSurface {
+  getSupportedFormats(adapter: GPUAdapter): GPUTextureFormat[];
   configure(configuration: GPUSurfaceConfiguration): void;
   getCurrentTexture(): GPUTexture;
   present(): void;
@@ -1335,6 +1336,5 @@ declare interface GPUSurfaceConfiguration {
   device: GPUDevice;
   format: GPUTextureFormat;
   usage?: GPUTextureUsageFlags;
-  width: number;
-  height: number;
+  size: GPUExtent3D;
 }

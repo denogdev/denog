@@ -17,14 +17,16 @@ const adapter = await navigator.gpu.requestAdapter({
 // Create WebGPU device.
 const device = await adapter.requestDevice();
 
+// Choose WebGPU surface format.
+const surfaceFormat = surface.getSupportedFormats(adapter)[0];
+
 // Configure WebGPU surface.
 configureSurface(window.getInnerSize());
-function configureSurface([width, height]) {
+function configureSurface(size) {
   surface.configure({
     device,
-    format: "bgra8unorm",
-    width,
-    height,
+    format: surfaceFormat,
+    size,
   });
 }
 

@@ -17,6 +17,27 @@ impl Resource for WebGpuSurface {
   }
 }
 
+#[op]
+pub fn op_webgpu_surface_get_supported_formats(
+  state: &mut OpState,
+  surface_rid: ResourceId,
+  adapter_rid: ResourceId,
+) -> Result<Vec<wgpu_types::TextureFormat>, AnyError> {
+  let instance = state.borrow::<super::Instance>();
+  let surface_resource =
+    state.resource_table.get::<WebGpuSurface>(surface_rid)?;
+  let surface = surface_resource.0;
+  let adapter_resource = state
+    .resource_table
+    .get::<super::WebGpuAdapter>(adapter_rid)?;
+  let adapter = adapter_resource.0;
+
+  let result = gfx_select!(adapter => instance.surface_get_supported_formats(
+    surface, adapter));
+
+  result.map_err(|err| AnyError::from(err))
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SurfaceConfigureArgs {
@@ -24,8 +45,7 @@ pub struct SurfaceConfigureArgs {
   device_rid: ResourceId,
   format: wgpu_types::TextureFormat,
   usage: u32,
-  width: u32,
-  height: u32,
+  size: wgpu_types::Extent3d,
 }
 
 #[op]
@@ -46,8 +66,8 @@ pub fn op_webgpu_surface_configure(
   let conf = wgpu_types::SurfaceConfiguration {
     usage: wgpu_types::TextureUsages::from_bits_truncate(args.usage),
     format: args.format,
-    width: args.width,
-    height: args.height,
+    width: args.size.width,
+    height: args.size.height,
     present_mode: wgpu_types::PresentMode::Fifo,
   };
 

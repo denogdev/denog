@@ -5156,6 +5156,15 @@
     }
   }
 
+  function assertSurface(surface, prefix) {
+    if (surface[_rid] === undefined) {
+      throw new DOMException(
+        `${prefix}: surface is destroyed.`,
+        "OperationError",
+      );
+    }
+  }
+
   class GPUSurface {
     /** @type {number | undefined} */
     [_rid];
@@ -5168,16 +5177,27 @@
       webidl.illegalConstructor();
     }
 
+    getSupportedFormats(adapter) {
+      webidl.assertBranded(this, GPUSurfacePrototype);
+      const prefix = "Failed to execute 'getSupportedFormats' on 'GPUSurface'";
+      assertSurface(this, prefix);
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      adapter = webidl.converters.GPUAdapter(adapter, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_webgpu_surface_get_supported_formats(
+        this[_rid],
+        adapter[_adapter].rid,
+      );
+    }
+
     configure(configuration) {
       webidl.assertBranded(this, GPUSurfacePrototype);
       const prefix = "Failed to execute 'configure' on 'GPUSurface'";
-
-      if (this[_rid] === undefined) {
-        throw new DOMException(
-          `${prefix}: surface is destroyed.`,
-          "OperationError",
-        );
-      }
+      assertSurface(this, prefix);
 
       webidl.requiredArguments(arguments.length, 1, { prefix });
       configuration = webidl.converters.GPUSurfaceConfiguration(configuration, {
@@ -5194,8 +5214,7 @@
         deviceRid: device.rid,
         format: configuration.format,
         usage: configuration.usage,
-        width: configuration.width,
-        height: configuration.height,
+        size: normalizeGPUExtent3D(configuration.size),
       });
       if (errMsg) {
         throw new DOMException(`${prefix}: ${errMsg}`, "OperationError");
@@ -5209,6 +5228,8 @@
     getCurrentTexture() {
       webidl.assertBranded(this, GPUSurfacePrototype);
       const prefix = "Failed to execute 'getCurrentTexture' on 'GPUSurface'";
+      assertSurface(this, prefix);
+
       const device = assertDevice(this, { prefix, context: "this" });
 
       if (this[_currentTexture]) {
@@ -5232,6 +5253,7 @@
     present() {
       webidl.assertBranded(this, GPUSurfacePrototype);
       const prefix = "Failed to execute 'present' on 'GPUSurface'";
+      assertSurface(this, prefix);
 
       if (!this[_currentTexture]) {
         throw new DOMException(
