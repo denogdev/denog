@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 "use strict";
 
 ((window) => {
@@ -172,6 +173,7 @@
     GPUQuerySet: util.nonEnumerable(webgpu.GPUQuerySet),
     GPUOutOfMemoryError: util.nonEnumerable(webgpu.GPUOutOfMemoryError),
     GPUValidationError: util.nonEnumerable(webgpu.GPUValidationError),
+    GPUSurface: util.nonEnumerable(webgpu.GPUSurface),
   };
 
   class Navigator {
