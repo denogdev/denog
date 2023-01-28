@@ -344,7 +344,7 @@ impl Serialize for WsiEvent {
             s.serialize_entry("type", "touchpad-pressure")?;
             s.serialize_entry("wid", &wid)?;
             s.serialize_entry("pressure", pressure)?;
-            s.serialize_entry("state", stage)?;
+            s.serialize_entry("stage", stage)?;
             s.end()
           }
           WsiWindowEvent::AxisMotion { axis, value, .. } => {

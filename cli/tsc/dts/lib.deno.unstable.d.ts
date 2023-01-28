@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 /// <reference no-default-lib="true" />
 /// <reference lib="deno.ns" />
@@ -1639,6 +1640,193 @@ declare namespace Deno {
    * @category Runtime Environment
    */
   export function osUptime(): number;
+
+  export const wsi: WSI;
+
+  export class WSI {
+    nextEvent(): Promise<WSIEvent>;
+    createWindow(options?: WSICreateWindowOptions): WSIWindow;
+  }
+
+  export type WSIEvent =
+    {
+      type: "new-events";
+    } | {
+      type: "window-resized";
+      window: WSIWindow;
+      innerSize: [number, number];
+    } | {
+      type: "window-moved";
+      window: WSIWindow;
+      position: [number, number];
+    } | {
+      type: "close-requested";
+      window: WSIWindow;
+    } | {
+      type: "dropped-file";
+      window: WSIWindow;
+      path: string;
+    } | {
+      type: "hovered-file";
+      window: WSIWindow;
+      path: string;
+    } | {
+      type: "hovered-file-cancelled";
+      window: WSIWindow;
+    } | {
+      type: "character";
+      window?: WSIWindow;
+      codePoint: number;
+    } | {
+      type: "window-focused";
+      window: WSIWindow;
+      focused: boolean;
+    } | {
+      type: "key";
+      window?: WSIWindow;
+      scanCode: number;
+      state: WSIElementState;
+      synthetic?: boolean;
+    } | {
+      type: "modifiers-changed";
+      window: WSIWindow;
+    } | {
+      type: "ime";
+      window: WSIWindow;
+    } | {
+      type: "cursor-moved";
+      window: WSIWindow;
+      position: [number, number];
+    } | {
+      type: "cursor-entered";
+      window: WSIWindow;
+    } | {
+      type: "cursor-left";
+      window: WSIWindow;
+    } | {
+      type: "mouse-wheel";
+      window?: WSIWindow;
+      delta: WSIMouseScrollDelta;
+      phase?: WSITouchPhase;
+    } | {
+      type: "mouse-button";
+      window: WSIWindow;
+      state: WSIElementState;
+      button: WSIMouseButton;
+    } | {
+      type: "touchpad-pressure";
+      window: WSIWindow;
+      pressure: number;
+      stage: bigint;
+    } | {
+      type: "axis-motion";
+      window?: WSIWindow;
+      axis: number;
+      value: number;
+    } | {
+      type: "touch";
+      window: WSIWindow;
+    } | {
+      type: "scale-factor-changed";
+      window: WSIWindow;
+      scaleFactor: number;
+    } | {
+      type: "theme-changed";
+      window: WSIWindow;
+      theme: WSITheme;
+    } | {
+      type: "window-occluded";
+      window: WSIWindow;
+      occluded: number;
+    } | {
+      type: "device-added";
+    } | {
+      type: "device-removed";
+    } | {
+      type: "mouse-motion";
+      delta: WSIMouseMotionDelta;
+    } | {
+      type: "button";
+      button: number;
+      state: WSIElementState;
+    } | {
+      type: "suspended";
+    } | {
+      type: "resumed";
+    } | {
+      type: "main-events-cleared";
+    } | {
+      type: "redraw-requested";
+      window: WSIWindow;
+    } | {
+      type: "redraw-events-cleared";
+    } | {
+      type: "loop-destroyed";
+    };
+
+  export type WSIElementState = "pressed" | "released";
+  export type WSIMouseButton = "left" | "right" | "middle" | number;
+  export type WSIMouseScrollDeltaType = "line" | "pixel";
+  export type WSITheme = "light" | "dark";
+  export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
+
+  export interface WSIMouseMotionDelta {
+    x: number;
+    y: number;
+  }
+
+  export interface WSIMouseScrollDelta {
+    type: WSIMouseScrollDeltaType;
+    x: number;
+    y: number;
+  }
+
+  export interface WSICreateWindowOptions {
+    innerSize?: [number, number];
+    minInnerSize?: [number, number];
+    maxInnerSize?: [number, number];
+    position?: [number, number];
+    resizable?: boolean;
+    title?: string;
+    fullscreen?: boolean;
+    maximized?: boolean;
+    visible?: boolean;
+    transparent?: boolean;
+    decorated?: boolean;
+    alwaysOnTop?: boolean;
+  }
+
+  export class WSIWindow {
+    getGPUSurface(): GPUSurface;
+    getScaleFactor(): number;
+    requestRedraw(): void;
+    getInnerPosition(): [number, number] | null;
+    getOuterPosition(): [number, number] | null;
+    setOuterPosition(position: [number, number]): void;
+    setOuterPosition(x: number, y: number): void;
+    getInnerSize(): [number, number];
+    setInnerSize(size: [number, number]): void;
+    setInnerSize(width: number, height: number): void;
+    getOuterSize(): [number, number];
+    setMinInnerSize(size: [number, number] | null): void;
+    setMinInnerSize(width: number, height: number): void;
+    setMaxInnerSize(size: [number, number] | null): void;
+    setMaxInnerSize(width: number, height: number): void;
+    setTitle(title: string): void;
+    setVisible(visible?: boolean): void;
+    isVisible(): boolean | null;
+    setResizable(resizable?: boolean): void;
+    isResizable(): boolean;
+    setMinimized(minimized?: boolean): void;
+    setMaximized(maximized?: boolean): void;
+    isMaximized(): boolean;
+    setFullscreen(fullscreen?: boolean): void;
+    isFullscreen(): boolean;
+    setDecorated(decorated?: boolean): void;
+    isDecorated(): boolean;
+    setAlwaysOnTop(alwaysOnTop?: boolean): void;
+    focus(): void;
+  }
 }
 
 /** **UNSTABLE**: New API, yet to be vetted.
