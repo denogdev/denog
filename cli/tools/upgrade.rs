@@ -305,7 +305,10 @@ pub async fn upgrade(
         && upgrade_flags.output.is_none()
         && current_is_passed
       {
-        log::info!("Version {} is already installed", crate::version::denox_short());
+        log::info!(
+          "Version {} is already installed",
+          crate::version::denox_short()
+        );
         return Ok(());
       } else {
         passed_version
@@ -324,7 +327,8 @@ pub async fn upgrade(
         let latest_hash = latest_version.clone();
         crate::version::GIT_COMMIT_HASH == latest_hash
       } else if !crate::version::is_canary() {
-        let current = semver::Version::parse(&crate::version::denox_short()).unwrap();
+        let current =
+          semver::Version::parse(&crate::version::denox_short()).unwrap();
         let latest = semver::Version::parse(&latest_version).unwrap();
         current >= latest
       } else {

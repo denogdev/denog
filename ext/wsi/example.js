@@ -35,7 +35,6 @@ window.setVisible();
 while (true) {
   const event = await Deno.wsi.nextEvent();
   switch (event.type) {
-
     // Reconfigure WebGPU surface when the window size changes.
     case "window-resized": {
       const { innerSize } = event;

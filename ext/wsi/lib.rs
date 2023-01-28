@@ -86,7 +86,10 @@ fn op_wsi_create_window(
   state: &mut OpState,
   options: Option<Box<CreateWindowOptions>>,
 ) -> Result<u64, anyhow::Error> {
-  match state.borrow::<Rc<WsiEventLoopProxy>>().create_window(options) {
+  match state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .create_window(options)
+  {
     Ok(window_id) => Ok(window_id.into()),
     Err(e) => Err(e.into()),
   }

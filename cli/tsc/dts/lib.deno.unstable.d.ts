@@ -98,7 +98,6 @@ declare namespace Deno {
   /** **UNSTABLE**: New API, yet to be vetted.
    *
    * The native struct type for interfacing with foreign functions.
-   *
    */
   type NativeStructType = { readonly struct: readonly NativeType[] };
 
@@ -165,7 +164,7 @@ declare namespace Deno {
    */
   type ToNativeResultType<T extends NativeResultType = NativeResultType> =
     T extends NativeStructType ? BufferSource
-    : ToNativeResultTypeMap[Exclude<T, NativeStructType>];
+      : ToNativeResultTypeMap[Exclude<T, NativeStructType>];
 
   /** **UNSTABLE**: New API, yet to be vetted.
    *
@@ -227,7 +226,7 @@ declare namespace Deno {
    */
   type FromNativeResultType<T extends NativeResultType = NativeResultType> =
     T extends NativeStructType ? Uint8Array
-    : FromNativeResultTypeMap[Exclude<T, NativeStructType>];
+      : FromNativeResultTypeMap[Exclude<T, NativeStructType>];
 
   /** **UNSTABLE**: New API, yet to be vetted.
    *
@@ -1649,118 +1648,150 @@ declare namespace Deno {
   }
 
   export type WSIEvent =
-    {
+    | {
       type: "new-events";
-    } | {
+    }
+    | {
       type: "window-resized";
       window: WSIWindow;
       innerSize: [number, number];
-    } | {
+    }
+    | {
       type: "window-moved";
       window: WSIWindow;
       position: [number, number];
-    } | {
+    }
+    | {
       type: "close-requested";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "dropped-file";
       window: WSIWindow;
       path: string;
-    } | {
+    }
+    | {
       type: "hovered-file";
       window: WSIWindow;
       path: string;
-    } | {
+    }
+    | {
       type: "hovered-file-cancelled";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "character";
       window?: WSIWindow;
       codePoint: number;
-    } | {
+    }
+    | {
       type: "window-focused";
       window: WSIWindow;
       focused: boolean;
-    } | {
+    }
+    | {
       type: "key";
       window?: WSIWindow;
       scanCode: number;
       state: WSIElementState;
       synthetic?: boolean;
-    } | {
+    }
+    | {
       type: "modifiers-changed";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "ime";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "cursor-moved";
       window: WSIWindow;
       position: [number, number];
-    } | {
+    }
+    | {
       type: "cursor-entered";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "cursor-left";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "mouse-wheel";
       window?: WSIWindow;
       delta: WSIMouseScrollDelta;
       phase?: WSITouchPhase;
-    } | {
+    }
+    | {
       type: "mouse-button";
       window: WSIWindow;
       state: WSIElementState;
       button: WSIMouseButton;
-    } | {
+    }
+    | {
       type: "touchpad-pressure";
       window: WSIWindow;
       pressure: number;
       stage: bigint;
-    } | {
+    }
+    | {
       type: "axis-motion";
       window?: WSIWindow;
       axis: number;
       value: number;
-    } | {
+    }
+    | {
       type: "touch";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "scale-factor-changed";
       window: WSIWindow;
       scaleFactor: number;
-    } | {
+    }
+    | {
       type: "theme-changed";
       window: WSIWindow;
       theme: WSITheme;
-    } | {
+    }
+    | {
       type: "window-occluded";
       window: WSIWindow;
       occluded: number;
-    } | {
+    }
+    | {
       type: "device-added";
-    } | {
+    }
+    | {
       type: "device-removed";
-    } | {
+    }
+    | {
       type: "mouse-motion";
       delta: WSIMouseMotionDelta;
-    } | {
+    }
+    | {
       type: "button";
       button: number;
       state: WSIElementState;
-    } | {
+    }
+    | {
       type: "suspended";
-    } | {
+    }
+    | {
       type: "resumed";
-    } | {
+    }
+    | {
       type: "main-events-cleared";
-    } | {
+    }
+    | {
       type: "redraw-requested";
       window: WSIWindow;
-    } | {
+    }
+    | {
       type: "redraw-events-cleared";
-    } | {
+    }
+    | {
       type: "loop-destroyed";
     };
 

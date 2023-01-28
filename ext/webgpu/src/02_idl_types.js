@@ -2079,8 +2079,9 @@
       required: true,
     },
   ];
-  webidl.converters["GPUSurfaceConfiguration"] = webidl.createDictionaryConverter(
-    "GPUSurfaceConfiguration",
-    dictMembersGPUSurfaceConfiguration,
-  );
+  webidl.converters["GPUSurfaceConfiguration"] = webidl
+    .createDictionaryConverter(
+      "GPUSurfaceConfiguration",
+      dictMembersGPUSurfaceConfiguration,
+    );
 })(this);

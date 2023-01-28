@@ -5170,7 +5170,10 @@
 
       this[_device] = configuration.device[_device];
       this[_configuration] = configuration;
-      const device = assertDevice(this, { prefix, context: "configuration.device" });
+      const device = assertDevice(this, {
+        prefix,
+        context: "configuration.device",
+      });
 
       const { err } = ops.op_webgpu_surface_configure({
         surfaceRid: this[_rid],
@@ -5189,7 +5192,10 @@
       const prefix = "Failed to execute 'getCurrentTexture' on 'GPUSurface'";
 
       if (this[_configuration] === null) {
-        throw new DOMException("surface is not configured.", "InvalidStateError");
+        throw new DOMException(
+          "surface is not configured.",
+          "InvalidStateError",
+        );
       }
 
       const device = assertDevice(this, { prefix, context: "this" });
@@ -5198,7 +5204,10 @@
         return this[_currentTexture];
       }
 
-      const { rid } = ops.op_webgpu_surface_get_current_texture(device.rid, this[_rid]);
+      const { rid } = ops.op_webgpu_surface_get_current_texture(
+        device.rid,
+        this[_rid],
+      );
 
       const texture = createGPUTexture(null, device, rid);
       device.trackResource(texture);
@@ -5209,7 +5218,10 @@
     present() {
       webidl.assertBranded(this, GPUSurfacePrototype);
       const prefix = "Failed to execute 'present' on 'GPUSurface'";
-      const device = assertDevice(this[_currentTexture], { prefix, context: "this" });
+      const device = assertDevice(this[_currentTexture], {
+        prefix,
+        context: "this",
+      });
       ops.op_webgpu_surface_present(device.rid, this[_rid]);
       this[_currentTexture].destroy();
       this[_currentTexture] = undefined;
