@@ -65,11 +65,25 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
     .build()
 }
 
+fn try_borrow_event_loop_proxy<'a>(
+  state: &'a OpState,
+  api_name: &str,
+) -> &'a Rc<WsiEventLoopProxy> {
+  state.try_borrow::<Rc<WsiEventLoopProxy>>().unwrap_or_else(|| {
+    eprintln!(
+      "WSI API '{}'. Only available in the main worker and the --wsi flag must be provided.",
+      api_name
+    );
+    std::process::exit(70);
+  })
+}
+
 #[op]
 async fn op_wsi_next_event(
   state: Rc<RefCell<OpState>>,
 ) -> Result<WsiEvent, anyhow::Error> {
-  let proxy = state.borrow().borrow::<Rc<WsiEventLoopProxy>>().clone();
+  let proxy =
+    try_borrow_event_loop_proxy(&state.borrow(), "Deno.wsi.nextEvent").clone();
   loop {
     match proxy.next_event().await? {
       WsiEvent::UserEvent
@@ -87,8 +101,7 @@ fn op_wsi_create_window(
   state: &mut OpState,
   options: Option<Box<CreateWindowOptions>>,
 ) -> Result<u64, anyhow::Error> {
-  match state
-    .borrow::<Rc<WsiEventLoopProxy>>()
+  match try_borrow_event_loop_proxy(state, "Deno.wsi.createWindow")
     .create_window(options)
   {
     Ok(window_id) => Ok(window_id.into()),
