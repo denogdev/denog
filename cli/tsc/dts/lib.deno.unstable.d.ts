@@ -1640,13 +1640,35 @@ declare namespace Deno {
    */
   export function osUptime(): number;
 
-  export const wsi: WSI;
-
-  export class WSI {
-    nextEvent(): Promise<WSIEvent>;
-    createWindow(options?: WSICreateWindowOptions): WSIWindow;
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export interface WSICreateWindowOptions {
+    innerSize?: [number, number];
+    minInnerSize?: [number, number];
+    maxInnerSize?: [number, number];
+    position?: [number, number];
+    resizable?: boolean;
+    title?: string;
+    fullscreen?: boolean;
+    maximized?: boolean;
+    visible?: boolean;
+    transparent?: boolean;
+    decorated?: boolean;
+    alwaysOnTop?: boolean;
   }
 
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export type WSIElementState = "pressed" | "released";
+
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
   export type WSIEvent =
     | {
       type: "new-events";
@@ -1794,39 +1816,69 @@ declare namespace Deno {
     | {
       type: "loop-destroyed";
     };
-
-  export type WSIElementState = "pressed" | "released";
+  
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
   export type WSIMouseButton = "left" | "right" | "middle" | number;
-  export type WSIMouseScrollDeltaType = "line" | "pixel";
-  export type WSITheme = "light" | "dark";
-  export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
 
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
   export interface WSIMouseMotionDelta {
     x: number;
     y: number;
   }
 
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
   export interface WSIMouseScrollDelta {
     type: WSIMouseScrollDeltaType;
     x: number;
     y: number;
   }
+  
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export type WSIMouseScrollDeltaType = "line" | "pixel";
+  
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export type WSITheme = "light" | "dark";
+  
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
 
-  export interface WSICreateWindowOptions {
-    innerSize?: [number, number];
-    minInnerSize?: [number, number];
-    maxInnerSize?: [number, number];
-    position?: [number, number];
-    resizable?: boolean;
-    title?: string;
-    fullscreen?: boolean;
-    maximized?: boolean;
-    visible?: boolean;
-    transparent?: boolean;
-    decorated?: boolean;
-    alwaysOnTop?: boolean;
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export const wsi: WSI;
+
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export class WSI {
+    nextEvent(): Promise<WSIEvent>;
+    createWindow(options?: WSICreateWindowOptions): WSIWindow;
   }
 
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
   export class WSIWindow {
     getGPUSurface(): GPUSurface;
     getScaleFactor(): number;
