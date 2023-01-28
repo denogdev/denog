@@ -22,7 +22,7 @@ configureSurface(window.getInnerSize());
 function configureSurface([width, height]) {
   surface.configure({
     device,
-    format: "bgra8unorm-srgb",
+    format: "bgra8unorm",
     width,
     height,
   });

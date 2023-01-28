@@ -1,8 +1,6 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-use super::error::WebGpuError;
-use super::WebGpuResult;
 use deno_core::error::AnyError;
 use deno_core::op;
 use deno_core::OpState;
@@ -64,7 +62,7 @@ pub fn op_webgpu_surface_get_current_texture(
   state: &mut OpState,
   device_rid: ResourceId,
   surface_rid: ResourceId,
-) -> Result<WebGpuResult, AnyError> {
+) -> Result<(Option<ResourceId>, Option<String>), AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -77,15 +75,16 @@ pub fn op_webgpu_surface_get_current_texture(
   match gfx_select!(
     device => instance.surface_get_current_texture(surface, PhantomData)
   ) {
-    Ok(output) => Ok(WebGpuResult {
-      rid: output.texture_id.map(|texture_id| {
+    Ok(output) => {
+      let texture_rid = output.texture_id.map(|texture_id| {
         state
           .resource_table
           .add(crate::texture::WebGpuTexture(texture_id))
-      }),
-      err: maybe_err_from_status(output.status),
-    }),
-    Err(err) => Ok(WebGpuResult::maybe_err(Some(err))),
+      });
+      let err_msg = maybe_err_msg_from_status(output.status);
+      Ok((texture_rid, err_msg))
+    }
+    Err(err) => Ok((None, Some(err.to_string()))),
   }
 }
 
@@ -94,7 +93,7 @@ pub fn op_webgpu_surface_present(
   state: &mut OpState,
   device_rid: ResourceId,
   surface_rid: ResourceId,
-) -> Result<Option<WebGpuError>, AnyError> {
+) -> Result<Option<String>, AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -105,14 +104,14 @@ pub fn op_webgpu_surface_present(
   let surface = surface_resource.0;
 
   match gfx_select!(device => instance.surface_present(surface)) {
-    Ok(status) => Ok(maybe_err_from_status(status)),
-    Err(err) => Ok(Some(err.into())),
+    Ok(status) => Ok(maybe_err_msg_from_status(status)),
+    Err(err) => Ok(Some(err.to_string())),
   }
 }
 
-fn maybe_err_from_status(
+fn maybe_err_msg_from_status(
   status: wgpu_types::SurfaceStatus,
-) -> Option<WebGpuError> {
+) -> Option<String> {
   use wgpu_types::SurfaceStatus::*;
   let msg = match status {
     Good | Suboptimal => return None,
@@ -120,5 +119,5 @@ fn maybe_err_from_status(
     Outdated => "The surface under the swap chain has changed.",
     Lost => "The surface under the swap chain is lost.",
   };
-  Some(WebGpuError::Validation(msg.to_string()))
+  Some(msg.to_string())
 }
