@@ -1149,9 +1149,19 @@ interface GPUSurface {
     undefined present();
 };
 
+enum GPUPresentMode {
+    "auto-vsync",
+    "auto-no-vsync",
+    "fifo",
+    "fifo-relaxed",
+    "immediate",
+    "mailbox",
+};
+
 dictionary GPUSurfaceConfiguration {
     required GPUDevice device;
-    required GPUTextureFormat format;
     GPUTextureUsageFlags usage = 0x10;  // GPUTextureUsage.RENDER_ATTACHMENT
+    required GPUTextureFormat format;
     required GPUExtent3D size;
+    GPUPresentMode presentMode = "auto-vsync";
 };

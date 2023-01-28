@@ -2051,6 +2051,19 @@
   // TYPEDEF: GPUFlagsConstant
   webidl.converters["GPUFlagsConstant"] = webidl.converters["unsigned long"];
 
+  // ENUM: GPUPresentMode
+  webidl.converters["GPUPresentMode"] = webidl.createEnumConverter(
+    "GPUPresentMode",
+    [
+      "auto-vsync",
+      "auto-no-vsync",
+      "fifo",
+      "fifo-relaxed",
+      "immediate",
+      "mailbox",
+    ],
+  );
+
   // DICTIONARY: GPUSurfaceConfiguration
   const dictMembersGPUSurfaceConfiguration = [
     {
@@ -2059,19 +2072,24 @@
       required: true,
     },
     {
-      key: "format",
-      converter: webidl.converters["GPUTextureFormat"],
-      required: true,
-    },
-    {
       key: "usage",
       converter: webidl.converters["GPUTextureUsageFlags"],
       defaultValue: GPUTextureUsage.RENDER_ATTACHMENT,
     },
     {
+      key: "format",
+      converter: webidl.converters["GPUTextureFormat"],
+      required: true,
+    },
+    {
       key: "size",
       converter: webidl.converters["GPUExtent3D"],
       required: true,
+    },
+    {
+      key: "presentMode",
+      converter: webidl.converters["GPUPresentMode"],
+      defaultValue: "auto-vsync",
     },
   ];
   webidl.converters["GPUSurfaceConfiguration"] = webidl

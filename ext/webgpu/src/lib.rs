@@ -680,6 +680,7 @@ fn declare_webgpu_ops() -> Vec<deno_core::OpDecl> {
     shader::op_webgpu_create_shader_module::decl(),
     // surface
     surface::op_webgpu_surface_get_supported_formats::decl(),
+    surface::op_webgpu_surface_get_supported_modes::decl(),
     surface::op_webgpu_surface_configure::decl(),
     surface::op_webgpu_surface_get_current_texture::decl(),
     surface::op_webgpu_surface_present::decl(),

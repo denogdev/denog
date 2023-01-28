@@ -5194,6 +5194,23 @@
       );
     }
 
+    getSupportedModes(adapter) {
+      webidl.assertBranded(this, GPUSurfacePrototype);
+      const prefix = "Failed to execute 'getSupportedModes' on 'GPUSurface'";
+      assertSurface(this, prefix);
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      adapter = webidl.converters.GPUAdapter(adapter, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_webgpu_surface_get_supported_modes(
+        this[_rid],
+        adapter[_adapter].rid,
+      );
+    }
+
     configure(configuration) {
       webidl.assertBranded(this, GPUSurfacePrototype);
       const prefix = "Failed to execute 'configure' on 'GPUSurface'";
@@ -5212,9 +5229,10 @@
       const errMsg = ops.op_webgpu_surface_configure({
         surfaceRid: this[_rid],
         deviceRid: device.rid,
-        format: configuration.format,
         usage: configuration.usage,
+        format: configuration.format,
         size: normalizeGPUExtent3D(configuration.size),
+        presentMode: configuration.presentMode,
       });
       if (errMsg) {
         throw new DOMException(`${prefix}: ${errMsg}`, "OperationError");

@@ -1326,15 +1326,26 @@ declare type GPUExtent3D = number[] | GPUExtent3DDict;
 /** @category WebGPU */
 declare class GPUSurface {
   getSupportedFormats(adapter: GPUAdapter): GPUTextureFormat[];
+  getSupportedModes(adapter: GPUAdapter): GPUPresentMode[];
   configure(configuration: GPUSurfaceConfiguration): void;
   getCurrentTexture(): GPUTexture;
   present(): void;
 }
 
 /** @category WebGPU */
+declare type GPUPresentMode =
+  | "auto-vsync"
+  | "auto-no-vsync"
+  | "fifo"
+  | "fifo-relaxed"
+  | "immediate"
+  | "mailbox";
+
+/** @category WebGPU */
 declare interface GPUSurfaceConfiguration {
   device: GPUDevice;
-  format: GPUTextureFormat;
   usage?: GPUTextureUsageFlags;
+  format: GPUTextureFormat;
   size: GPUExtent3D;
+  presentMode?: GPUPresentMode;
 }
