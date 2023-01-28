@@ -109,6 +109,15 @@ impl WsiEventLoopProxy {
     result_rx.recv().unwrap()
   }
 
+  pub(crate) fn destroy_window(&self, window_id: WindowId) {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::DestroyWindow {
+      window_id,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
   pub(crate) fn create_webgpu_surface(
     &self,
     window_id: WindowId,

@@ -123,19 +123,45 @@
   }
   const WSIPrototype = WSI.prototype;
 
+  function assertWindowNotDestroyed(window, prefix) {
+    if (window[_wid] === null) {
+      throw new DOMException(
+        `${prefix}: window is destroyed.`,
+        "OperationError",
+      );
+    }
+  }
+
   class WSIWindow {
-    [_wid];
+    [_wid] = null;
     [_gpuSurface] = null;
 
     constructor() {
       webidl.illegalConstructor();
     }
 
+    destroy() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'destroy' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
+      if (this[_gpuSurface]) {
+        webgpu.destroyGPUSurface(this[_gpuSurface]);
+        this[_gpuSurface] = null;
+      }
+
+      ops.op_wsi_destroy_window(this[_wid]);
+      windows.delete(this[_wid]);
+      this[_wid] = null;
+    }
+
     getGPUSurface() {
       webidl.assertBranded(this, WSIWindowPrototype);
-      const surface = this[_gpuSurface];
-      if (surface) {
-        return surface;
+      const prefix = "Failed to execute 'getGPUSurface' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
+      if (this[_gpuSurface]) {
+        return this[_gpuSurface];
       } else {
         const rid = ops.op_wsi_create_webgpu_surface(this[_wid]);
         return this[_gpuSurface] = webgpu.createGPUSurface(rid);
@@ -144,174 +170,246 @@
 
     getScaleFactor() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getScaleFactor' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_scale_factor(this[_wid]);
     }
 
     requestRedraw() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'requestRedraw' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_request_redraw(this[_wid]);
     }
 
     getInnerPosition() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getInnerPosition' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_inner_position(this[_wid]);
     }
 
     getOuterPosition() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getOuterPosition' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_outer_position(this[_wid]);
     }
 
     setOuterPosition(positionOrX, y) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setOuterPosition' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       webidl.requiredArguments(arguments.length, 1, { prefix });
       const position = convertPosition(prefix, positionOrX, y);
+
       return ops.op_wsi_window_set_outer_position(this[_wid], position);
     }
 
     getInnerSize() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getInnerSize' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_inner_size(this[_wid]);
     }
 
     setInnerSize(sizeOrWidth, height) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setInnerSize' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       webidl.requiredArguments(arguments.length, 1, { prefix });
       const size = convertSize(prefix, sizeOrWidth, height);
+
       return ops.op_wsi_window_set_inner_size(this[_wid], size);
     }
 
     getOuterSize() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getOuterSize' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_outer_size(this[_wid]);
     }
 
     setMinInnerSize(sizeOrWidth, height) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMinInnerSize' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       webidl.requiredArguments(arguments.length, 1, { prefix });
       const size = convertSize(prefix, sizeOrWidth, height, true);
+
       return ops.op_wsi_window_set_min_inner_size(this[_wid], size);
     }
 
     setMaxInnerSize(sizeOrWidth, height) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMaxInnerSize' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       webidl.requiredArguments(arguments.length, 1, { prefix });
       const size = convertSize(prefix, sizeOrWidth, height, true);
+
       return ops.op_wsi_window_set_max_inner_size(this[_wid], size);
     }
 
     setTitle(title) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setTitle' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       webidl.requiredArguments(arguments.length, 1, { prefix });
       title = webidl.converters["DOMString"](title, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_title(this[_wid], title);
     }
 
     setVisible(visible = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setVisible' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       visible = webidl.converters["boolean"](visible, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_visible(this[_wid], visible);
     }
 
     isVisible() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'isVisible' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_is_visible(this[_wid]);
     }
 
     setResizable(resizable = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setResizable' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       resizable = webidl.converters["boolean"](resizable, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_resizable(this[_wid], resizable);
     }
 
     isResizable() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'isResizable' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_is_resizable(this[_wid]);
     }
 
     setMinimized(minimized = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMinimized' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       minimized = webidl.converters["boolean"](minimized, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_minimized(this[_wid], minimized);
     }
 
     setMaximized(maximized = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMaximized' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       maximized = webidl.converters["boolean"](maximized, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_maximized(this[_wid], maximized);
     }
 
     isMaximized() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'isMaximized' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_is_maximized(this[_wid]);
     }
 
     setFullscreen(fullscreen = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setFullscreen' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       fullscreen = webidl.converters["boolean"](fullscreen, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_fullscreen(this[_wid], fullscreen);
     }
 
     isFullscreen() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'isFullscreen' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_is_fullscreen(this[_wid]);
     }
 
     setDecorated(decorated = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setDecorated' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       decorated = webidl.converters["boolean"](decorated, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_decorated(this[_wid], decorated);
     }
 
     isDecorated() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'isDecorated' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_window_is_decorated(this[_wid]);
     }
 
     setAlwaysOnTop(alwaysOnTop = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setAlwaysOnTop' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       alwaysOnTop = webidl.converters["boolean"](alwaysOnTop, {
         prefix,
         context: "Argument 1",
       });
+
       return ops.op_wsi_window_set_always_on_top(this[_wid], alwaysOnTop);
     }
 
     focus() {
       webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'focus' on 'WSIWindow'";
+      assertWindowNotDestroyed(this, prefix);
+
       return ops.op_wsi_focus_window(this[_wid]);
     }
   }

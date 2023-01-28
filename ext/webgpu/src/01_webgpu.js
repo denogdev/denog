@@ -5146,6 +5146,21 @@
     return surface;
   }
 
+  function destroyGPUSurface(surface) {
+    if (surface[_currentTexture] !== undefined) {
+      surface[_currentTexture].destroy();
+      surface[_currentTexture] = undefined;
+    }
+
+    surface[_configuration] = undefined;
+    surface[_device] = undefined;
+
+    if (surface[_rid] !== undefined) {
+      core.close(surface[_rid]);
+      surface[_rid] = undefined;
+    }
+  }
+
   class GPUSurface {
     /** @type {number} */
     [_rid];
@@ -5162,6 +5177,14 @@
     configure(configuration) {
       webidl.assertBranded(this, GPUSurfacePrototype);
       const prefix = "Failed to execute 'configure' on 'GPUSurface'";
+
+      if (this[_rid] === undefined) {
+        throw new DOMException(
+          `${prefix}: surface is destroyed.`,
+          "OperationError",
+        );
+      }
+
       webidl.requiredArguments(arguments.length, 1, { prefix });
       configuration = webidl.converters.GPUSurfaceConfiguration(configuration, {
         prefix,
@@ -5263,6 +5286,7 @@
     GPUOutOfMemoryError,
     GPUValidationError,
     createGPUSurface,
+    destroyGPUSurface,
     GPUSurface,
   };
 })(this);

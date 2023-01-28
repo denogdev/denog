@@ -1880,6 +1880,7 @@ declare namespace Deno {
    * @category Window System Integration
    */
   export class WSIWindow {
+    destroy(): void;
     getGPUSurface(): GPUSurface;
     getScaleFactor(): number;
     requestRedraw(): void;

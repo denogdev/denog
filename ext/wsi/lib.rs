@@ -29,6 +29,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
     .ops(vec![
       op_wsi_next_event::decl(),
       op_wsi_create_window::decl(),
+      op_wsi_destroy_window::decl(),
       op_wsi_create_webgpu_surface::decl(),
       op_wsi_window_scale_factor::decl(),
       op_wsi_window_request_redraw::decl(),
@@ -93,6 +94,13 @@ fn op_wsi_create_window(
     Ok(window_id) => Ok(window_id.into()),
     Err(e) => Err(e.into()),
   }
+}
+
+#[op]
+fn op_wsi_destroy_window(state: &mut OpState, wid: u64) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .destroy_window(wid.into())
 }
 
 #[op]

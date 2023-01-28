@@ -24,6 +24,11 @@ pub enum Request {
     result_tx: SyncSender<Result<WindowId, OsError>>,
   },
 
+  DestroyWindow {
+    window_id: WindowId,
+    result_tx: SyncSender<()>,
+  },
+
   CreateWebGpuSurface {
     window_id: WindowId,
     webgpu_instance: Box<deno_webgpu::Instance>,
@@ -171,6 +176,11 @@ impl Debug for Request {
       Request::CreateWindow { options, .. } => f
         .debug_struct("Request::CreateWindow")
         .field("options", options)
+        .finish_non_exhaustive(),
+
+      Request::DestroyWindow { window_id, .. } => f
+        .debug_struct("Request::DestroyWindow")
+        .field("window_id", window_id)
         .finish_non_exhaustive(),
 
       Request::CreateWebGpuSurface { window_id, .. } => f
@@ -374,6 +384,11 @@ pub fn handle_requests(
           window_id
         });
         result_tx.send(result).unwrap();
+      }
+
+      Request::DestroyWindow { window_id, result_tx } => {
+        windows.remove(&window_id);
+        result_tx.send(()).unwrap();
       }
 
       Request::CreateWebGpuSurface {
