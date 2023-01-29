@@ -564,8 +564,8 @@ static ENV_VARIABLES_HELP: &str = r#"ENVIRONMENT VARIABLES:
 static DENO_HELP: Lazy<String> = Lazy::new(|| {
   "A fork of Deno with built-in window system integration
 
-Repository: https://github.com/jbatez/denox
-Bugs: https://github.com/jbatez/denox/issues
+Repository: https://github.com/denoxdev/denox
+Bugs: https://github.com/denoxdev/denox/issues
 
 To start the REPL:
 
@@ -1739,7 +1739,7 @@ fn upgrade_subcommand<'a>() -> Command<'a> {
 Defaults to latest.
 
 The version is downloaded from
-https://github.com/jbatez/denox/releases
+https://github.com/denoxdev/denox/releases
 and is used to replace the current executable.
 
 If you want to not replace the current Denox executable but instead download an

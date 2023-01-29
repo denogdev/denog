@@ -15,7 +15,7 @@ exclude = ["test_util/std/hash/_wasm"]
 authors = ["the Deno authors", "Jo Bates"]
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/jbatez/denox"
+repository = "https://github.com/denoxdev/denox"
 
 [workspace.dependencies]
 v8 = { version = "0.60.1", default-features = false }

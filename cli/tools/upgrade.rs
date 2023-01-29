@@ -30,7 +30,7 @@ use std::time::Duration;
 static ARCHIVE_NAME: Lazy<String> =
   Lazy::new(|| format!("denox-{}.zip", env!("TARGET")));
 
-const RELEASE_URL: &str = "https://github.com/jbatez/denox/releases";
+const RELEASE_URL: &str = "https://github.com/denoxdev/denox/releases";
 
 // How often query server for new version. In hours.
 const UPGRADE_CHECK_INTERVAL: i64 = 24;
@@ -171,7 +171,7 @@ fn print_release_notes(current_version: &str, new_version: &str) {
   if get_minor_version(current_version) != get_minor_version(new_version) {
     log::info!(
       "{}{}",
-      "Release notes: https://github.com/jbatez/denox/releases/tag/v",
+      "Release notes: https://github.com/denoxdev/denox/releases/tag/v",
       &new_version,
     );
   }
@@ -361,7 +361,7 @@ pub async fn upgrade(
     }
 
     format!(
-      "https://jbatez.github.io/denox/canary/{}/{}",
+      "https://denoxdev.github.io/dl/canary/{}/{}",
       install_version, *ARCHIVE_NAME
     )
   } else {
@@ -430,7 +430,7 @@ async fn get_latest_release_version(
   client: &HttpClient,
 ) -> Result<String, AnyError> {
   let text = client
-    .download_text("https://jbatez.github.io/denox/release-latest.txt")
+    .download_text("https://denoxdev.github.io/dl/release-latest.txt")
     .await?;
   let version = text.trim().to_string();
   Ok(version.replace('v', ""))
@@ -440,7 +440,7 @@ async fn get_latest_canary_version(
   client: &HttpClient,
 ) -> Result<String, AnyError> {
   let text = client
-    .download_text("https://jbatez.github.io/denox/canary-latest.txt")
+    .download_text("https://denoxdev.github.io/dl/canary-latest.txt")
     .await?;
   let version = text.trim().to_string();
   Ok(version)

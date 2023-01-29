@@ -124,7 +124,7 @@ async fn download_base_binary(
   binary_path_suffix: &str,
 ) -> Result<(), AnyError> {
   let download_url =
-    format!("https://jbatez.github.io/denox/{}", binary_path_suffix);
+    format!("https://denoxdev.github.io/dl/{}", binary_path_suffix);
   let maybe_bytes = {
     let progress_bars = ProgressBar::new(ProgressBarStyle::DownloadBars);
     let progress = progress_bars.update(&download_url);
