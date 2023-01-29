@@ -567,17 +567,9 @@ static DENO_HELP: Lazy<String> = Lazy::new(|| {
 Repository: https://github.com/denoxdev/denox
 Bugs: https://github.com/denoxdev/denox/issues
 
-To start the REPL:
+To execute a script with window system integration:
 
-  denox
-
-To execute a script:
-
-  denox run https://deno.land/std/examples/welcome.ts
-
-To evaluate code in the shell:
-
-  denox eval \"console.log(30933 + 404)\"
+  denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.1.0/examples/hello-triangle/main.ts
 "
   .to_string()
 });
