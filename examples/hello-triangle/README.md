@@ -12,4 +12,4 @@ denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.1
 
 ## Screenshots
 
-![Triangle window](./screenshot.png)
+![A red triangle over a green background.](./screenshot.png)
