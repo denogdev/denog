@@ -9,3 +9,7 @@ This example renders a triangle to a window.
 ```
 denox run --unstable --wsi examples/hello-triangle/main.ts
 ```
+
+## Screenshots
+
+![Triangle window](./screenshot.png)
