@@ -2089,7 +2089,7 @@
     {
       key: "presentMode",
       converter: webidl.converters["GPUPresentMode"],
-      defaultValue: "auto-vsync",
+      defaultValue: "fifo",
     },
   ];
   webidl.converters["GPUSurfaceConfiguration"] = webidl
