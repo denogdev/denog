@@ -1,101 +1,45 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
-// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
+use super::WebGpuResult;
 use deno_core::error::AnyError;
+use deno_core::include_js_files;
 use deno_core::op;
+use deno_core::Extension;
 use deno_core::OpState;
 use deno_core::Resource;
 use deno_core::ResourceId;
 use serde::Deserialize;
-use serde::Serialize;
 use std::borrow::Cow;
-use std::marker::PhantomData;
+use wgpu_types::SurfaceStatus;
+
+pub fn init_surface(unstable: bool) -> Extension {
+  Extension::builder("deno_webgpu_surface")
+    .dependencies(vec!["deno_webidl", "deno_web", "deno_webgpu"])
+    .js(include_js_files!(
+      prefix "deno:deno_webgpu",
+      "03_surface.js",
+      "04_surface_idl_types.js",
+    ))
+    .ops(vec![
+      op_webgpu_surface_configure::decl(),
+      op_webgpu_surface_get_current_texture::decl(),
+      op_webgpu_surface_present::decl(),
+    ])
+    .state(move |state| {
+      // TODO: check & possibly streamline this
+      // Unstable might be able to be OpMiddleware
+      // let unstable_checker = state.borrow::<super::UnstableChecker>();
+      // let unstable = unstable_checker.unstable;
+      state.put(super::Unstable(unstable));
+      Ok(())
+    })
+    .build()
+}
 
 pub struct WebGpuSurface(pub wgpu_core::id::SurfaceId);
 impl Resource for WebGpuSurface {
   fn name(&self) -> Cow<str> {
     "webGPUSurface".into()
-  }
-}
-
-#[op]
-pub fn op_webgpu_surface_get_supported_formats(
-  state: &mut OpState,
-  surface_rid: ResourceId,
-  adapter_rid: ResourceId,
-) -> Result<Vec<wgpu_types::TextureFormat>, AnyError> {
-  let instance = state.borrow::<super::Instance>();
-  let surface_resource =
-    state.resource_table.get::<WebGpuSurface>(surface_rid)?;
-  let surface = surface_resource.0;
-  let adapter_resource = state
-    .resource_table
-    .get::<super::WebGpuAdapter>(adapter_rid)?;
-  let adapter = adapter_resource.0;
-
-  gfx_select!(adapter =>
-    instance.surface_get_supported_formats(surface, adapter)
-  )
-  .map_err(AnyError::from)
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum GpuPresentMode {
-  AutoVsync = 0,
-  AutoNoVsync = 1,
-  Fifo = 2,
-  FifoRelaxed = 3,
-  Immediate = 4,
-  Mailbox = 5,
-}
-
-impl From<GpuPresentMode> for wgpu_types::PresentMode {
-  fn from(value: GpuPresentMode) -> Self {
-    match value {
-      GpuPresentMode::AutoVsync => wgpu_types::PresentMode::AutoVsync,
-      GpuPresentMode::AutoNoVsync => wgpu_types::PresentMode::AutoNoVsync,
-      GpuPresentMode::Fifo => wgpu_types::PresentMode::Fifo,
-      GpuPresentMode::FifoRelaxed => wgpu_types::PresentMode::FifoRelaxed,
-      GpuPresentMode::Immediate => wgpu_types::PresentMode::Immediate,
-      GpuPresentMode::Mailbox => wgpu_types::PresentMode::Mailbox,
-    }
-  }
-}
-
-impl From<wgpu_types::PresentMode> for GpuPresentMode {
-  fn from(value: wgpu_types::PresentMode) -> Self {
-    match value {
-      wgpu_types::PresentMode::AutoVsync => GpuPresentMode::AutoVsync,
-      wgpu_types::PresentMode::AutoNoVsync => GpuPresentMode::AutoNoVsync,
-      wgpu_types::PresentMode::Fifo => GpuPresentMode::Fifo,
-      wgpu_types::PresentMode::FifoRelaxed => GpuPresentMode::FifoRelaxed,
-      wgpu_types::PresentMode::Immediate => GpuPresentMode::Immediate,
-      wgpu_types::PresentMode::Mailbox => GpuPresentMode::Mailbox,
-    }
-  }
-}
-
-#[op]
-pub fn op_webgpu_surface_get_supported_modes(
-  state: &mut OpState,
-  surface_rid: ResourceId,
-  adapter_rid: ResourceId,
-) -> Result<Vec<GpuPresentMode>, AnyError> {
-  let instance = state.borrow::<super::Instance>();
-  let surface_resource =
-    state.resource_table.get::<WebGpuSurface>(surface_rid)?;
-  let surface = surface_resource.0;
-  let adapter_resource = state
-    .resource_table
-    .get::<super::WebGpuAdapter>(adapter_rid)?;
-  let adapter = adapter_resource.0;
-
-  match gfx_select!(adapter =>
-    instance.surface_get_supported_modes(surface, adapter)
-  ) {
-    Ok(modes) => Ok(modes.iter().map(|&mode| mode.into()).collect()),
-    Err(err) => Err(err.into()),
   }
 }
 
@@ -106,15 +50,18 @@ pub struct SurfaceConfigureArgs {
   device_rid: ResourceId,
   format: wgpu_types::TextureFormat,
   usage: u32,
-  size: wgpu_types::Extent3d,
-  present_mode: GpuPresentMode,
+  width: u32,
+  height: u32,
+  present_mode: Option<wgpu_types::PresentMode>,
+  alpha_mode: wgpu_types::CompositeAlphaMode,
+  view_formats: Vec<wgpu_types::TextureFormat>,
 }
 
 #[op]
 pub fn op_webgpu_surface_configure(
   state: &mut OpState,
   args: SurfaceConfigureArgs,
-) -> Result<(), AnyError> {
+) -> Result<WebGpuResult, AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -125,20 +72,20 @@ pub fn op_webgpu_surface_configure(
     .get::<WebGpuSurface>(args.surface_rid)?;
   let surface = surface_resource.0;
 
-  let conf = wgpu_types::SurfaceConfiguration {
+  let conf = wgpu_types::SurfaceConfiguration::<Vec<wgpu_types::TextureFormat>> {
     usage: wgpu_types::TextureUsages::from_bits_truncate(args.usage),
     format: args.format,
-    width: args.size.width,
-    height: args.size.height,
-    present_mode: args.present_mode.into(),
+    width: args.width,
+    height: args.height,
+    present_mode: args.present_mode.unwrap_or_default(),
+    alpha_mode: args.alpha_mode,
+    view_formats: args.view_formats,
   };
 
-  match gfx_select!(device =>
-    instance.surface_configure(surface, device, &conf)
-  ) {
-    None => Ok(()),
-    Some(err) => Err(err.into()),
-  }
+  let err =
+    gfx_select!(device => instance.surface_configure(surface, device, &conf));
+
+  Ok(WebGpuResult::maybe_err(err))
 }
 
 #[op]
@@ -146,7 +93,7 @@ pub fn op_webgpu_surface_get_current_texture(
   state: &mut OpState,
   device_rid: ResourceId,
   surface_rid: ResourceId,
-) -> Result<ResourceId, AnyError> {
+) -> Result<WebGpuResult, AnyError> {
   let instance = state.borrow::<super::Instance>();
   let device_resource = state
     .resource_table
@@ -156,18 +103,16 @@ pub fn op_webgpu_surface_get_current_texture(
     state.resource_table.get::<WebGpuSurface>(surface_rid)?;
   let surface = surface_resource.0;
 
-  match gfx_select!(device =>
-    instance.surface_get_current_texture(surface, PhantomData)
-  ) {
-    Ok(output) => {
-      check_status(output.status)?;
-      let texture_id = output.texture_id.unwrap();
-      let texture_rid = state
-        .resource_table
-        .add(crate::texture::WebGpuTexture(texture_id));
-      Ok(texture_rid)
+  let output =
+    gfx_select!(device => instance.surface_get_current_texture(surface, ()))?;
+
+  match output.status {
+    SurfaceStatus::Good | SurfaceStatus::Suboptimal => {
+      let id = output.texture_id.unwrap();
+      let rid = state.resource_table.add(crate::texture::WebGpuTexture(id));
+      Ok(WebGpuResult::rid(rid))
     }
-    Err(err) => Err(err.into()),
+    _ => Err(AnyError::msg("Invalid Surface Status")),
   }
 }
 
@@ -186,19 +131,7 @@ pub fn op_webgpu_surface_present(
     state.resource_table.get::<WebGpuSurface>(surface_rid)?;
   let surface = surface_resource.0;
 
-  match gfx_select!(device => instance.surface_present(surface)) {
-    Ok(status) => check_status(status),
-    Err(err) => Err(err.into()),
-  }
-}
+  let _ = gfx_select!(device => instance.surface_present(surface))?;
 
-fn check_status(status: wgpu_types::SurfaceStatus) -> Result<(), AnyError> {
-  use wgpu_types::SurfaceStatus::*;
-  let msg = match status {
-    Good | Suboptimal => return Ok(()),
-    Timeout => "Unable to get the next frame, timed out.",
-    Outdated => "The surface under the swap chain has changed.",
-    Lost => "The surface under the swap chain is lost.",
-  };
-  Err(AnyError::msg(msg))
+  Ok(())
 }

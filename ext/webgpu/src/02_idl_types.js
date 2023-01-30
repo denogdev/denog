@@ -1,5 +1,4 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
-// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 // @ts-check
 /// <reference path="../web/internal.d.ts" />
@@ -39,7 +38,6 @@
     GPUQuerySet,
     GPUOutOfMemoryError,
     GPUValidationError,
-    GPUSurface,
   } = window.__bootstrap.webgpu;
   const { SymbolIterator, TypeError } = window.__bootstrap.primordials;
 
@@ -67,12 +65,6 @@
     GPUSupportedFeatures.prototype,
   );
 
-  // ENUM: GPUPredefinedColorSpace
-  webidl.converters.GPUPredefinedColorSpace = webidl.createEnumConverter(
-    "GPUPredefinedColorSpace",
-    ["srgb"],
-  );
-
   // INTERFACE: GPU
   webidl.converters.GPU = webidl.createInterfaceConverter("GPU", GPU.prototype);
 
@@ -85,12 +77,6 @@
     ],
   );
 
-  // INTERFACE: GPUSurface
-  webidl.converters.GPUSurface = webidl.createInterfaceConverter(
-    "GPUSurface",
-    GPUSurface.prototype,
-  );
-
   // DICTIONARY: GPURequestAdapterOptions
   const dictMembersGPURequestAdapterOptions = [
     {
@@ -101,10 +87,6 @@
       key: "forceFallbackAdapter",
       converter: webidl.converters.boolean,
       defaultValue: false,
-    },
-    {
-      key: "compatibleSurface",
-      converter: webidl.converters["GPUSurface"],
     },
   ];
   webidl.converters["GPURequestAdapterOptions"] = webidl
@@ -124,7 +106,6 @@
     "GPUFeatureName",
     [
       "depth-clip-control",
-      "depth24unorm-stencil8",
       "depth32float-stencil8",
       "pipeline-statistics-query",
       "texture-compression-bc",
@@ -160,6 +141,10 @@
   webidl.converters["GPUSize32"] = (V, opts) =>
     webidl.converters["unsigned long"](V, { ...opts, enforceRange: true });
 
+  // TYPEDEF: GPUSize64
+  webidl.converters["GPUSize64"] = (V, opts) =>
+    webidl.converters["unsigned long long"](V, { ...opts, enforceRange: true });
+
   // DICTIONARY: GPUDeviceDescriptor
   const dictMembersGPUDeviceDescriptor = [
     {
@@ -175,7 +160,7 @@
       key: "requiredLimits",
       converter: webidl.createRecordConverter(
         webidl.converters["DOMString"],
-        webidl.converters["GPUSize32"],
+        webidl.converters["GPUSize64"],
       ),
     },
   ];
@@ -196,10 +181,6 @@
     "GPUBuffer",
     GPUBuffer.prototype,
   );
-
-  // TYPEDEF: GPUSize64
-  webidl.converters["GPUSize64"] = (V, opts) =>
-    webidl.converters["unsigned long long"](V, { ...opts, enforceRange: true });
 
   // TYPEDEF: GPUBufferUsageFlags
   webidl.converters["GPUBufferUsageFlags"] = (V, opts) =>
@@ -351,7 +332,6 @@
       "depth24plus",
       "depth24plus-stencil8",
       "depth32float",
-      "depth24unorm-stencil8",
       "depth32float-stencil8",
       "bc1-rgba-unorm",
       "bc1-rgba-unorm-srgb",
@@ -443,6 +423,15 @@
       key: "usage",
       converter: webidl.converters["GPUTextureUsageFlags"],
       required: true,
+    },
+    {
+      key: "viewFormats",
+      converter: webidl.createSequenceConverter(
+        webidl.converters["GPUTextureFormat"],
+      ),
+      get defaultValue() {
+        return [];
+      },
     },
   ];
   webidl.converters["GPUTextureDescriptor"] = webidl.createDictionaryConverter(
@@ -923,7 +912,6 @@
       converter: webidl.converters["DOMString"],
       required: true,
     },
-    { key: "sourceMap", converter: webidl.converters["object"] },
   ];
   webidl.converters["GPUShaderModuleDescriptor"] = webidl
     .createDictionaryConverter(
@@ -1854,7 +1842,6 @@
       key: "depthStencilAttachment",
       converter: webidl.converters["GPURenderPassDepthStencilAttachment"],
     },
-    { key: "occlusionQuerySet", converter: webidl.converters["GPUQuerySet"] },
   ];
   webidl.converters["GPURenderPassDescriptor"] = webidl
     .createDictionaryConverter(
@@ -2050,51 +2037,4 @@
 
   // TYPEDEF: GPUFlagsConstant
   webidl.converters["GPUFlagsConstant"] = webidl.converters["unsigned long"];
-
-  // ENUM: GPUPresentMode
-  webidl.converters["GPUPresentMode"] = webidl.createEnumConverter(
-    "GPUPresentMode",
-    [
-      "auto-vsync",
-      "auto-no-vsync",
-      "fifo",
-      "fifo-relaxed",
-      "immediate",
-      "mailbox",
-    ],
-  );
-
-  // DICTIONARY: GPUSurfaceConfiguration
-  const dictMembersGPUSurfaceConfiguration = [
-    {
-      key: "device",
-      converter: webidl.converters["GPUDevice"],
-      required: true,
-    },
-    {
-      key: "usage",
-      converter: webidl.converters["GPUTextureUsageFlags"],
-      defaultValue: GPUTextureUsage.RENDER_ATTACHMENT,
-    },
-    {
-      key: "format",
-      converter: webidl.converters["GPUTextureFormat"],
-      required: true,
-    },
-    {
-      key: "size",
-      converter: webidl.converters["GPUExtent3D"],
-      required: true,
-    },
-    {
-      key: "presentMode",
-      converter: webidl.converters["GPUPresentMode"],
-      defaultValue: "fifo",
-    },
-  ];
-  webidl.converters["GPUSurfaceConfiguration"] = webidl
-    .createDictionaryConverter(
-      "GPUSurfaceConfiguration",
-      dictMembersGPUSurfaceConfiguration,
-    );
 })(this);
