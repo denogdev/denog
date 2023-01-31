@@ -5395,20 +5395,19 @@
   }
 
   class GPUSurfaceTexture extends GPUTexture {
-    /** @type {GPUSurface | undefined} */
+    /** @type {GPUSurface} */
     [_surface];
 
     /** @type {boolean} */
     [_isSuboptimal];
 
     [_cleanup]() {
-      if (this[_surface]) {
+      if (this[_rid] !== undefined) {
         ops.op_webgpu_surface_texture_discard(
           this[_surface][_rid],
           this[_device].rid,
         );
         this[_surface][_currentTexture] = undefined;
-        this[_surface] = undefined;
       }
       super[_cleanup]();
     }
@@ -5426,15 +5425,11 @@
 
       const prefix = "Failed to execute 'present' on 'GPUSurfaceTexture'";
       const device = assertDevice(this, { prefix, context: "this" });
-      const surfaceRid = assertResource(this[_surface], {
-        prefix,
-        context: "surface",
-      });
+      assertResource(this, { prefix, context: "this" });
 
-      ops.op_webgpu_surface_texture_present(surfaceRid, device.rid);
+      ops.op_webgpu_surface_texture_present(this[_surface][_rid], device.rid);
 
       this[_surface][_currentTexture] = undefined;
-      this[_surface] = undefined;
       super[_cleanup]();
     }
   }
