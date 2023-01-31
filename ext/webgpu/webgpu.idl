@@ -1059,29 +1059,6 @@ enum GPUPipelineStatisticName {
     "compute-shader-invocations",
 };
 
-[Exposed=(Window, DedicatedWorker), SecureContext]
-interface GPUCanvasContext {
-    readonly attribute (HTMLCanvasElement or OffscreenCanvas) canvas;
-
-    undefined configure(GPUCanvasConfiguration configuration);
-    undefined unconfigure();
-
-    GPUTexture getCurrentTexture();
-};
-
-enum GPUCanvasAlphaMode {
-    "opaque",
-    "premultiplied"
-};
-
-dictionary GPUCanvasConfiguration {
-    required GPUDevice device;
-    required GPUTextureFormat format;
-    GPUTextureUsageFlags usage = 0x10;  // GPUTextureUsage.RENDER_ATTACHMENT
-    GPUCanvasAlphaMode alphaMode = "opaque";
-    sequence<GPUTextureFormat> viewFormats = [];
-};
-
 enum GPUDeviceLostReason {
     "destroyed"
 };
@@ -1166,3 +1143,48 @@ dictionary GPUExtent3DDict {
     GPUIntegerCoordinate depthOrArrayLayers = 1;
 };
 typedef (sequence<GPUIntegerCoordinate> or GPUExtent3DDict) GPUExtent3D;
+
+[Exposed=(Window, DedicatedWorker), SecureContext]
+interface GPUSurface {
+    GPUSurfaceCapabilities getCapabilities(GPUAdapter adapter);
+    undefined configure(GPUDevice device, GPUSurfaceConfiguration config);
+    GPUSurfaceTexture getCurrentTexture();
+};
+
+dictionary GPUSurfaceCapabilities {
+    required sequence<GPUTextureFormat> formats;
+    required sequence<GPUSurfacePresentMode> presentModes;
+    required sequence<GPUSurfaceAlphaMode> alphaModes;
+};
+
+enum GPUSurfacePresentMode {
+    "auto-vsync",
+    "auto-no-vsync",
+    "fifo",
+    "fifo-relaxed",
+    "immediate",
+    "mailbox"
+};
+
+enum GPUSurfaceAlphaMode {
+    "auto",
+    "opaque",
+    "pre-multiplied",
+    "post-multiplied",
+    "inherit"
+};
+
+dictionary GPUSurfaceConfiguration {
+    GPUTextureUsageFlags usage = 0x10;  // GPUTextureUsage.RENDER_ATTACHMENT
+    required GPUTextureFormat format;
+    required GPUExtent3D size;
+    GPUSurfacePresentMode presentMode = "fifo";
+    GPUSurfaceAlphaMode alphaMode = "opaque";
+    sequence<GPUTextureFormat> viewFormats = [];
+};
+
+[Exposed=(Window, DedicatedWorker), SecureContext]
+interface GPUSurfaceTexture : GPUTexture {
+    readonly attribute boolean isSuboptimal;
+    undefined present();
+};

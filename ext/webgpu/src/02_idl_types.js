@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 // @ts-check
 /// <reference path="../web/internal.d.ts" />
@@ -38,6 +39,7 @@
     GPUQuerySet,
     GPUOutOfMemoryError,
     GPUValidationError,
+    GPUSurface,
   } = window.__bootstrap.webgpu;
   const { SymbolIterator, TypeError } = window.__bootstrap.primordials;
 
@@ -77,6 +79,12 @@
     ],
   );
 
+  // INTERFACE: GPUSurface
+  webidl.converters.GPUSurface = webidl.createInterfaceConverter(
+    "GPUSurface",
+    GPUSurface.prototype,
+  );
+
   // DICTIONARY: GPURequestAdapterOptions
   const dictMembersGPURequestAdapterOptions = [
     {
@@ -87,6 +95,10 @@
       key: "forceFallbackAdapter",
       converter: webidl.converters.boolean,
       defaultValue: false,
+    },
+    {
+      key: "compatibleSurface",
+      converter: webidl.converters["GPUSurface"],
     },
   ];
   webidl.converters["GPURequestAdapterOptions"] = webidl
@@ -2037,4 +2049,72 @@
 
   // TYPEDEF: GPUFlagsConstant
   webidl.converters["GPUFlagsConstant"] = webidl.converters["unsigned long"];
+
+  // ENUM: GPUSurfacePresentMode
+  webidl.converters["GPUSurfacePresentMode"] = webidl.createEnumConverter(
+    "GPUSurfacePresentMode",
+    [
+      "auto-vsync",
+      "auto-no-vsync",
+      "fifo",
+      "fifo-relaxed",
+      "immediate",
+      "mailbox",
+    ],
+  );
+
+  // ENUM: GPUSurfaceAlphaMode
+  webidl.converters["GPUSurfaceAlphaMode"] = webidl.createEnumConverter(
+    "GPUSurfaceAlphaMode",
+    [
+      "auto",
+      "opaque",
+      "pre-multiplied",
+      "post-multiplied",
+      "inherit",
+    ],
+  );
+
+  // DICTIONARY: GPUSurfaceConfiguration
+  const dictMembersGPUSurfaceConfiguration = [
+    {
+      key: "usage",
+      converter: webidl.converters["GPUTextureUsageFlags"],
+      defaultValue: GPUTextureUsage.RENDER_ATTACHMENT,
+    },
+    {
+      key: "format",
+      converter: webidl.converters["GPUTextureFormat"],
+      required: true,
+    },
+    {
+      key: "size",
+      converter: webidl.converters["GPUExtent3D"],
+      required: true,
+    },
+    {
+      key: "presentMode",
+      converter: webidl.converters["GPUSurfacePresentMode"],
+      defaultValue: "fifo",
+    },
+    {
+      key: "alphaMode",
+      converter: webidl.converters["GPUSurfaceAlphaMode"],
+      defaultValue: "opaque",
+    },
+    {
+      key: "viewFormats",
+      converter: webidl.createSequenceConverter(
+        webidl.converters["GPUTextureFormat"],
+      ),
+      get defaultValue() {
+        return [];
+      },
+    },
+  ];
+  webidl.converters["GPUSurfaceConfiguration"] = webidl
+    .createDictionaryConverter(
+      "GPUSurfaceConfiguration",
+      dictMembersGPUSurfaceConfiguration,
+    );
 })(this);

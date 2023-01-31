@@ -40,7 +40,7 @@ const layout = device.createPipelineLayout({
 });
 
 // Choose GPUTextureFormat.
-const format = surface.getSupportedFormats(adapter)[0];
+const format = surface.getCapabilities(adapter).formats[0];
 
 // Create GPURenderPipeline.
 const pipeline = device.createRenderPipeline({
@@ -59,25 +59,25 @@ const pipeline = device.createRenderPipeline({
 });
 
 // Configure surface.
-const configuration = {
-  device,
+const config = {
   format,
   size: window.getInnerSize(),
 };
-surface.configure(configuration);
+surface.configure(device, config);
 
 // Event loop.
 while (true) {
   const event = await Deno.wsi.nextEvent();
   switch (event.type) {
     case "window-resized": {
-      configuration.size = event.innerSize;
-      surface.configure(configuration);
+      config.size = event.innerSize;
+      surface.configure(device, config);
       window.requestRedraw(); // macOS doesn't do this automatically.
       break;
     }
     case "redraw-requested": {
-      const view = surface.getCurrentTexture().createView();
+      const texture = surface.getCurrentTexture();
+      const view = texture.createView();
       const commandEncoder = device.createCommandEncoder();
 
       const renderPass = commandEncoder.beginRenderPass({
@@ -93,7 +93,7 @@ while (true) {
       renderPass.end();
 
       queue.submit([commandEncoder.finish()]);
-      surface.present();
+      texture.present();
       break;
     }
     case "close-requested": {

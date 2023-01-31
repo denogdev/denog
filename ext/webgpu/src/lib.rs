@@ -263,6 +263,7 @@ pub async fn op_webgpu_request_adapter(
   state: Rc<RefCell<OpState>>,
   power_preference: Option<wgpu_types::PowerPreference>,
   force_fallback_adapter: bool,
+  compatible_surface_rid: Option<ResourceId>,
 ) -> Result<GpuAdapterDeviceOrErr, AnyError> {
   let mut state = state.borrow_mut();
   check_unstable(&state, "navigator.gpu.requestAdapter");
@@ -274,10 +275,17 @@ pub async fn op_webgpu_request_adapter(
     state.borrow::<Instance>()
   };
 
+  let compatible_surface_resource = match compatible_surface_rid {
+    None => None,
+    Some(rid) => Some(state.resource_table.get::<surface::WebGpuSurface>(rid)?),
+  };
+  let compatible_surface =
+    compatible_surface_resource.map(|resource| resource.0);
+
   let descriptor = wgpu_core::instance::RequestAdapterOptions {
     power_preference: power_preference.unwrap_or_default(),
     force_fallback_adapter,
-    compatible_surface: None, // windowless
+    compatible_surface,
   };
   let res = instance.request_adapter(
     &descriptor,
@@ -675,5 +683,11 @@ fn declare_webgpu_ops() -> Vec<deno_core::OpDecl> {
     queue::op_webgpu_write_texture::decl(),
     // shader
     shader::op_webgpu_create_shader_module::decl(),
+    // surface
+    surface::op_webgpu_surface_get_capabilities::decl(),
+    surface::op_webgpu_surface_configure::decl(),
+    surface::op_webgpu_surface_get_current_texture::decl(),
+    surface::op_webgpu_surface_texture_discard::decl(),
+    surface::op_webgpu_surface_texture_present::decl(),
   ]
 }

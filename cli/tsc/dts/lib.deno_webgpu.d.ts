@@ -1,4 +1,5 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
+// Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 // deno-lint-ignore-file no-explicit-any no-empty-interface
 
@@ -87,6 +88,7 @@ declare class GPU {
 declare interface GPURequestAdapterOptions {
   powerPreference?: GPUPowerPreference;
   forceFallbackAdapter?: boolean;
+  compatibleSurface?: GPUSurface;
 }
 
 /** @category WebGPU */
@@ -1322,3 +1324,50 @@ declare interface GPUExtent3DDict {
 
 /** @category WebGPU */
 declare type GPUExtent3D = number[] | GPUExtent3DDict;
+
+/** @category WebGPU */
+declare class GPUSurface {
+  getCapabilities(adapter: GPUAdapter): GPUSurfaceCapabilities;
+  configure(device: GPUDevice, config: GPUSurfaceConfiguration): void;
+  getCurrentTexture(): GPUSurfaceTexture;
+}
+
+/** @category WebGPU */
+declare interface GPUSurfaceCapabilities {
+  formats: GPUTextureFormat[];
+  presentModes: GPUSurfacePresentMode[];
+  alphaModes: GPUSurfaceAlphaMode[];
+}
+
+/** @category WebGPU */
+declare type GPUSurfacePresentMode =
+  | "auto-vsync"
+  | "auto-no-vsync"
+  | "fifo"
+  | "fifo-relaxed"
+  | "immediate"
+  | "mailbox";
+
+/** @category WebGPU */
+declare type GPUSurfaceAlphaMode =
+  | "auto"
+  | "opaque"
+  | "pre-multiplied"
+  | "post-multiplied"
+  | "inherit";
+
+/** @category WebGPU */
+declare interface GPUSurfaceConfiguration {
+  usage?: GPUTextureUsageFlags;
+  format: GPUTextureFormat;
+  size: GPUExtent3D;
+  presentMode?: GPUSurfacePresentMode;
+  alphaMode?: GPUSurfaceAlphaMode;
+  viewFormats?: GPUTextureFormat[];
+}
+
+/** @category WebGPU */
+declare class GPUSurfaceTexture extends GPUTexture {
+  readonly isSuboptimal: boolean;
+  present(): void;
+}
