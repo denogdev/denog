@@ -138,8 +138,8 @@ pub fn op_webgpu_surface_get_capabilities(
   ) {
     Ok(caps) => Ok(GpuSurfaceCapabilities {
       formats: caps.formats,
-      present_modes: caps.present_modes.iter().map(|&x| x.into()).collect(),
-      alpha_modes: caps.alpha_modes.iter().map(|&x| x.into()).collect(),
+      present_modes: caps.present_modes.into_iter().map(Into::into).collect(),
+      alpha_modes: caps.alpha_modes.into_iter().map(Into::into).collect(),
     }),
     Err(err) => Err(err.into()),
   }
