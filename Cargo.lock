@@ -1355,7 +1355,7 @@ dependencies = [
 
 [[package]]
 name = "denox"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "atty",
  "base32",
@@ -1440,7 +1440,7 @@ dependencies = [
 
 [[package]]
 name = "denox_runtime"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "atty",
  "deno_broadcast_channel",
@@ -1492,7 +1492,7 @@ dependencies = [
 
 [[package]]
 name = "denox_webgpu"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "deno_core",
  "raw-window-handle 0.5.0",
@@ -1504,7 +1504,7 @@ dependencies = [
 
 [[package]]
 name = "denox_wsi"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "deno_core",
  "denox_webgpu",

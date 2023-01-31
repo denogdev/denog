@@ -24,7 +24,7 @@ deno_ast = { version = "0.23.2", features = ["transpiling"] }
 deno_core = { version = "0.168.0" }
 deno_ops = { version = "0.46.0" }
 serde_v8 = { version = "0.79.0" }
-deno_runtime = { version = "0.2.0", path = "./runtime", package = "denox_runtime" }
+deno_runtime = { version = "0.2.1", path = "./runtime", package = "denox_runtime" }
 napi_sym = { version = "0.16.0" }
 deno_bench_util = { version = "0.80.0" }
 test_util = { path = "./test_util" }
@@ -44,12 +44,12 @@ deno_node = { version = "0.23.0" }
 deno_tls = { version = "0.73.0" }
 deno_url = { version = "0.86.0" }
 deno_web = { version = "0.117.0" }
-deno_webgpu = { version = "0.2.0", path = "./ext/webgpu", package = "denox_webgpu" }
+deno_webgpu = { version = "0.2.1", path = "./ext/webgpu", package = "denox_webgpu" }
 deno_webidl = { version = "0.86.0" }
 deno_websocket = { version = "0.91.0" }
 deno_webstorage = { version = "0.81.0" }
 deno_napi = { version = "0.16.0" }
-deno_wsi = { version = "0.2.0", path = "./ext/wsi", package = "denox_wsi" }
+deno_wsi = { version = "0.2.1", path = "./ext/wsi", package = "denox_wsi" }
 
 anyhow = "1.0.57"
 async-trait = "0.1.51"
