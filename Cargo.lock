@@ -1508,6 +1508,7 @@ version = "0.1.0"
 dependencies = [
  "deno_core",
  "denox_webgpu",
+ "raw-window-handle 0.5.0",
  "serde",
  "tokio",
  "winit",

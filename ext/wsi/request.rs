@@ -2,10 +2,10 @@
 
 use crate::create_window_options::CreateWindowOptions;
 use deno_webgpu::wgpu_core::id::SurfaceId;
+use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::{
   collections::HashMap,
   fmt::{self, Debug, Formatter},
-  marker::PhantomData,
   sync::mpsc::{Receiver, SyncSender},
 };
 use winit::{
@@ -400,8 +400,11 @@ pub fn handle_requests(
         result_tx,
       } => {
         let window = windows.get(&window_id).unwrap();
-        let surface_id =
-          webgpu_instance.instance_create_surface(window, PhantomData);
+        let surface_id = webgpu_instance.instance_create_surface(
+          window.raw_display_handle(),
+          window.raw_window_handle(),
+          (),
+        );
         result_tx.send((webgpu_instance, surface_id)).unwrap();
       }
 

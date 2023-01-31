@@ -16,6 +16,7 @@ path = "lib.rs"
 [dependencies]
 deno_core.workspace = true
 deno_webgpu.workspace = true
+raw-window-handle.workspace = true
 serde.workspace = true
 tokio.workspace = true
 winit = "0.27.5"
