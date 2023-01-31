@@ -5334,7 +5334,7 @@
      */
     getCurrentTexture() {
       webidl.assertBranded(this, GPUSurfacePrototype);
-      const prefix = "Failed to execute 'configure' on 'GPUSurface'";
+      const prefix = "Failed to execute 'getCurrentTexture' on 'GPUSurface'";
       assertGPUSurface(this, prefix);
 
       if (this[_texture]) {
@@ -5401,7 +5401,10 @@
 
     [_cleanup]() {
       if (this[_surface]) {
-        ops.op_webgpu_surface_texture_discard(this[_surface][_rid]);
+        ops.op_webgpu_surface_texture_discard(
+          this[_surface][_rid],
+          this[_device].rid,
+        );
         this[_surface][_texture] = undefined;
         this[_surface] = undefined;
       }
