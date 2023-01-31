@@ -77,9 +77,10 @@
   const _format = Symbol("[[format]]");
   const _type = Symbol("[[type]]");
   const _count = Symbol("[[count]]");
-  const _config = Symbol("[[configuration]]");
+  const _configuration = Symbol("[[configuration]]");
+  const _currentTexture = Symbol("[[currentTexture]]");
   const _surface = Symbol("[[surface]]");
-  const _suboptimal = Symbol("[[suboptimal]]");
+  const _isSuboptimal = Symbol("[[isSuboptimal]]");
 
   /**
    * @param {any} self
@@ -249,16 +250,25 @@
      */
     async requestAdapter(options = {}) {
       webidl.assertBranded(this, GPUPrototype);
+      const prefix = "Failed to execute 'requestAdapter' on 'GPU'";
       options = webidl.converters.GPURequestAdapterOptions(options, {
-        prefix: "Failed to execute 'requestAdapter' on 'GPU'",
+        prefix,
         context: "Argument 1",
       });
+
+      let compatibleSurfaceRid = null;
+      if (options.compatibleSurface) {
+        compatibleSurfaceRid = assertResource(options.compatibleSurface, {
+          prefix,
+          context: "compatible surface",
+        });
+      }
 
       const { err, ...data } = await core.opAsync(
         "op_webgpu_request_adapter",
         options.powerPreference,
         options.forceFallbackAdapter,
-        options.compatibleSurface?.[_rid],
+        compatibleSurfaceRid,
       );
 
       if (err) {
@@ -5233,7 +5243,6 @@
    * @returns {GPUSurface}
    */
   function createGPUSurface(rid) {
-    /** @type {GPUTexture} */
     const surface = webidl.createBranded(GPUSurface);
     surface[_rid] = rid;
     return surface;
@@ -5243,23 +5252,11 @@
    * @param {GPUSurface} surface
    */
   function destroyGPUSurface(surface) {
-    surface[_texture]?.destroy();
-    surface[_config] = undefined;
+    surface[_currentTexture]?.destroy();
+    surface[_configuration] = undefined;
     surface[_device] = undefined;
     core.close(surface[_rid]);
     surface[_rid] = undefined;
-  }
-
-  /**
-   * @param {GPUSurface} surface
-   */
-  function assertGPUSurface(surface, prefix) {
-    if (surface[_rid] === undefined) {
-      throw new DOMException(
-        `${prefix}: surface is destroyed.`,
-        "OperationError",
-      );
-    }
   }
 
   class GPUSurface {
@@ -5270,10 +5267,10 @@
     [_device];
 
     /** @type {GPUSurfaceConfiguration | undefined} */
-    [_config];
+    [_configuration];
 
     /** @type {GPUSurfaceTexture | undefined} */
-    [_texture];
+    [_currentTexture];
 
     constructor() {
       webidl.illegalConstructor();
@@ -5285,17 +5282,18 @@
      */
     getCapabilities(adapter) {
       webidl.assertBranded(this, GPUSurfacePrototype);
-      const prefix = "Failed to execute 'getCapabilities' on 'GPUSurface'";
-      assertGPUSurface(this, prefix);
 
+      const prefix = "Failed to execute 'getCapabilities' on 'GPUSurface'";
+      const rid = assertResource(this, { prefix, context: "this" });
       webidl.requiredArguments(arguments.length, 1, { prefix });
+
       adapter = webidl.converters.GPUAdapter(adapter, {
         prefix,
         context: "Argument 1",
       });
 
       return ops.op_webgpu_surface_get_capabilities(
-        this[_rid],
+        rid,
         adapter[_adapter].rid,
       );
     }
@@ -5306,27 +5304,30 @@
      */
     configure(device, config) {
       webidl.assertBranded(this, GPUSurfacePrototype);
-      const prefix = "Failed to execute 'configure' on 'GPUSurface'";
-      assertGPUSurface(this, prefix);
 
+      const prefix = "Failed to execute 'configure' on 'GPUSurface'";
+      const rid = assertResource(this, { prefix, context: "this" });
       webidl.requiredArguments(arguments.length, 2, { prefix });
+
+      device = webidl.converters.GPUDevice(device, {
+        prefix,
+        context: "Argument 1",
+      });
       device = assertDevice(
-        webidl.converters.GPUDevice(device, {
-          prefix,
-          context: "Argument 1",
-        }),
+        device,
         { prefix, context: "Argument 1" },
       );
+
       config = webidl.converters.GPUSurfaceConfiguration(config, {
         prefix,
         context: "Argument 2",
       });
       config.size = normalizeGPUExtent3D(config.size);
 
-      ops.op_webgpu_surface_configure(this[_rid], device.rid, config);
+      ops.op_webgpu_surface_configure(rid, device.rid, config);
 
       this[_device] = device;
-      this[_config] = config;
+      this[_configuration] = config;
     }
 
     /**
@@ -5334,34 +5335,35 @@
      */
     getCurrentTexture() {
       webidl.assertBranded(this, GPUSurfacePrototype);
-      const prefix = "Failed to execute 'getCurrentTexture' on 'GPUSurface'";
-      assertGPUSurface(this, prefix);
 
-      if (this[_texture]) {
-        return this[_texture];
+      if (this[_currentTexture]) {
+        return this[_currentTexture];
       }
 
+      const prefix = "Failed to execute 'getCurrentTexture' on 'GPUSurface'";
+      const rid = assertResource(this, { prefix, context: "this" });
       const device = assertDevice(this, { prefix, context: "this" });
-      const [textureRid, isSuboptimal] = ops
-        .op_webgpu_surface_get_current_texture(this[_rid], device.rid);
 
-      this[_texture] = createGPUSurfaceTexture(
+      const [textureRid, isSuboptimal] = ops
+        .op_webgpu_surface_get_current_texture(rid, device.rid);
+
+      this[_currentTexture] = createGPUSurfaceTexture(
         {
-          size: this[_config].size,
+          size: this[_configuration].size,
           mipLevelCount: 1,
           sampleCount: 1,
           dimension: "2d",
-          format: this[_config].format,
-          usage: this[_config].usage,
-          viewFormats: this[_config].viewFormats,
+          format: this[_configuration].format,
+          usage: this[_configuration].usage,
+          viewFormats: this[_configuration].viewFormats,
         },
         device,
         textureRid,
         this,
         isSuboptimal,
       );
-      device.trackResource(this[_texture]);
-      return this[_texture];
+      device.trackResource(this[_currentTexture]);
+      return this[_currentTexture];
     }
   }
   const GPUSurfacePrototype = GPUSurface.prototype;
@@ -5388,7 +5390,7 @@
       GPUSurfaceTexture,
     );
     texture[_surface] = surface;
-    texture[_suboptimal] = isSuboptimal;
+    texture[_isSuboptimal] = isSuboptimal;
     return texture;
   }
 
@@ -5396,8 +5398,8 @@
     /** @type {GPUSurface | undefined} */
     [_surface];
 
-    /** @type {boolean | undefined} */
-    [_suboptimal];
+    /** @type {boolean} */
+    [_isSuboptimal];
 
     [_cleanup]() {
       if (this[_surface]) {
@@ -5405,7 +5407,7 @@
           this[_surface][_rid],
           this[_device].rid,
         );
-        this[_surface][_texture] = undefined;
+        this[_surface][_currentTexture] = undefined;
         this[_surface] = undefined;
       }
       super[_cleanup]();
@@ -5416,17 +5418,22 @@
      */
     get isSuboptimal() {
       webidl.assertBranded(this, GPUSurfaceTexturePrototype);
-      return this[_suboptimal];
+      return this[_isSuboptimal];
     }
 
     present() {
       webidl.assertBranded(this, GPUSurfaceTexturePrototype);
+
       const prefix = "Failed to execute 'present' on 'GPUSurfaceTexture'";
-
       const device = assertDevice(this, { prefix, context: "this" });
-      ops.op_webgpu_surface_texture_present(this[_surface][_rid], device.rid);
+      const surfaceRid = assertResource(this[_surface], {
+        prefix,
+        context: "surface",
+      });
 
-      this[_surface][_texture] = undefined;
+      ops.op_webgpu_surface_texture_present(surfaceRid, device.rid);
+
+      this[_surface][_currentTexture] = undefined;
       this[_surface] = undefined;
       super[_cleanup]();
     }
