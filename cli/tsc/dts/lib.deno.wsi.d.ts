@@ -7,10 +7,13 @@
 declare namespace Deno {
   export {}; // stop default export type behavior
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
+  export const wsi: WSI;
+
+  export class WSI {
+    nextEvent(): Promise<WSIEvent>;
+    createWindow(options?: WSICreateWindowOptions): WSIWindow;
+  }
+
   export interface WSICreateWindowOptions {
     innerSize?: [number, number];
     minInnerSize?: [number, number];
@@ -26,16 +29,8 @@ declare namespace Deno {
     alwaysOnTop?: boolean;
   }
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export type WSIElementState = "pressed" | "released";
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export type WSIEvent =
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Motion
@@ -148,7 +143,7 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ModifiersChanged
       type: "modifiers-changed";
       window: WSIWindow;
-      modifiers: WSIModifiersStateFlags;
+      modifiers: WSIModifiers;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.MouseInput
@@ -257,35 +252,28 @@ declare namespace Deno {
       value: number;
     };
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
+  export class WSIModifier {
+    static SHIFT: 0o0004;
+    static CTRL: 0o0040;
+    static ALT: 0o0400;
+    static LOGO: 0o4000;
+  }
+
+  export type WSIModifiers = number;
+
   export interface WSIMouseMotionDelta {
     x: number;
     y: number;
   }
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export interface WSIMouseScrollDelta {
     type: "line" | "pixel";
     x: number;
     y: number;
   }
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export type WSIVirtualKeyCode =
     | "1"
     | "2"
@@ -451,42 +439,6 @@ declare namespace Deno {
     | "paste"
     | "cut";
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
-  export const wsi: WSI;
-
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
-  export class WSI {
-    nextEvent(): Promise<WSIEvent>;
-    createWindow(options?: WSICreateWindowOptions): WSIWindow;
-  }
-
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
-  export type WSIModifiersStateFlags = number;
-
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
-  export class WSIModifiersState {
-    static SHIFT: 0o0004;
-    static CTRL: 0o0040;
-    static ALT: 0o0400;
-    static LOGO: 0o4000;
-  }
-
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export class WSIWindow {
     destroy(): void;
     getGPUSurface(): GPUSurface;

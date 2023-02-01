@@ -137,7 +137,7 @@
     return wid;
   }
 
-  class WSIModifiersState {
+  class WSIModifier {
     constructor() {
       webidl.illegalConstructor();
     }
@@ -442,7 +442,7 @@
   globalThis.__bootstrap.wsi = {
     wsi: webidl.createBranded(WSI),
     WSI,
-    WSIModifiersState,
+    WSIModifier,
     WSIWindow,
   };
 })(this);
