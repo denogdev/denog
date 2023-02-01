@@ -1,5 +1,6 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
+use crate::serialize_device_id::serialize_device_id;
 use serde::{
   ser::{SerializeMap, SerializeTuple},
   Serialize, Serializer,
@@ -287,9 +288,10 @@ impl Serialize for WsiEvent {
               },
             is_synthetic,
           } => {
-            let mut s = s.serialize_map(Some(6))?;
+            let mut s = s.serialize_map(Some(7))?;
             s.serialize_entry("type", "key")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("scanCode", scancode)?;
             s.serialize_entry("state", &SerializeElementState(*state))?;
             s.serialize_entry(
@@ -340,19 +342,22 @@ impl Serialize for WsiEvent {
             let mut s = s.serialize_map(Some(4))?;
             s.serialize_entry("type", "cursor-moved")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("position", &SerializePosition(*position))?;
             s.end()
           }
           WsiWindowEvent::CursorEntered { device_id } => {
-            let mut s = s.serialize_map(Some(2))?;
+            let mut s = s.serialize_map(Some(3))?;
             s.serialize_entry("type", "cursor-entered")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.end()
           }
           WsiWindowEvent::CursorLeft { device_id } => {
-            let mut s = s.serialize_map(Some(2))?;
+            let mut s = s.serialize_map(Some(3))?;
             s.serialize_entry("type", "cursor-left")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.end()
           }
           WsiWindowEvent::MouseWheel {
@@ -360,9 +365,10 @@ impl Serialize for WsiEvent {
             delta,
             phase,
           } => {
-            let mut s = s.serialize_map(Some(4))?;
+            let mut s = s.serialize_map(Some(5))?;
             s.serialize_entry("type", "mouse-wheel")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("delta", &SerializeMouseScrollDelta(*delta))?;
             s.serialize_entry("phase", &SerializeTouchPhase(*phase))?;
             s.end()
@@ -372,9 +378,10 @@ impl Serialize for WsiEvent {
             state,
             button,
           } => {
-            let mut s = s.serialize_map(Some(4))?;
+            let mut s = s.serialize_map(Some(5))?;
             s.serialize_entry("type", "mouse-button")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("state", &SerializeElementState(*state))?;
             s.serialize_entry("button", &SerializeMouseButton(*button))?;
             s.end()
@@ -384,9 +391,10 @@ impl Serialize for WsiEvent {
             pressure,
             stage,
           } => {
-            let mut s = s.serialize_map(Some(4))?;
+            let mut s = s.serialize_map(Some(5))?;
             s.serialize_entry("type", "touchpad-pressure")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("pressure", pressure)?;
             s.serialize_entry("stage", stage)?;
             s.end()
@@ -396,9 +404,10 @@ impl Serialize for WsiEvent {
             axis,
             value,
           } => {
-            let mut s = s.serialize_map(Some(4))?;
+            let mut s = s.serialize_map(Some(5))?;
             s.serialize_entry("type", "axis-motion")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("axis", axis)?;
             s.serialize_entry("value", value)?;
             s.end()
@@ -410,9 +419,10 @@ impl Serialize for WsiEvent {
             force,
             id,
           }) => {
-            let mut s = s.serialize_map(Some(6))?;
+            let mut s = s.serialize_map(Some(7))?;
             s.serialize_entry("type", "touch")?;
             s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("phase", &SerializeTouchPhase(*phase))?;
             s.serialize_entry("location", &SerializePosition(*location))?;
             s.serialize_entry("force", &force.map(SerializeForce))?;
@@ -442,67 +452,78 @@ impl Serialize for WsiEvent {
           }
         }
       }
-      WsiEvent::DeviceEvent { device_id, event } => match event {
-        DeviceEvent::Added => {
-          let mut s = s.serialize_map(Some(1))?;
-          s.serialize_entry("type", "device-added")?;
-          s.end()
+      WsiEvent::DeviceEvent { device_id, event } => {
+        let device_id = serialize_device_id(*device_id);
+        match event {
+          DeviceEvent::Added => {
+            let mut s = s.serialize_map(Some(2))?;
+            s.serialize_entry("type", "device-added")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.end()
+          }
+          DeviceEvent::Removed => {
+            let mut s = s.serialize_map(Some(2))?;
+            s.serialize_entry("type", "device-removed")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.end()
+          }
+          DeviceEvent::MouseMotion { delta: (x, y) } => {
+            let mut s = s.serialize_map(Some(3))?;
+            s.serialize_entry("type", "mouse-motion")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.serialize_entry("delta", &SerializeMouseMotionDelta(*x, *y))?;
+            s.end()
+          }
+          DeviceEvent::MouseWheel { delta } => {
+            let mut s = s.serialize_map(Some(3))?;
+            s.serialize_entry("type", "mouse-wheel")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.serialize_entry("delta", &SerializeMouseScrollDelta(*delta))?;
+            s.end()
+          }
+          DeviceEvent::Motion { axis, value } => {
+            let mut s = s.serialize_map(Some(4))?;
+            s.serialize_entry("type", "axis-motion")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.serialize_entry("axis", axis)?;
+            s.serialize_entry("value", value)?;
+            s.end()
+          }
+          DeviceEvent::Button { button, state } => {
+            let mut s = s.serialize_map(Some(4))?;
+            s.serialize_entry("type", "button")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.serialize_entry("button", button)?;
+            s.serialize_entry("state", &SerializeElementState(*state))?;
+            s.end()
+          }
+          #[allow(deprecated)]
+          DeviceEvent::Key(KeyboardInput {
+            scancode,
+            state,
+            virtual_keycode,
+            modifiers: _,
+          }) => {
+            let mut s = s.serialize_map(Some(5))?;
+            s.serialize_entry("type", "key")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.serialize_entry("scanCode", scancode)?;
+            s.serialize_entry("state", &SerializeElementState(*state))?;
+            s.serialize_entry(
+              "virtualKeyCode",
+              &virtual_keycode.map(SerializeVirtualKeyCode),
+            )?;
+            s.end()
+          }
+          DeviceEvent::Text { codepoint } => {
+            let mut s = s.serialize_map(Some(3))?;
+            s.serialize_entry("type", "character")?;
+            s.serialize_entry("deviceId", &device_id)?;
+            s.serialize_entry("codePoint", &(*codepoint as u32))?;
+            s.end()
+          }
         }
-        DeviceEvent::Removed => {
-          let mut s = s.serialize_map(Some(1))?;
-          s.serialize_entry("type", "device-removed")?;
-          s.end()
-        }
-        DeviceEvent::MouseMotion { delta: (x, y) } => {
-          let mut s = s.serialize_map(Some(2))?;
-          s.serialize_entry("type", "mouse-motion")?;
-          s.serialize_entry("delta", &SerializeMouseMotionDelta(*x, *y))?;
-          s.end()
-        }
-        DeviceEvent::MouseWheel { delta } => {
-          let mut s = s.serialize_map(Some(2))?;
-          s.serialize_entry("type", "mouse-wheel")?;
-          s.serialize_entry("delta", &SerializeMouseScrollDelta(*delta))?;
-          s.end()
-        }
-        DeviceEvent::Motion { axis, value } => {
-          let mut s = s.serialize_map(Some(3))?;
-          s.serialize_entry("type", "axis-motion")?;
-          s.serialize_entry("axis", axis)?;
-          s.serialize_entry("value", value)?;
-          s.end()
-        }
-        DeviceEvent::Button { button, state } => {
-          let mut s = s.serialize_map(Some(3))?;
-          s.serialize_entry("type", "button")?;
-          s.serialize_entry("button", button)?;
-          s.serialize_entry("state", &SerializeElementState(*state))?;
-          s.end()
-        }
-        #[allow(deprecated)]
-        DeviceEvent::Key(KeyboardInput {
-          scancode,
-          state,
-          virtual_keycode,
-          modifiers: _,
-        }) => {
-          let mut s = s.serialize_map(Some(4))?;
-          s.serialize_entry("type", "key")?;
-          s.serialize_entry("scanCode", scancode)?;
-          s.serialize_entry("state", &SerializeElementState(*state))?;
-          s.serialize_entry(
-            "virtualKeyCode",
-            &virtual_keycode.map(SerializeVirtualKeyCode),
-          )?;
-          s.end()
-        }
-        DeviceEvent::Text { codepoint } => {
-          let mut s = s.serialize_map(Some(2))?;
-          s.serialize_entry("type", "character")?;
-          s.serialize_entry("codePoint", &(*codepoint as u32))?;
-          s.end()
-        }
-      },
+      }
       WsiEvent::UserEvent => {
         let mut s = s.serialize_map(Some(1))?;
         s.serialize_entry("type", "user")?;

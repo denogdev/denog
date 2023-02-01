@@ -4,6 +4,7 @@ mod create_window_options;
 mod event;
 pub mod event_loop;
 mod request;
+mod serialize_device_id;
 
 use crate::{
   create_window_options::CreateWindowOptions,

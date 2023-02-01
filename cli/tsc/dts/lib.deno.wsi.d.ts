@@ -38,12 +38,14 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.AxisMotion
       type: "axis-motion";
       window?: WSIWindow;
+      deviceId: number;
       axis: number;
       value: number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Button
       type: "button";
+      deviceId: number;
       button: number;
       state: WSIElementState;
     }
@@ -53,6 +55,7 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ReceivedCharacter
       type: "character";
       window?: WSIWindow;
+      deviceId?: number;
       codePoint: number;
     }
     | {
@@ -64,25 +67,30 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CursorEntered
       type: "cursor-entered";
       window: WSIWindow;
+      deviceId: number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CursorLeft
       type: "cursor-left";
       window: WSIWindow;
+      deviceId: number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CursorMoved
       type: "cursor-moved";
       window: WSIWindow;
+      deviceId: number;
       position: [number, number];
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Added
       type: "device-added";
+      deviceId: number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Removed
       type: "device-removed";
+      deviceId: number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.DroppedFile
@@ -130,6 +138,7 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.KeyboardInput
       type: "key";
       window?: WSIWindow;
+      deviceId: number;
       scanCode: number;
       state: WSIElementState;
       virtualKeyCode?: WSIVirtualKeyCode;
@@ -149,12 +158,14 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.MouseInput
       type: "mouse-button";
       window: WSIWindow;
+      deviceId: number;
       state: WSIElementState;
       button: "left" | "right" | "middle" | number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.MouseMotion
       type: "mouse-motion";
+      deviceId: number;
       delta: WSIMouseMotionDelta;
     }
     | {
@@ -163,6 +174,7 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.MouseWheel
       type: "mouse-wheel";
       window?: WSIWindow;
+      deviceId: number;
       delta: WSIMouseScrollDelta;
       phase?: WSITouchPhase;
     }
@@ -203,6 +215,7 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Touch
       type: "touch";
       window: WSIWindow;
+      deviceId: number;
       phase: WSITouchPhase;
       location: [number, number];
       force?: WSIForce;
@@ -212,6 +225,7 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.TouchpadPressure
       type: "touchpad-pressure";
       window: WSIWindow;
+      deviceId: number;
       pressure: number;
       stage: bigint;
     }
