@@ -68,6 +68,7 @@ mod ts {
       "deno.shared_globals",
       "deno.ns",
       "deno.unstable",
+      "deno.wsi",
       // Deno built-in type libraries
       "es5",
       "es2015.collection",

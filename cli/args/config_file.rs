@@ -858,7 +858,11 @@ impl Serialize for TsTypeLib {
       Self::DenoWindow => vec!["deno.window".to_string()],
       Self::DenoWorker => vec!["deno.worker".to_string()],
       Self::UnstableDenoWindow => {
-        vec!["deno.window".to_string(), "deno.unstable".to_string()]
+        vec![
+          "deno.window".to_string(),
+          "deno.unstable".to_string(),
+          "deno.wsi".to_string(),
+        ]
       }
       Self::UnstableDenoWorker => {
         vec!["deno.worker".to_string(), "deno.unstable".to_string()]

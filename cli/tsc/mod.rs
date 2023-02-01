@@ -93,6 +93,7 @@ pub fn get_types_declaration_file_text(unstable: bool) -> String {
 
   if unstable {
     lib_names.push("deno.unstable");
+    lib_names.push("deno.wsi");
   }
 
   lib_names

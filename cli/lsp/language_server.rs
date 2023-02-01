@@ -816,7 +816,7 @@ impl Inner {
     let workspace_settings = config.get_workspace_settings();
     if workspace_settings.unstable {
       let unstable_libs = json!({
-        "lib": ["deno.ns", "deno.window", "deno.unstable"]
+        "lib": ["deno.ns", "deno.window", "deno.unstable", "deno.wsi"]
       });
       tsconfig.merge(&unstable_libs);
     }
