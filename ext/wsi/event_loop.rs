@@ -68,8 +68,8 @@ impl WsiEventLoopProxy {
   pub(crate) async fn next_event(&self) -> Result<WsiEvent, anyhow::Error> {
     // Take the receiver for exclusive use.
     let Some(mut event_rx) = self.event_rx.take() else {
-        return Err(anyhow::Error::msg("Receiver already in use"));
-      };
+      return Err(anyhow::Error::msg("Receiver already in use"));
+    };
 
     // Send the request.
     self.request_tx.send(Request::NextEvent).unwrap();

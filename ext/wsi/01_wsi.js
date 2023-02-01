@@ -137,6 +137,25 @@
     return wid;
   }
 
+  class WSIModifiersState {
+    constructor() {
+      webidl.illegalConstructor();
+    }
+
+    static get SHIFT() {
+      return 0o0004;
+    }
+    static get CTRL() {
+      return 0o0040;
+    }
+    static get ALT() {
+      return 0o0400;
+    }
+    static get LOGO() {
+      return 0o4000;
+    }
+  }
+
   class WSIWindow {
     [_wid] = null;
     [_gpuSurface] = null;
@@ -423,6 +442,7 @@
   globalThis.__bootstrap.wsi = {
     wsi: webidl.createBranded(WSI),
     WSI,
+    WSIModifiersState,
     WSIWindow,
   };
 })(this);

@@ -107,9 +107,27 @@ declare namespace Deno {
       window: WSIWindow;
     }
     | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Ime
-      type: "ime";
+      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Commit
+      type: "ime-commit";
       window: WSIWindow;
+      string: string;
+    }
+    | {
+      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Disabled
+      type: "ime-disabled";
+      window: WSIWindow;
+    }
+    | {
+      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Enabled
+      type: "ime-enabled";
+      window: WSIWindow;
+    }
+    | {
+      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Preedit
+      type: "ime-preedit";
+      window: WSIWindow;
+      string: string;
+      cursorRange?: [number, number];
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Key
@@ -119,6 +137,7 @@ declare namespace Deno {
       window?: WSIWindow;
       scanCode: number;
       state: WSIElementState;
+      virtualKeyCode?: WSIVirtualKeyCode;
       synthetic?: boolean;
     }
     | {
@@ -129,13 +148,14 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ModifiersChanged
       type: "modifiers-changed";
       window: WSIWindow;
+      modifiers: WSIModifiersStateFlags;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.MouseInput
       type: "mouse-button";
       window: WSIWindow;
       state: WSIElementState;
-      button: WSIMouseButton;
+      button: "left" | "right" | "middle" | number;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.MouseMotion
@@ -182,12 +202,16 @@ declare namespace Deno {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ThemeChanged
       type: "theme-changed";
       window: WSIWindow;
-      theme: WSITheme;
+      theme: "light" | "dark";
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Touch
       type: "touch";
       window: WSIWindow;
+      phase: WSITouchPhase;
+      location: [number, number];
+      force?: WSIForce;
+      id: bigint;
     }
     | {
       // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.TouchpadPressure
@@ -221,11 +245,17 @@ declare namespace Deno {
       innerSize: [number, number];
     };
 
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
-  export type WSIMouseButton = "left" | "right" | "middle" | number;
+  export type WSIForce =
+    | {
+      type: "calibrated";
+      value: number;
+      maxValue: number;
+      altitudeAngle?: number;
+    }
+    | {
+      type: "normalized";
+      value: number;
+    };
 
   /** **UNSTABLE**: New API, yet to be vetted.
    *
@@ -241,7 +271,7 @@ declare namespace Deno {
    * @category Window System Integration
    */
   export interface WSIMouseScrollDelta {
-    type: WSIMouseScrollDeltaType;
+    type: "line" | "pixel";
     x: number;
     y: number;
   }
@@ -250,19 +280,176 @@ declare namespace Deno {
    *
    * @category Window System Integration
    */
-  export type WSIMouseScrollDeltaType = "line" | "pixel";
-
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
-  export type WSITheme = "light" | "dark";
-
-  /** **UNSTABLE**: New API, yet to be vetted.
-   *
-   * @category Window System Integration
-   */
   export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
+
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export type WSIVirtualKeyCode =
+    | "1"
+    | "2"
+    | "3"
+    | "4"
+    | "5"
+    | "6"
+    | "7"
+    | "8"
+    | "9"
+    | "0"
+    | "a"
+    | "b"
+    | "c"
+    | "d"
+    | "e"
+    | "f"
+    | "g"
+    | "h"
+    | "i"
+    | "j"
+    | "k"
+    | "l"
+    | "m"
+    | "n"
+    | "o"
+    | "p"
+    | "q"
+    | "r"
+    | "s"
+    | "t"
+    | "u"
+    | "v"
+    | "w"
+    | "x"
+    | "y"
+    | "z"
+    | "escape"
+    | "f1"
+    | "f2"
+    | "f3"
+    | "f4"
+    | "f5"
+    | "f6"
+    | "f7"
+    | "f8"
+    | "f9"
+    | "f10"
+    | "f11"
+    | "f12"
+    | "f13"
+    | "f14"
+    | "f15"
+    | "f16"
+    | "f17"
+    | "f18"
+    | "f19"
+    | "f20"
+    | "f21"
+    | "f22"
+    | "f23"
+    | "f24"
+    | "snapshot"
+    | "scroll"
+    | "pause"
+    | "insert"
+    | "home"
+    | "delete"
+    | "end"
+    | "page-down"
+    | "page-up"
+    | "left"
+    | "up"
+    | "right"
+    | "down"
+    | "back"
+    | "return"
+    | "space"
+    | "compose"
+    | "caret"
+    | "numlock"
+    | "numpad-0"
+    | "numpad-1"
+    | "numpad-2"
+    | "numpad-3"
+    | "numpad-4"
+    | "numpad-5"
+    | "numpad-6"
+    | "numpad-7"
+    | "numpad-8"
+    | "numpad-9"
+    | "numpad-add"
+    | "numpad-divide"
+    | "numpad-decimal"
+    | "numpad-comma"
+    | "numpad-enter"
+    | "numpad-equals"
+    | "numpad-multiply"
+    | "numpad-subtract"
+    | "abnt-c1"
+    | "abnt-c2"
+    | "apostrophe"
+    | "apps"
+    | "asterisk"
+    | "at"
+    | "ax"
+    | "backslash"
+    | "calculator"
+    | "capital"
+    | "colon"
+    | "comma"
+    | "convert"
+    | "equals"
+    | "grave"
+    | "kana"
+    | "kanji"
+    | "left-alt"
+    | "left-bracket"
+    | "left-control"
+    | "left-shift"
+    | "left-win"
+    | "mail"
+    | "media-select"
+    | "media-stop"
+    | "minus"
+    | "mute"
+    | "my-computer"
+    | "navigate-forward"
+    | "navigate-backward"
+    | "next-track"
+    | "no-convert"
+    | "oem-102"
+    | "period"
+    | "play-pause"
+    | "plus"
+    | "power"
+    | "prev-track"
+    | "right-alt"
+    | "right-bracket"
+    | "right-control"
+    | "right-shift"
+    | "right-win"
+    | "semicolon"
+    | "slash"
+    | "sleep"
+    | "stop"
+    | "sysrq"
+    | "tab"
+    | "underline"
+    | "unlabeled"
+    | "volume-down"
+    | "volume-up"
+    | "wake"
+    | "web-back"
+    | "web-favorites"
+    | "web-forward"
+    | "web-home"
+    | "web-refresh"
+    | "web-search"
+    | "web-stop"
+    | "yen"
+    | "copy"
+    | "paste"
+    | "cut";
 
   /** **UNSTABLE**: New API, yet to be vetted.
    *
@@ -277,6 +464,23 @@ declare namespace Deno {
   export class WSI {
     nextEvent(): Promise<WSIEvent>;
     createWindow(options?: WSICreateWindowOptions): WSIWindow;
+  }
+
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export type WSIModifiersStateFlags = number;
+
+  /** **UNSTABLE**: New API, yet to be vetted.
+   *
+   * @category Window System Integration
+   */
+  export class WSIModifiersState {
+    static SHIFT: 0o0004;
+    static CTRL: 0o0040;
+    static ALT: 0o0400;
+    static LOGO: 0o4000;
   }
 
   /** **UNSTABLE**: New API, yet to be vetted.

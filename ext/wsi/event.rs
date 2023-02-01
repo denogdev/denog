@@ -8,9 +8,9 @@ use std::path::PathBuf;
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
   event::{
-    AxisId, DeviceEvent, DeviceId, ElementState, Event, Ime, KeyboardInput,
-    ModifiersState, MouseButton, MouseScrollDelta, StartCause, Touch,
-    TouchPhase, WindowEvent,
+    AxisId, DeviceEvent, DeviceId, ElementState, Event, Force, Ime,
+    KeyboardInput, ModifiersState, MouseButton, MouseScrollDelta, StartCause,
+    Touch, TouchPhase, VirtualKeyCode, WindowEvent,
   },
   window::{Theme, WindowId},
 };
@@ -140,10 +140,11 @@ impl From<WindowEvent<'_>> for WsiWindowEvent {
         Self::ModifiersChanged(modifiers)
       }
       WindowEvent::Ime(ime) => Self::Ime(ime),
+      #[allow(deprecated)]
       WindowEvent::CursorMoved {
         device_id,
         position,
-        ..
+        modifiers: _,
       } => Self::CursorMoved {
         device_id,
         position,
@@ -152,21 +153,23 @@ impl From<WindowEvent<'_>> for WsiWindowEvent {
         Self::CursorEntered { device_id }
       }
       WindowEvent::CursorLeft { device_id } => Self::CursorLeft { device_id },
+      #[allow(deprecated)]
       WindowEvent::MouseWheel {
         device_id,
         delta,
         phase,
-        ..
+        modifiers: _,
       } => Self::MouseWheel {
         device_id,
         delta,
         phase,
       },
+      #[allow(deprecated)]
       WindowEvent::MouseInput {
         device_id,
         state,
         button,
-        ..
+        modifiers: _,
       } => Self::MouseInput {
         device_id,
         state,
@@ -191,9 +194,10 @@ impl From<WindowEvent<'_>> for WsiWindowEvent {
         value,
       },
       WindowEvent::Touch(touch) => Self::Touch(touch),
-      WindowEvent::ScaleFactorChanged { scale_factor, .. } => {
-        Self::ScaleFactorChanged { scale_factor }
-      }
+      WindowEvent::ScaleFactorChanged {
+        scale_factor,
+        new_inner_size: _,
+      } => Self::ScaleFactorChanged { scale_factor },
       WindowEvent::ThemeChanged(theme) => Self::ThemeChanged(theme),
       WindowEvent::Occluded(is_occluded) => Self::Occluded(is_occluded),
     }
@@ -271,57 +275,91 @@ impl Serialize for WsiEvent {
             s.serialize_entry("focused", focused)?;
             s.end()
           }
+          #[allow(deprecated)]
           WsiWindowEvent::KeyboardInput {
+            device_id,
             input:
               KeyboardInput {
-                scancode, state, ..
+                scancode,
+                state,
+                virtual_keycode,
+                modifiers: _,
               },
             is_synthetic,
-            ..
           } => {
-            let mut s = s.serialize_map(Some(5))?;
+            let mut s = s.serialize_map(Some(6))?;
             s.serialize_entry("type", "key")?;
             s.serialize_entry("wid", &wid)?;
             s.serialize_entry("scanCode", scancode)?;
             s.serialize_entry("state", &SerializeElementState(*state))?;
-            // TODO: keyCode
+            s.serialize_entry(
+              "virtualKeyCode",
+              &virtual_keycode.map(SerializeVirtualKeyCode),
+            )?;
             s.serialize_entry("synthetic", is_synthetic)?;
             s.end()
           }
-          WsiWindowEvent::ModifiersChanged(_) => {
-            let mut s = s.serialize_map(Some(2))?;
+          WsiWindowEvent::ModifiersChanged(modifiers) => {
+            let mut s = s.serialize_map(Some(3))?;
             s.serialize_entry("type", "modifiers-changed")?;
             s.serialize_entry("wid", &wid)?;
-            // TODO
+            s.serialize_entry("modifiers", &modifiers.bits())?;
             s.end()
           }
-          WsiWindowEvent::Ime(_) => {
+          WsiWindowEvent::Ime(Ime::Enabled) => {
             let mut s = s.serialize_map(Some(2))?;
-            s.serialize_entry("type", "ime")?;
+            s.serialize_entry("type", "ime-enabled")?;
             s.serialize_entry("wid", &wid)?;
-            // TODO
             s.end()
           }
-          WsiWindowEvent::CursorMoved { position, .. } => {
+          WsiWindowEvent::Ime(Ime::Preedit(string, cursor_range)) => {
+            let mut s = s.serialize_map(Some(4))?;
+            s.serialize_entry("type", "ime-preedit")?;
+            s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("string", string)?;
+            s.serialize_entry("cursorRange", cursor_range)?;
+            s.end()
+          }
+          WsiWindowEvent::Ime(Ime::Commit(string)) => {
+            let mut s = s.serialize_map(Some(3))?;
+            s.serialize_entry("type", "ime-commit")?;
+            s.serialize_entry("wid", &wid)?;
+            s.serialize_entry("string", string)?;
+            s.end()
+          }
+          WsiWindowEvent::Ime(Ime::Disabled) => {
+            let mut s = s.serialize_map(Some(2))?;
+            s.serialize_entry("type", "ime-disabled")?;
+            s.serialize_entry("wid", &wid)?;
+            s.end()
+          }
+          WsiWindowEvent::CursorMoved {
+            device_id,
+            position,
+          } => {
             let mut s = s.serialize_map(Some(4))?;
             s.serialize_entry("type", "cursor-moved")?;
             s.serialize_entry("wid", &wid)?;
             s.serialize_entry("position", &SerializePosition(*position))?;
             s.end()
           }
-          WsiWindowEvent::CursorEntered { .. } => {
+          WsiWindowEvent::CursorEntered { device_id } => {
             let mut s = s.serialize_map(Some(2))?;
             s.serialize_entry("type", "cursor-entered")?;
             s.serialize_entry("wid", &wid)?;
             s.end()
           }
-          WsiWindowEvent::CursorLeft { .. } => {
+          WsiWindowEvent::CursorLeft { device_id } => {
             let mut s = s.serialize_map(Some(2))?;
             s.serialize_entry("type", "cursor-left")?;
             s.serialize_entry("wid", &wid)?;
             s.end()
           }
-          WsiWindowEvent::MouseWheel { delta, phase, .. } => {
+          WsiWindowEvent::MouseWheel {
+            device_id,
+            delta,
+            phase,
+          } => {
             let mut s = s.serialize_map(Some(4))?;
             s.serialize_entry("type", "mouse-wheel")?;
             s.serialize_entry("wid", &wid)?;
@@ -329,7 +367,11 @@ impl Serialize for WsiEvent {
             s.serialize_entry("phase", &SerializeTouchPhase(*phase))?;
             s.end()
           }
-          WsiWindowEvent::MouseInput { state, button, .. } => {
+          WsiWindowEvent::MouseInput {
+            device_id,
+            state,
+            button,
+          } => {
             let mut s = s.serialize_map(Some(4))?;
             s.serialize_entry("type", "mouse-button")?;
             s.serialize_entry("wid", &wid)?;
@@ -338,7 +380,9 @@ impl Serialize for WsiEvent {
             s.end()
           }
           WsiWindowEvent::TouchpadPressure {
-            pressure, stage, ..
+            device_id,
+            pressure,
+            stage,
           } => {
             let mut s = s.serialize_map(Some(4))?;
             s.serialize_entry("type", "touchpad-pressure")?;
@@ -347,7 +391,11 @@ impl Serialize for WsiEvent {
             s.serialize_entry("stage", stage)?;
             s.end()
           }
-          WsiWindowEvent::AxisMotion { axis, value, .. } => {
+          WsiWindowEvent::AxisMotion {
+            device_id,
+            axis,
+            value,
+          } => {
             let mut s = s.serialize_map(Some(4))?;
             s.serialize_entry("type", "axis-motion")?;
             s.serialize_entry("wid", &wid)?;
@@ -355,11 +403,20 @@ impl Serialize for WsiEvent {
             s.serialize_entry("value", value)?;
             s.end()
           }
-          WsiWindowEvent::Touch(_) => {
-            let mut s = s.serialize_map(Some(2))?;
+          WsiWindowEvent::Touch(Touch {
+            device_id,
+            phase,
+            location,
+            force,
+            id,
+          }) => {
+            let mut s = s.serialize_map(Some(6))?;
             s.serialize_entry("type", "touch")?;
             s.serialize_entry("wid", &wid)?;
-            // TODO
+            s.serialize_entry("phase", &SerializeTouchPhase(*phase))?;
+            s.serialize_entry("location", &SerializePosition(*location))?;
+            s.serialize_entry("force", &force.map(SerializeForce))?;
+            s.serialize_entry("id", id)?;
             s.end()
           }
           WsiWindowEvent::ScaleFactorChanged { scale_factor } => {
@@ -385,7 +442,7 @@ impl Serialize for WsiEvent {
           }
         }
       }
-      WsiEvent::DeviceEvent { event, .. } => match event {
+      WsiEvent::DeviceEvent { device_id, event } => match event {
         DeviceEvent::Added => {
           let mut s = s.serialize_map(Some(1))?;
           s.serialize_entry("type", "device-added")?;
@@ -422,14 +479,21 @@ impl Serialize for WsiEvent {
           s.serialize_entry("state", &SerializeElementState(*state))?;
           s.end()
         }
+        #[allow(deprecated)]
         DeviceEvent::Key(KeyboardInput {
-          scancode, state, ..
+          scancode,
+          state,
+          virtual_keycode,
+          modifiers: _,
         }) => {
-          let mut s = s.serialize_map(Some(3))?;
+          let mut s = s.serialize_map(Some(4))?;
           s.serialize_entry("type", "key")?;
           s.serialize_entry("scanCode", scancode)?;
           s.serialize_entry("state", &SerializeElementState(*state))?;
-          // TODO: keyCode
+          s.serialize_entry(
+            "virtualKeyCode",
+            &virtual_keycode.map(SerializeVirtualKeyCode),
+          )?;
           s.end()
         }
         DeviceEvent::Text { codepoint } => {
@@ -486,6 +550,32 @@ impl Serialize for SerializeElementState {
       ElementState::Pressed => "pressed",
       ElementState::Released => "released",
     })
+  }
+}
+
+struct SerializeForce(Force);
+impl Serialize for SerializeForce {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    match self.0 {
+      Force::Calibrated {
+        force,
+        max_possible_force,
+        altitude_angle,
+      } => {
+        let mut s = s.serialize_map(Some(4))?;
+        s.serialize_entry("type", "calibrated")?;
+        s.serialize_entry("value", &force)?;
+        s.serialize_entry("maxValue", &max_possible_force)?;
+        s.serialize_entry("altitudeAngle", &altitude_angle)?;
+        s.end()
+      }
+      Force::Normalized(value) => {
+        let mut s = s.serialize_map(Some(2))?;
+        s.serialize_entry("type", "normalized")?;
+        s.serialize_entry("value", &value)?;
+        s.end()
+      }
+    }
   }
 }
 
@@ -564,6 +654,178 @@ impl Serialize for SerializeTouchPhase {
       TouchPhase::Moved => "moved",
       TouchPhase::Ended => "ended",
       TouchPhase::Cancelled => "cancelled",
+    })
+  }
+}
+
+struct SerializeVirtualKeyCode(VirtualKeyCode);
+impl Serialize for SerializeVirtualKeyCode {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    use VirtualKeyCode::*;
+    s.serialize_str(match self.0 {
+      Key1 => "1",
+      Key2 => "2",
+      Key3 => "3",
+      Key4 => "4",
+      Key5 => "5",
+      Key6 => "6",
+      Key7 => "7",
+      Key8 => "8",
+      Key9 => "9",
+      Key0 => "0",
+      A => "a",
+      B => "b",
+      C => "c",
+      D => "d",
+      E => "e",
+      F => "f",
+      G => "g",
+      H => "h",
+      I => "i",
+      J => "j",
+      K => "k",
+      L => "l",
+      M => "m",
+      N => "n",
+      O => "o",
+      P => "p",
+      Q => "q",
+      R => "r",
+      S => "s",
+      T => "t",
+      U => "u",
+      V => "v",
+      W => "w",
+      X => "x",
+      Y => "y",
+      Z => "z",
+      Escape => "escape",
+      F1 => "f1",
+      F2 => "f2",
+      F3 => "f3",
+      F4 => "f4",
+      F5 => "f5",
+      F6 => "f6",
+      F7 => "f7",
+      F8 => "f8",
+      F9 => "f9",
+      F10 => "f10",
+      F11 => "f11",
+      F12 => "f12",
+      F13 => "f13",
+      F14 => "f14",
+      F15 => "f15",
+      F16 => "f16",
+      F17 => "f17",
+      F18 => "f18",
+      F19 => "f19",
+      F20 => "f20",
+      F21 => "f21",
+      F22 => "f22",
+      F23 => "f23",
+      F24 => "f24",
+      Snapshot => "snapshot",
+      Scroll => "scroll",
+      Pause => "pause",
+      Insert => "insert",
+      Home => "home",
+      Delete => "delete",
+      End => "end",
+      PageDown => "page-down",
+      PageUp => "page-up",
+      Left => "left",
+      Up => "up",
+      Right => "right",
+      Down => "down",
+      Back => "back",
+      Return => "return",
+      Space => "space",
+      Compose => "compose",
+      Caret => "caret",
+      Numlock => "numlock",
+      Numpad0 => "numpad-0",
+      Numpad1 => "numpad-1",
+      Numpad2 => "numpad-2",
+      Numpad3 => "numpad-3",
+      Numpad4 => "numpad-4",
+      Numpad5 => "numpad-5",
+      Numpad6 => "numpad-6",
+      Numpad7 => "numpad-7",
+      Numpad8 => "numpad-8",
+      Numpad9 => "numpad-9",
+      NumpadAdd => "numpad-add",
+      NumpadDivide => "numpad-divide",
+      NumpadDecimal => "numpad-decimal",
+      NumpadComma => "numpad-comma",
+      NumpadEnter => "numpad-enter",
+      NumpadEquals => "numpad-equals",
+      NumpadMultiply => "numpad-multiply",
+      NumpadSubtract => "numpad-subtract",
+      AbntC1 => "abnt-c1",
+      AbntC2 => "abnt-c2",
+      Apostrophe => "apostrophe",
+      Apps => "apps",
+      Asterisk => "asterisk",
+      At => "at",
+      Ax => "ax",
+      Backslash => "backslash",
+      Calculator => "calculator",
+      Capital => "capital",
+      Colon => "colon",
+      Comma => "comma",
+      Convert => "convert",
+      Equals => "equals",
+      Grave => "grave",
+      Kana => "kana",
+      Kanji => "kanji",
+      LAlt => "left-alt",
+      LBracket => "left-bracket",
+      LControl => "left-control",
+      LShift => "left-shift",
+      LWin => "left-win",
+      Mail => "mail",
+      MediaSelect => "media-select",
+      MediaStop => "media-stop",
+      Minus => "minus",
+      Mute => "mute",
+      MyComputer => "my-computer",
+      NavigateForward => "navigate-forward",
+      NavigateBackward => "navigate-backward",
+      NextTrack => "next-track",
+      NoConvert => "no-convert",
+      OEM102 => "oem-102",
+      Period => "period",
+      PlayPause => "play-pause",
+      Plus => "plus",
+      Power => "power",
+      PrevTrack => "prev-track",
+      RAlt => "right-alt",
+      RBracket => "right-bracket",
+      RControl => "right-control",
+      RShift => "right-shift",
+      RWin => "right-win",
+      Semicolon => "semicolon",
+      Slash => "slash",
+      Sleep => "sleep",
+      Stop => "stop",
+      Sysrq => "sysrq",
+      Tab => "tab",
+      Underline => "underline",
+      Unlabeled => "unlabeled",
+      VolumeDown => "volume-down",
+      VolumeUp => "volume-up",
+      Wake => "wake",
+      WebBack => "web-back",
+      WebFavorites => "web-favorites",
+      WebForward => "web-forward",
+      WebHome => "web-home",
+      WebRefresh => "web-refresh",
+      WebSearch => "web-search",
+      WebStop => "web-stop",
+      Yen => "yen",
+      Copy => "copy",
+      Paste => "paste",
+      Cut => "cut",
     })
   }
 }
