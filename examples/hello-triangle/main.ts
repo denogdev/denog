@@ -66,6 +66,7 @@ const config = {
 surface.configure(device, config);
 
 // Event loop.
+eventLoop:
 while (true) {
   const event = await Deno.wsi.nextEvent();
   switch (event.type) {
@@ -97,7 +98,7 @@ while (true) {
       break;
     }
     case "close-requested": {
-      Deno.exit(0);
+      break eventLoop;
     }
   }
 }
