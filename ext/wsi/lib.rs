@@ -90,7 +90,8 @@ async fn op_wsi_next_event(
       | WsiEvent::WindowEvent {
         event: WsiWindowEvent::Destroyed,
         ..
-      } => (),
+      }
+      | WsiEvent::LoopDestroyed => (),
       event => return Ok(event),
     }
   }
