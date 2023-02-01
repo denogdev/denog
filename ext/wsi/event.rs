@@ -283,7 +283,7 @@ impl Serialize for WsiEvent {
               KeyboardInput {
                 scancode,
                 state,
-                virtual_keycode,
+                virtual_keycode: keycode,
                 modifiers: _,
               },
             is_synthetic,
@@ -294,10 +294,7 @@ impl Serialize for WsiEvent {
             s.serialize_entry("deviceId", &serialize_device_id(*device_id))?;
             s.serialize_entry("scanCode", scancode)?;
             s.serialize_entry("state", &SerializeElementState(*state))?;
-            s.serialize_entry(
-              "virtualKeyCode",
-              &virtual_keycode.map(SerializeVirtualKeyCode),
-            )?;
+            s.serialize_entry("keyCode", &keycode.map(SerializeKeyCode))?;
             s.serialize_entry("synthetic", is_synthetic)?;
             s.end()
           }
@@ -501,7 +498,7 @@ impl Serialize for WsiEvent {
           DeviceEvent::Key(KeyboardInput {
             scancode,
             state,
-            virtual_keycode,
+            virtual_keycode: keycode,
             modifiers: _,
           }) => {
             let mut s = s.serialize_map(Some(5))?;
@@ -509,10 +506,7 @@ impl Serialize for WsiEvent {
             s.serialize_entry("deviceId", &device_id)?;
             s.serialize_entry("scanCode", scancode)?;
             s.serialize_entry("state", &SerializeElementState(*state))?;
-            s.serialize_entry(
-              "virtualKeyCode",
-              &virtual_keycode.map(SerializeVirtualKeyCode),
-            )?;
+            s.serialize_entry("keyCode", &keycode.map(SerializeKeyCode))?;
             s.end()
           }
           DeviceEvent::Text { codepoint } => {
@@ -600,87 +594,8 @@ impl Serialize for SerializeForce {
   }
 }
 
-struct SerializeMouseButton(MouseButton);
-impl Serialize for SerializeMouseButton {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    match self.0 {
-      MouseButton::Left => s.serialize_str("left"),
-      MouseButton::Right => s.serialize_str("right"),
-      MouseButton::Middle => s.serialize_str("middle"),
-      MouseButton::Other(b) => s.serialize_u16(b),
-    }
-  }
-}
-
-struct SerializeMouseMotionDelta(f64, f64);
-impl Serialize for SerializeMouseMotionDelta {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    let mut s = s.serialize_map(Some(2))?;
-    s.serialize_entry("x", &self.0)?;
-    s.serialize_entry("y", &self.1)?;
-    s.end()
-  }
-}
-
-struct SerializeMouseScrollDelta(MouseScrollDelta);
-impl Serialize for SerializeMouseScrollDelta {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    let (t, x, y) = match self.0 {
-      MouseScrollDelta::LineDelta(x, y) => ("line", x as f64, y as f64),
-      MouseScrollDelta::PixelDelta(p) => ("pixel", p.x, p.y),
-    };
-    let mut s = s.serialize_map(Some(3))?;
-    s.serialize_entry("type", t)?;
-    s.serialize_entry("x", &x)?;
-    s.serialize_entry("y", &y)?;
-    s.end()
-  }
-}
-
-struct SerializePosition<T>(PhysicalPosition<T>);
-impl<T: Serialize> Serialize for SerializePosition<T> {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    let mut s = s.serialize_tuple(2)?;
-    s.serialize_element(&self.0.x)?;
-    s.serialize_element(&self.0.y)?;
-    s.end()
-  }
-}
-
-struct SerializeSize<T>(PhysicalSize<T>);
-impl<T: Serialize> Serialize for SerializeSize<T> {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    let mut s = s.serialize_tuple(2)?;
-    s.serialize_element(&self.0.width)?;
-    s.serialize_element(&self.0.height)?;
-    s.end()
-  }
-}
-
-struct SerializeTheme(Theme);
-impl Serialize for SerializeTheme {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    s.serialize_str(match self.0 {
-      Theme::Light => "light",
-      Theme::Dark => "dark",
-    })
-  }
-}
-
-struct SerializeTouchPhase(TouchPhase);
-impl Serialize for SerializeTouchPhase {
-  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-    s.serialize_str(match self.0 {
-      TouchPhase::Started => "started",
-      TouchPhase::Moved => "moved",
-      TouchPhase::Ended => "ended",
-      TouchPhase::Cancelled => "cancelled",
-    })
-  }
-}
-
-struct SerializeVirtualKeyCode(VirtualKeyCode);
-impl Serialize for SerializeVirtualKeyCode {
+struct SerializeKeyCode(VirtualKeyCode);
+impl Serialize for SerializeKeyCode {
   fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
     use VirtualKeyCode::*;
     s.serialize_str(match self.0 {
@@ -847,6 +762,85 @@ impl Serialize for SerializeVirtualKeyCode {
       Copy => "copy",
       Paste => "paste",
       Cut => "cut",
+    })
+  }
+}
+
+struct SerializeMouseButton(MouseButton);
+impl Serialize for SerializeMouseButton {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    match self.0 {
+      MouseButton::Left => s.serialize_str("left"),
+      MouseButton::Right => s.serialize_str("right"),
+      MouseButton::Middle => s.serialize_str("middle"),
+      MouseButton::Other(b) => s.serialize_u16(b),
+    }
+  }
+}
+
+struct SerializeMouseMotionDelta(f64, f64);
+impl Serialize for SerializeMouseMotionDelta {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    let mut s = s.serialize_map(Some(2))?;
+    s.serialize_entry("x", &self.0)?;
+    s.serialize_entry("y", &self.1)?;
+    s.end()
+  }
+}
+
+struct SerializeMouseScrollDelta(MouseScrollDelta);
+impl Serialize for SerializeMouseScrollDelta {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    let (t, x, y) = match self.0 {
+      MouseScrollDelta::LineDelta(x, y) => ("line", x as f64, y as f64),
+      MouseScrollDelta::PixelDelta(p) => ("pixel", p.x, p.y),
+    };
+    let mut s = s.serialize_map(Some(3))?;
+    s.serialize_entry("type", t)?;
+    s.serialize_entry("x", &x)?;
+    s.serialize_entry("y", &y)?;
+    s.end()
+  }
+}
+
+struct SerializePosition<T>(PhysicalPosition<T>);
+impl<T: Serialize> Serialize for SerializePosition<T> {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    let mut s = s.serialize_tuple(2)?;
+    s.serialize_element(&self.0.x)?;
+    s.serialize_element(&self.0.y)?;
+    s.end()
+  }
+}
+
+struct SerializeSize<T>(PhysicalSize<T>);
+impl<T: Serialize> Serialize for SerializeSize<T> {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    let mut s = s.serialize_tuple(2)?;
+    s.serialize_element(&self.0.width)?;
+    s.serialize_element(&self.0.height)?;
+    s.end()
+  }
+}
+
+struct SerializeTheme(Theme);
+impl Serialize for SerializeTheme {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_str(match self.0 {
+      Theme::Light => "light",
+      Theme::Dark => "dark",
+    })
+  }
+}
+
+struct SerializeTouchPhase(TouchPhase);
+impl Serialize for SerializeTouchPhase {
+  fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_str(match self.0 {
+      TouchPhase::Started => "started",
+      TouchPhase::Moved => "moved",
+      TouchPhase::Ended => "ended",
+      TouchPhase::Cancelled => "cancelled",
     })
   }
 }

@@ -141,7 +141,7 @@ declare namespace Deno {
       deviceId: number;
       scanCode: number;
       state: WSIElementState;
-      virtualKeyCode?: WSIVirtualKeyCode;
+      keyCode?: WSIKeyCode;
       synthetic?: boolean;
     }
     | {
@@ -266,29 +266,7 @@ declare namespace Deno {
       value: number;
     };
 
-  export class WSIModifier {
-    static SHIFT: 0o0004;
-    static CTRL: 0o0040;
-    static ALT: 0o0400;
-    static LOGO: 0o4000;
-  }
-
-  export type WSIModifiers = number;
-
-  export interface WSIMouseMotionDelta {
-    x: number;
-    y: number;
-  }
-
-  export interface WSIMouseScrollDelta {
-    type: "line" | "pixel";
-    x: number;
-    y: number;
-  }
-
-  export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
-
-  export type WSIVirtualKeyCode =
+  export type WSIKeyCode =
     | "1"
     | "2"
     | "3"
@@ -452,6 +430,28 @@ declare namespace Deno {
     | "copy"
     | "paste"
     | "cut";
+
+  export class WSIModifier {
+    static SHIFT: 0o0004;
+    static CTRL: 0o0040;
+    static ALT: 0o0400;
+    static LOGO: 0o4000;
+  }
+
+  export type WSIModifiers = number;
+
+  export interface WSIMouseMotionDelta {
+    x: number;
+    y: number;
+  }
+
+  export interface WSIMouseScrollDelta {
+    type: "line" | "pixel";
+    x: number;
+    y: number;
+  }
+
+  export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
 
   export class WSIWindow {
     destroy(): void;
