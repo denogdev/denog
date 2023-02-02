@@ -223,18 +223,6 @@ declare namespace Deno {
       type: "app-suspended";
     }
     | {
-      type: "axis-input";
-      window: WSIWindow;
-      deviceId: number;
-      axisId: number;
-      value: number;
-    }
-    | {
-      type: "char-input";
-      window: WSIWindow;
-      codePoint: number;
-    }
-    | {
       type: "close-requested";
       window: WSIWindow;
     }
@@ -291,17 +279,17 @@ declare namespace Deno {
       delta: WSIScrollDelta;
     }
     | {
-      type: "dropped-file";
+      type: "file-dropped";
       window: WSIWindow;
       path: string;
     }
     | {
-      type: "hovered-file";
+      type: "file-hovered";
       window: WSIWindow;
       path: string;
     }
     | {
-      type: "hovered-file-cancelled";
+      type: "file-left";
       window: WSIWindow;
     }
     | {
@@ -324,13 +312,34 @@ declare namespace Deno {
       cursorRange?: [number, number];
     }
     | {
-      type: "key-input";
+      type: "input-axis";
+      window: WSIWindow;
+      deviceId: number;
+      axisId: number;
+      value: number;
+    }
+    | {
+      type: "input-char";
+      window: WSIWindow;
+      codePoint: number;
+    }
+    | {
+      type: "input-key";
       window: WSIWindow;
       deviceId: number;
       scanCode: number;
       keyCode?: WSIKeyCode;
       state: WSIButtonState;
       isSynthetic: boolean;
+    }
+    | {
+      type: "input-touch";
+      window: WSIWindow;
+      deviceId: number;
+      location: [number, number];
+      touchPhase: WSITouchPhase;
+      touchForce?: WSITouchForce;
+      fingerId: bigint;
     }
     | {
       type: "main-events-cleared";
@@ -375,15 +384,6 @@ declare namespace Deno {
       scaleFactor: number;
     }
     | {
-      type: "touch-input";
-      window: WSIWindow;
-      deviceId: number;
-      location: [number, number];
-      touchPhase: WSITouchPhase;
-      touchForce?: WSITouchForce;
-      fingerId: bigint;
-    }
-    | {
       type: "touchpad-pressure";
       window: WSIWindow;
       deviceId: number;
@@ -391,7 +391,7 @@ declare namespace Deno {
       clickLevel: bigint;
     }
     | {
-      type: "window-focused";
+      type: "window-focus";
       window: WSIWindow;
       isFocused: boolean;
     }
@@ -401,7 +401,7 @@ declare namespace Deno {
       position: [number, number];
     }
     | {
-      type: "window-occluded";
+      type: "window-occlusion";
       window: WSIWindow;
       isOccluded: boolean;
     }

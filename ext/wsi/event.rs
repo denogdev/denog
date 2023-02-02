@@ -18,18 +18,6 @@ pub enum WsiEvent {
   AppResumed,
   AppSuspended,
   #[serde(rename_all = "camelCase")]
-  AxisInput {
-    window: u64,
-    device_id: u32,
-    axis_id: u32,
-    value: f64,
-  },
-  #[serde(rename_all = "camelCase")]
-  CharInput {
-    window: u64,
-    code_point: u32,
-  },
-  #[serde(rename_all = "camelCase")]
   CloseRequested {
     window: u64,
   },
@@ -87,17 +75,17 @@ pub enum WsiEvent {
     delta: WsiScrollDelta,
   },
   #[serde(rename_all = "camelCase")]
-  DroppedFile {
+  FileDropped {
     window: u64,
     path: PathBuf,
   },
   #[serde(rename_all = "camelCase")]
-  HoveredFile {
+  FileHovered {
     window: u64,
     path: PathBuf,
   },
   #[serde(rename_all = "camelCase")]
-  HoveredFileCancelled {
+  FileLeft {
     window: u64,
   },
   #[serde(rename_all = "camelCase")]
@@ -120,13 +108,34 @@ pub enum WsiEvent {
     cursor_range: Option<(usize, usize)>,
   },
   #[serde(rename_all = "camelCase")]
-  KeyInput {
+  InputAxis {
+    window: u64,
+    device_id: u32,
+    axis_id: u32,
+    value: f64,
+  },
+  #[serde(rename_all = "camelCase")]
+  InputChar {
+    window: u64,
+    code_point: u32,
+  },
+  #[serde(rename_all = "camelCase")]
+  InputKey {
     window: u64,
     device_id: u32,
     scan_code: u32,
     key_code: Option<WsiKeyCode>,
     state: WsiButtonState,
     is_synthetic: bool,
+  },
+  #[serde(rename_all = "camelCase")]
+  InputTouch {
+    window: u64,
+    device_id: u32,
+    location: (f64, f64),
+    touch_phase: WsiTouchPhase,
+    touch_force: Option<WsiTouchForce>,
+    finger_id: u64,
   },
   MainEventsCleared,
   #[serde(rename_all = "camelCase")]
@@ -165,15 +174,6 @@ pub enum WsiEvent {
     scale_factor: f64,
   },
   #[serde(rename_all = "camelCase")]
-  TouchInput {
-    window: u64,
-    device_id: u32,
-    location: (f64, f64),
-    touch_phase: WsiTouchPhase,
-    touch_force: Option<WsiTouchForce>,
-    finger_id: u64,
-  },
-  #[serde(rename_all = "camelCase")]
   TouchpadPressure {
     window: u64,
     device_id: u32,
@@ -181,7 +181,7 @@ pub enum WsiEvent {
     click_level: i64,
   },
   #[serde(rename_all = "camelCase")]
-  WindowFocused {
+  WindowFocus {
     window: u64,
     is_focused: bool,
   },
@@ -191,7 +191,7 @@ pub enum WsiEvent {
     position: (i32, i32),
   },
   #[serde(rename_all = "camelCase")]
-  WindowOccluded {
+  WindowOcclusion {
     window: u64,
     is_occluded: bool,
   },
@@ -224,23 +224,21 @@ impl WsiEvent {
           },
           WindowEvent::CloseRequested => Self::CloseRequested { window },
           WindowEvent::Destroyed => Self::Internal,
-          WindowEvent::DroppedFile(path) => Self::DroppedFile { window, path },
-          WindowEvent::HoveredFile(path) => Self::HoveredFile { window, path },
-          WindowEvent::HoveredFileCancelled => {
-            Self::HoveredFileCancelled { window }
-          }
-          WindowEvent::ReceivedCharacter(c) => Self::CharInput {
+          WindowEvent::DroppedFile(path) => Self::FileDropped { window, path },
+          WindowEvent::HoveredFile(path) => Self::FileHovered { window, path },
+          WindowEvent::HoveredFileCancelled => Self::FileLeft { window },
+          WindowEvent::ReceivedCharacter(c) => Self::InputChar {
             window,
             code_point: c as u32,
           },
           WindowEvent::Focused(is_focused) => {
-            Self::WindowFocused { window, is_focused }
+            Self::WindowFocus { window, is_focused }
           }
           WindowEvent::KeyboardInput {
             device_id,
             input,
             is_synthetic,
-          } => Self::KeyInput {
+          } => Self::InputKey {
             window,
             device_id: device_ids.get(device_id),
             scan_code: input.scancode,
@@ -320,13 +318,13 @@ impl WsiEvent {
             device_id,
             axis,
             value,
-          } => Self::AxisInput {
+          } => Self::InputAxis {
             window,
             device_id: device_ids.get(device_id),
             axis_id: axis,
             value,
           },
-          WindowEvent::Touch(touch) => Self::TouchInput {
+          WindowEvent::Touch(touch) => Self::InputTouch {
             window,
             device_id: device_ids.get(touch.device_id),
             location: (touch.location.x, touch.location.y),
@@ -345,7 +343,7 @@ impl WsiEvent {
             window,
             theme: theme.into(),
           },
-          WindowEvent::Occluded(is_occluded) => Self::WindowOccluded {
+          WindowEvent::Occluded(is_occluded) => Self::WindowOcclusion {
             window,
             is_occluded,
           },
