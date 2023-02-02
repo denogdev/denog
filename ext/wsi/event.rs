@@ -123,15 +123,25 @@ enum WsiKeyCodeDef {
   Compose,
   Caret,
   Numlock,
+  #[serde(rename = "numpad-0")]
   Numpad0,
+  #[serde(rename = "numpad-1")]
   Numpad1,
+  #[serde(rename = "numpad-2")]
   Numpad2,
+  #[serde(rename = "numpad-3")]
   Numpad3,
+  #[serde(rename = "numpad-4")]
   Numpad4,
+  #[serde(rename = "numpad-5")]
   Numpad5,
+  #[serde(rename = "numpad-6")]
   Numpad6,
+  #[serde(rename = "numpad-7")]
   Numpad7,
+  #[serde(rename = "numpad-8")]
   Numpad8,
+  #[serde(rename = "numpad-9")]
   Numpad9,
   NumpadAdd,
   NumpadDivide,
