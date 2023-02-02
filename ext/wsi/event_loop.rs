@@ -2,6 +2,7 @@
 
 use crate::{
   create_window_options::CreateWindowOptions,
+  device_ids::DeviceIds,
   event::WsiEvent,
   request::{handle_requests, Request},
 };
@@ -47,8 +48,10 @@ where
   handle_requests(&event_loop, &mut request_rx, &mut windows);
 
   // Run the real event loop.
+  let mut device_ids = DeviceIds::new();
   event_loop.run(move |event, window_target, control_flow| {
-    event_tx.blocking_send(event.into()).unwrap();
+    let event = WsiEvent::from(event, &mut device_ids);
+    event_tx.blocking_send(event).unwrap();
     handle_requests(window_target, &mut request_rx, &mut windows);
     control_flow.set_wait();
   });

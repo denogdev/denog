@@ -1,14 +1,13 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 mod create_window_options;
+mod device_ids;
 mod event;
 pub mod event_loop;
 mod request;
-mod serialize_device_id;
 
 use crate::{
-  create_window_options::CreateWindowOptions,
-  event::{WsiEvent, WsiWindowEvent},
+  create_window_options::CreateWindowOptions, event::WsiEvent,
   event_loop::WsiEventLoopProxy,
 };
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
@@ -87,12 +86,7 @@ async fn op_wsi_next_event(
     try_borrow_event_loop_proxy(&state.borrow(), "Deno.wsi.nextEvent").clone();
   loop {
     match proxy.next_event().await? {
-      WsiEvent::UserEvent
-      | WsiEvent::WindowEvent {
-        event: WsiWindowEvent::Destroyed,
-        ..
-      }
-      | WsiEvent::LoopDestroyed => (),
+      WsiEvent::Internal => continue,
       event => return Ok(event),
     }
   }

@@ -137,7 +137,7 @@
     return wid;
   }
 
-  class WSIModifier {
+  class WSIModifierKey {
     constructor() {
       webidl.illegalConstructor();
     }
@@ -151,7 +151,7 @@
     static get ALT() {
       return 0o0400;
     }
-    static get LOGO() {
+    static get GUI() {
       return 0o4000;
     }
   }
@@ -442,7 +442,7 @@
   globalThis.__bootstrap.wsi = {
     wsi: webidl.createBranded(WSI),
     WSI,
-    WSIModifier,
+    WSIModifierKey,
     WSIWindow,
   };
 })(this);

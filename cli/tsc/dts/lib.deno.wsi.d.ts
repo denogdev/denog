@@ -7,264 +7,9 @@
 declare namespace Deno {
   export {}; // stop default export type behavior
 
-  export const wsi: WSI;
-
-  export class WSI {
-    nextEvent(): Promise<WSIEvent>;
-    createWindow(options?: WSICreateWindowOptions): WSIWindow;
-  }
-
-  export interface WSICreateWindowOptions {
-    innerSize?: [number, number];
-    minInnerSize?: [number, number];
-    maxInnerSize?: [number, number];
-    position?: [number, number];
-    resizable?: boolean;
-    title?: string;
-    fullscreen?: boolean;
-    maximized?: boolean;
-    visible?: boolean;
-    transparent?: boolean;
-    decorated?: boolean;
-    alwaysOnTop?: boolean;
-  }
-
-  export type WSIElementState = "pressed" | "released";
-
-  export type WSIEvent =
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Motion
-      // and
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.AxisMotion
-      type: "axis-motion";
-      window?: WSIWindow;
-      deviceId: number;
-      axis: number;
-      value: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Button
-      type: "button";
-      deviceId: number;
-      button: number;
-      state: WSIElementState;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Text
-      // and
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ReceivedCharacter
-      type: "character";
-      window?: WSIWindow;
-      deviceId?: number;
-      codePoint: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CloseRequested
-      type: "close-requested";
-      window: WSIWindow;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CursorEntered
-      type: "cursor-entered";
-      window: WSIWindow;
-      deviceId: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CursorLeft
-      type: "cursor-left";
-      window: WSIWindow;
-      deviceId: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.CursorMoved
-      type: "cursor-moved";
-      window: WSIWindow;
-      deviceId: number;
-      position: [number, number];
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Added
-      type: "device-added";
-      deviceId: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Removed
-      type: "device-removed";
-      deviceId: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.DroppedFile
-      type: "dropped-file";
-      window: WSIWindow;
-      path: string;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.HoveredFile
-      type: "hovered-file";
-      window: WSIWindow;
-      path: string;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.HoveredFileCancelled
-      type: "hovered-file-cancelled";
-      window: WSIWindow;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Commit
-      type: "ime-commit";
-      window: WSIWindow;
-      string: string;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Disabled
-      type: "ime-disabled";
-      window: WSIWindow;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Enabled
-      type: "ime-enabled";
-      window: WSIWindow;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Ime.html#variant.Preedit
-      type: "ime-preedit";
-      window: WSIWindow;
-      string: string;
-      cursorRange?: [number, number];
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.Key
-      // and
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.KeyboardInput
-      type: "key";
-      window?: WSIWindow;
-      deviceId: number;
-      scanCode: number;
-      state: WSIElementState;
-      keyCode?: WSIKeyCode;
-      synthetic?: boolean;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Event.html#variant.MainEventsCleared
-      type: "main-events-cleared";
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ModifiersChanged
-      type: "modifiers-changed";
-      window: WSIWindow;
-      modifiers: WSIModifiers;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.MouseInput
-      type: "mouse-button";
-      window: WSIWindow;
-      deviceId: number;
-      state: WSIElementState;
-      button: "left" | "right" | "middle" | number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.MouseMotion
-      type: "mouse-motion";
-      deviceId: number;
-      delta: WSIMouseMotionDelta;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.DeviceEvent.html#variant.MouseWheel
-      // and
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.MouseWheel
-      type: "mouse-wheel";
-      window?: WSIWindow;
-      deviceId: number;
-      delta: WSIMouseScrollDelta;
-      phase?: WSITouchPhase;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Event.html#variant.NewEvents
-      type: "new-events";
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Event.html#variant.RedrawEventsCleared
-      type: "redraw-events-cleared";
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Event.html#variant.RedrawRequested
-      type: "redraw-requested";
-      window: WSIWindow;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Event.html#variant.Resumed
-      type: "resumed";
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ScaleFactorChanged
-      type: "scale-factor-changed";
-      window: WSIWindow;
-      scaleFactor: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.Event.html#variant.Suspended
-      type: "suspended";
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.ThemeChanged
-      type: "theme-changed";
-      window: WSIWindow;
-      theme: "light" | "dark";
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Touch
-      type: "touch";
-      window: WSIWindow;
-      deviceId: number;
-      phase: WSITouchPhase;
-      location: [number, number];
-      force?: WSIForce;
-      id: bigint;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.TouchpadPressure
-      type: "touchpad-pressure";
-      window: WSIWindow;
-      deviceId: number;
-      pressure: number;
-      stage: bigint;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Focused
-      type: "window-focused";
-      window: WSIWindow;
-      focused: boolean;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Moved
-      type: "window-moved";
-      window: WSIWindow;
-      position: [number, number];
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Occluded
-      type: "window-occluded";
-      window: WSIWindow;
-      occluded: number;
-    }
-    | {
-      // https://docs.rs/winit/0.27.5/winit/event/enum.WindowEvent.html#variant.Resized
-      type: "window-resized";
-      window: WSIWindow;
-      innerSize: [number, number];
-    };
-
-  export type WSIForce =
-    | {
-      type: "calibrated";
-      value: number;
-      maxValue: number;
-      altitudeAngle?: number;
-    }
-    | {
-      type: "normalized";
-      value: number;
-    };
+  export type WSIButtonState =
+    | "pressed"
+    | "released";
 
   export type WSIKeyCode =
     | "1"
@@ -384,9 +129,9 @@ declare namespace Deno {
     | "kanji"
     | "left-alt"
     | "left-bracket"
-    | "left-control"
+    | "left-ctrl"
     | "left-shift"
-    | "left-win"
+    | "left-gui"
     | "mail"
     | "media-select"
     | "media-stop"
@@ -405,9 +150,9 @@ declare namespace Deno {
     | "prev-track"
     | "right-alt"
     | "right-bracket"
-    | "right-control"
+    | "right-ctrl"
     | "right-shift"
-    | "right-win"
+    | "right-gui"
     | "semicolon"
     | "slash"
     | "sleep"
@@ -431,27 +176,274 @@ declare namespace Deno {
     | "paste"
     | "cut";
 
-  export class WSIModifier {
+  export type WSIMouseButton =
+    | "left"
+    | "right"
+    | "middle"
+    | number;
+
+  export type WSIMouseDelta = {
+    x: number;
+    y: number;
+  };
+
+  export type WSITouchForce =
+    | {
+      type: "calibrated";
+      value: number;
+      maxValue: number;
+      altitudeAngle?: number;
+    }
+    | {
+      type: "normalized";
+      value: number;
+    };
+
+  export type WSITouchPhase =
+    | "started"
+    | "moved"
+    | "ended"
+    | "cancelled";
+
+  export type WSIWheelDelta = {
+    type: "line-delta" | "pixel-delta";
+    x: number;
+    y: number;
+  };
+
+  export type WSIWindowTheme =
+    | "light"
+    | "dark";
+
+  export type WSIEvent =
+    | {
+      type: "app-resumed";
+    }
+    | {
+      type: "app-suspended";
+    }
+    | {
+      type: "axis-input";
+      window: WSIWindow;
+      deviceId: number;
+      axisId: number;
+      value: number;
+    }
+    | {
+      type: "char-input";
+      window: WSIWindow;
+      codePoint: number;
+    }
+    | {
+      type: "close-requested";
+      window: WSIWindow;
+    }
+    | {
+      type: "cursor-entered";
+      window: WSIWindow;
+      deviceId: number;
+    }
+    | {
+      type: "cursor-left";
+      window: WSIWindow;
+      deviceId: number;
+    }
+    | {
+      type: "cursor-moved";
+      window: WSIWindow;
+      deviceId: number;
+      position: [number, number];
+    }
+    | {
+      type: "device-added";
+      deviceId: number;
+    }
+    | {
+      type: "device-axis";
+      deviceId: number;
+      value: number;
+    }
+    | {
+      type: "device-button";
+      deviceId: number;
+      buttonId: number;
+      state: WSIButtonState;
+    }
+    | {
+      type: "device-char";
+      deviceId: number;
+      codePoint: number;
+    }
+    | {
+      type: "device-key";
+      deviceId: number;
+      scanCode: number;
+      keyCode?: WSIKeyCode;
+      state: WSIButtonState;
+    }
+    | {
+      type: "device-removed";
+      deviceId: number;
+    }
+    | {
+      type: "device-wheel";
+      deviceId: number;
+      delta: WSIWheelDelta;
+    }
+    | {
+      type: "dropped-file";
+      window: WSIWindow;
+      path: string;
+    }
+    | {
+      type: "hovered-file";
+      window: WSIWindow;
+      path: string;
+    }
+    | {
+      type: "hovered-file-cancelled";
+      window: WSIWindow;
+    }
+    | {
+      type: "ime-commit";
+      window: WSIWindow;
+      string: string;
+    }
+    | {
+      type: "ime-disabled";
+      window: WSIWindow;
+    }
+    | {
+      type: "ime-enabled";
+      window: WSIWindow;
+    }
+    | {
+      type: "ime-preedit";
+      window: WSIWindow;
+      string: string;
+      cursorRange?: [number, number];
+    }
+    | {
+      type: "key-input";
+      window: WSIWindow;
+      deviceId: number;
+      scanCode: number;
+      keyCode?: WSIKeyCode;
+      state: WSIButtonState;
+      isSynthetic: boolean;
+    }
+    | {
+      type: "main-events-cleared";
+    }
+    | {
+      type: "modifiers-changed";
+      window: WSIWindow;
+      modifiers: WSIModifierKeys;
+    }
+    | {
+      type: "mouse-button";
+      window: WSIWindow;
+      deviceId: number;
+      button: WSIMouseButton;
+      state: WSIButtonState;
+    }
+    | {
+      type: "mouse-motion";
+      deviceId: number;
+      delta: WSIMouseDelta;
+    }
+    | {
+      type: "mouse-wheel";
+      window: WSIWindow;
+      deviceId: number;
+      delta: WSIWheelDelta;
+      touchPhase: WSITouchPhase;
+    }
+    | {
+      type: "new-events";
+    }
+    | {
+      type: "redraw-events-cleared";
+    }
+    | {
+      type: "redraw-requested";
+      window: WSIWindow;
+    }
+    | {
+      type: "scale-factor-changed";
+      window: WSIWindow;
+      scaleFactor: number;
+    }
+    | {
+      type: "touch-input";
+      window: WSIWindow;
+      deviceId: number;
+      location: [number, number];
+      touchPhase: WSITouchPhase;
+      touchForce?: WSITouchForce;
+      fingerId: bigint;
+    }
+    | {
+      type: "touchpad-pressure";
+      window: WSIWindow;
+      deviceId: number;
+      pressure: number;
+      clickLevel: bigint;
+    }
+    | {
+      type: "window-focused";
+      window: WSIWindow;
+      isFocused: boolean;
+    }
+    | {
+      type: "window-moved";
+      window: WSIWindow;
+      position: [number, number];
+    }
+    | {
+      type: "window-occluded";
+      window: WSIWindow;
+      isOccluded: boolean;
+    }
+    | {
+      type: "window-resized";
+      window: WSIWindow;
+      innerSize: [number, number];
+    }
+    | {
+      type: "window-theme-changed";
+      window: WSIWindow;
+      theme: WSIWindowTheme;
+    };
+
+  export interface WSICreateWindowOptions {
+    innerSize?: [number, number];
+    minInnerSize?: [number, number];
+    maxInnerSize?: [number, number];
+    position?: [number, number];
+    resizable?: boolean;
+    title?: string;
+    fullscreen?: boolean;
+    maximized?: boolean;
+    visible?: boolean;
+    transparent?: boolean;
+    decorated?: boolean;
+    alwaysOnTop?: boolean;
+  }
+
+  export const wsi: WSI;
+  export class WSI {
+    nextEvent(): Promise<WSIEvent>;
+    createWindow(options?: WSICreateWindowOptions): WSIWindow;
+  }
+
+  export type WSIModifierKeys = number;
+  export class WSIModifierKey {
     static SHIFT: 0o0004;
     static CTRL: 0o0040;
     static ALT: 0o0400;
-    static LOGO: 0o4000;
+    static GUI: 0o4000;
   }
-
-  export type WSIModifiers = number;
-
-  export interface WSIMouseMotionDelta {
-    x: number;
-    y: number;
-  }
-
-  export interface WSIMouseScrollDelta {
-    type: "line" | "pixel";
-    x: number;
-    y: number;
-  }
-
-  export type WSITouchPhase = "started" | "moved" | "ended" | "cancelled";
 
   export class WSIWindow {
     destroy(): void;
