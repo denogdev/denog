@@ -87,9 +87,8 @@
       webidl.assertBranded(this, WSIPrototype);
 
       const event = await ops.op_wsi_next_event();
-      if (event.wid) {
-        event.window = windows.get(event.wid);
-        delete event.wid;
+      if (event.window != null) {
+        event.window = windows.get(event.window);
       }
       return event;
     }
@@ -98,21 +97,21 @@
       webidl.assertBranded(this, WSIPrototype);
       const prefix = "Failed to execute 'createWindow' on 'WSI'";
 
-      if (options) {
+      if (options !== undefined) {
         options = webidl.converters.WSICreateWindowOptions(options, {
           prefix,
           context: "Argument 1",
         });
-        if (options.innerSize) {
+        if (options.innerSize != null) {
           checkSize(prefix, options.innerSize);
         }
-        if (options.minInnerSize) {
+        if (options.minInnerSize != null) {
           checkSize(prefix, options.minInnerSize);
         }
-        if (options.maxInnerSize) {
+        if (options.maxInnerSize != null) {
           checkSize(prefix, options.maxInnerSize);
         }
-        if (options.position) {
+        if (options.position != null) {
           checkPosition(prefix, options.position);
         }
       }
@@ -157,8 +156,8 @@
   }
 
   class WSIWindow {
-    [_wid] = null;
-    [_gpuSurface] = null;
+    [_wid];
+    [_gpuSurface];
 
     constructor() {
       webidl.illegalConstructor();
@@ -169,14 +168,14 @@
       const prefix = "Failed to execute 'destroy' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      if (this[_gpuSurface]) {
+      if (this[_gpuSurface] != null) {
         webgpu.destroyGPUSurface(this[_gpuSurface]);
-        this[_gpuSurface] = null;
+        this[_gpuSurface] = undefined;
       }
 
       ops.op_wsi_destroy_window(wid);
       windows.delete(wid);
-      this[_wid] = null;
+      this[_wid] = undefined;
     }
 
     getGPUSurface() {
@@ -184,7 +183,7 @@
       const prefix = "Failed to execute 'getGPUSurface' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      if (this[_gpuSurface]) {
+      if (this[_gpuSurface] != null) {
         return this[_gpuSurface];
       } else {
         const rid = ops.op_wsi_create_webgpu_surface(wid);
