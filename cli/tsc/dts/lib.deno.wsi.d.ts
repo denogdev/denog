@@ -205,7 +205,7 @@ declare namespace Deno {
     | "ended"
     | "cancelled";
 
-  export type WSIWheelDelta = {
+  export type WSIScrollDelta = {
     type: "line-delta" | "pixel-delta";
     x: number;
     y: number;
@@ -266,7 +266,7 @@ declare namespace Deno {
     | {
       type: "device-button";
       deviceId: number;
-      buttonId: number;
+      button: number;
       state: WSIButtonState;
     }
     | {
@@ -286,9 +286,9 @@ declare namespace Deno {
       deviceId: number;
     }
     | {
-      type: "device-wheel";
+      type: "device-scroll";
       deviceId: number;
-      delta: WSIWheelDelta;
+      delta: WSIScrollDelta;
     }
     | {
       type: "dropped-file";
@@ -353,10 +353,10 @@ declare namespace Deno {
       delta: WSIMouseDelta;
     }
     | {
-      type: "mouse-wheel";
+      type: "mouse-scroll";
       window: WSIWindow;
       deviceId: number;
-      delta: WSIWheelDelta;
+      delta: WSIScrollDelta;
       touchPhase: WSITouchPhase;
     }
     | {

@@ -4,6 +4,7 @@ mod create_window_options;
 mod device_ids;
 mod event;
 pub mod event_loop;
+mod input;
 mod request;
 
 use crate::{
