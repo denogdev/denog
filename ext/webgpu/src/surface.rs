@@ -3,7 +3,7 @@
 
 use crate::{texture::WebGpuTexture, WebGpuAdapter, WebGpuDevice};
 use deno_core::{error::AnyError, op, OpState, Resource, ResourceId};
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
 use std::borrow::Cow;
 
 pub struct WebGpuSurface(pub wgpu_core::id::SurfaceId);
@@ -15,15 +15,27 @@ impl Resource for WebGpuSurface {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GpuSurfaceCapabilities {
-  pub formats: Vec<wgpu_types::TextureFormat>,
-  pub present_modes: Vec<GpuSurfacePresentMode>,
-  pub alpha_modes: Vec<GpuSurfaceAlphaMode>,
+pub(crate) struct GpuSurfaceCapabilities {
+  formats: Vec<wgpu_types::TextureFormat>,
+  #[serde(serialize_with = "serialize_present_modes")]
+  present_modes: Vec<wgpu_types::PresentMode>,
+  #[serde(serialize_with = "serialize_alpha_modes")]
+  alpha_modes: Vec<wgpu_types::CompositeAlphaMode>,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum GpuSurfacePresentMode {
+impl From<wgpu_types::SurfaceCapabilities> for GpuSurfaceCapabilities {
+  fn from(caps: wgpu_types::SurfaceCapabilities) -> Self {
+    Self {
+      formats: caps.formats,
+      present_modes: caps.present_modes,
+      alpha_modes: caps.alpha_modes,
+    }
+  }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case", remote = "wgpu_types::PresentMode")]
+enum GpuSurfacePresentMode {
   AutoVsync,
   AutoNoVsync,
   Fifo,
@@ -32,35 +44,28 @@ pub enum GpuSurfacePresentMode {
   Mailbox,
 }
 
-impl From<GpuSurfacePresentMode> for wgpu_types::PresentMode {
-  fn from(value: GpuSurfacePresentMode) -> Self {
-    match value {
-      GpuSurfacePresentMode::AutoVsync => Self::AutoVsync,
-      GpuSurfacePresentMode::AutoNoVsync => Self::AutoNoVsync,
-      GpuSurfacePresentMode::Fifo => Self::Fifo,
-      GpuSurfacePresentMode::FifoRelaxed => Self::FifoRelaxed,
-      GpuSurfacePresentMode::Immediate => Self::Immediate,
-      GpuSurfacePresentMode::Mailbox => Self::Mailbox,
-    }
+fn serialize_present_modes<S: Serializer>(
+  modes: &Vec<wgpu_types::PresentMode>,
+  s: S,
+) -> Result<S::Ok, S::Error> {
+  let mut s = s.serialize_seq(Some(modes.len()))?;
+  for mode in modes {
+    use wgpu_types::PresentMode::*;
+    s.serialize_element(match mode {
+      AutoVsync => "auto-vsync",
+      AutoNoVsync => "auto-no-vsync",
+      Fifo => "fifo",
+      FifoRelaxed => "fifo-relaxed",
+      Immediate => "immediate",
+      Mailbox => "mailbox",
+    })?
   }
+  s.end()
 }
 
-impl From<wgpu_types::PresentMode> for GpuSurfacePresentMode {
-  fn from(value: wgpu_types::PresentMode) -> Self {
-    match value {
-      wgpu_types::PresentMode::AutoVsync => Self::AutoVsync,
-      wgpu_types::PresentMode::AutoNoVsync => Self::AutoNoVsync,
-      wgpu_types::PresentMode::Fifo => Self::Fifo,
-      wgpu_types::PresentMode::FifoRelaxed => Self::FifoRelaxed,
-      wgpu_types::PresentMode::Immediate => Self::Immediate,
-      wgpu_types::PresentMode::Mailbox => Self::Mailbox,
-    }
-  }
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum GpuSurfaceAlphaMode {
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case", remote = "wgpu_types::CompositeAlphaMode")]
+enum GpuSurfaceAlphaMode {
   Auto,
   Opaque,
   PreMultiplied,
@@ -68,39 +73,35 @@ pub enum GpuSurfaceAlphaMode {
   Inherit,
 }
 
-impl From<GpuSurfaceAlphaMode> for wgpu_types::CompositeAlphaMode {
-  fn from(value: GpuSurfaceAlphaMode) -> Self {
-    match value {
-      GpuSurfaceAlphaMode::Auto => Self::Auto,
-      GpuSurfaceAlphaMode::Opaque => Self::Opaque,
-      GpuSurfaceAlphaMode::PreMultiplied => Self::PreMultiplied,
-      GpuSurfaceAlphaMode::PostMultiplied => Self::PostMultiplied,
-      GpuSurfaceAlphaMode::Inherit => Self::Inherit,
-    }
+fn serialize_alpha_modes<S: Serializer>(
+  modes: &Vec<wgpu_types::CompositeAlphaMode>,
+  s: S,
+) -> Result<S::Ok, S::Error> {
+  let mut s = s.serialize_seq(Some(modes.len()))?;
+  for mode in modes {
+    use wgpu_types::CompositeAlphaMode::*;
+    s.serialize_element(match mode {
+      Auto => "auto",
+      Opaque => "opaque",
+      PreMultiplied => "pre-multiplied",
+      PostMultiplied => "post-multiplied",
+      Inherit => "inherit",
+    })?
   }
-}
-
-impl From<wgpu_types::CompositeAlphaMode> for GpuSurfaceAlphaMode {
-  fn from(value: wgpu_types::CompositeAlphaMode) -> Self {
-    match value {
-      wgpu_types::CompositeAlphaMode::Auto => Self::Auto,
-      wgpu_types::CompositeAlphaMode::Opaque => Self::Opaque,
-      wgpu_types::CompositeAlphaMode::PreMultiplied => Self::PreMultiplied,
-      wgpu_types::CompositeAlphaMode::PostMultiplied => Self::PostMultiplied,
-      wgpu_types::CompositeAlphaMode::Inherit => Self::Inherit,
-    }
-  }
+  s.end()
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct GpuSurfaceConfiguration {
-  pub usage: wgpu_types::TextureUsages,
-  pub format: wgpu_types::TextureFormat,
-  pub size: wgpu_types::Extent3d,
-  pub present_mode: GpuSurfacePresentMode,
-  pub alpha_mode: GpuSurfaceAlphaMode,
-  pub view_formats: Vec<wgpu_types::TextureFormat>,
+pub(crate) struct GpuSurfaceConfiguration {
+  usage: wgpu_types::TextureUsages,
+  format: wgpu_types::TextureFormat,
+  size: wgpu_types::Extent3d,
+  #[serde(with = "GpuSurfacePresentMode")]
+  present_mode: wgpu_types::PresentMode,
+  #[serde(with = "GpuSurfaceAlphaMode")]
+  alpha_mode: wgpu_types::CompositeAlphaMode,
+  view_formats: Vec<wgpu_types::TextureFormat>,
 }
 
 fn check_suboptimal(
@@ -118,7 +119,7 @@ fn check_suboptimal(
 }
 
 #[op]
-pub fn op_webgpu_surface_get_capabilities(
+pub(crate) fn op_webgpu_surface_get_capabilities(
   state: &mut OpState,
   surface_rid: ResourceId,
   adapter_rid: ResourceId,
@@ -136,17 +137,13 @@ pub fn op_webgpu_surface_get_capabilities(
   match gfx_select!(adapter =>
    instance.surface_get_capabilities(surface, adapter)
   ) {
-    Ok(caps) => Ok(GpuSurfaceCapabilities {
-      formats: caps.formats,
-      present_modes: caps.present_modes.into_iter().map(Into::into).collect(),
-      alpha_modes: caps.alpha_modes.into_iter().map(Into::into).collect(),
-    }),
+    Ok(caps) => Ok(caps.into()),
     Err(err) => Err(err.into()),
   }
 }
 
 #[op]
-pub fn op_webgpu_surface_configure(
+pub(crate) fn op_webgpu_surface_configure(
   state: &mut OpState,
   surface_rid: ResourceId,
   device_rid: ResourceId,
@@ -166,8 +163,8 @@ pub fn op_webgpu_surface_configure(
     format: config.format,
     width: config.size.width,
     height: config.size.height,
-    present_mode: config.present_mode.into(),
-    alpha_mode: config.alpha_mode.into(),
+    present_mode: config.present_mode,
+    alpha_mode: config.alpha_mode,
     view_formats: config.view_formats,
   };
 
@@ -180,7 +177,7 @@ pub fn op_webgpu_surface_configure(
 }
 
 #[op]
-pub fn op_webgpu_surface_get_current_texture(
+pub(crate) fn op_webgpu_surface_get_current_texture(
   state: &mut OpState,
   surface_rid: ResourceId,
   device_rid: ResourceId,
@@ -208,7 +205,7 @@ pub fn op_webgpu_surface_get_current_texture(
 }
 
 #[op]
-pub fn op_webgpu_surface_texture_discard(
+pub(crate) fn op_webgpu_surface_texture_discard(
   state: &mut OpState,
   surface_rid: ResourceId,
   device_rid: ResourceId,
@@ -231,7 +228,7 @@ pub fn op_webgpu_surface_texture_discard(
 }
 
 #[op]
-pub fn op_webgpu_surface_texture_present(
+pub(crate) fn op_webgpu_surface_texture_present(
   state: &mut OpState,
   surface_rid: ResourceId,
   device_rid: ResourceId,
