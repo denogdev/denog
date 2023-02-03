@@ -99,7 +99,7 @@ pub fn get_types_declaration_file_text(unstable: bool) -> String {
   lib_names
     .into_iter()
     .map(|name| {
-      let asset_url = format!("asset:///lib.{}.d.ts", name);
+      let asset_url = format!("asset:///lib.{name}.d.ts");
       assets.remove(&asset_url).unwrap()
     })
     .collect::<Vec<_>>()
@@ -205,7 +205,7 @@ impl fmt::Display for Stats {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     writeln!(f, "Compilation statistics:")?;
     for (key, value) in self.0.clone() {
-      writeln!(f, "  {}: {}", key, value)?;
+      writeln!(f, "  {key}: {value}")?;
     }
 
     Ok(())
@@ -839,7 +839,7 @@ pub fn exec(request: Request) -> Result<Response, AnyError> {
     "rootNames": root_names,
   });
   let request_str = request_value.to_string();
-  let exec_source = format!("globalThis.exec({})", request_str);
+  let exec_source = format!("globalThis.exec({request_str})");
 
   runtime
     .execute_script(&located_script_name!(), startup_source)

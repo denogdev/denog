@@ -21,34 +21,34 @@ repository = "https://github.com/denoxdev/denox"
 v8 = { version = "0.60.1", default-features = false }
 deno_ast = { version = "0.23.2", features = ["transpiling"] }
 
-deno_core = { version = "0.168.0" }
-deno_ops = { version = "0.46.0" }
-serde_v8 = { version = "0.79.0" }
+deno_core = { version = "0.170.0" }
+deno_ops = { version = "0.48.0" }
+serde_v8 = { version = "0.81.0" }
 deno_runtime = { version = "0.2.1", path = "./runtime", package = "denox_runtime" }
-napi_sym = { version = "0.16.0" }
-deno_bench_util = { version = "0.80.0" }
+napi_sym = { version = "0.18.0" }
+deno_bench_util = { version = "0.82.0" }
 test_util = { path = "./test_util" }
-deno_lockfile = { version = "0.2.0" }
+deno_lockfile = { version = "0.4.0" }
 
 # exts
-deno_broadcast_channel = { version = "0.80.0" }
-deno_cache = { version = "0.18.0" }
-deno_console = { version = "0.86.0" }
-deno_crypto = { version = "0.100.0" }
-deno_fetch = { version = "0.110.0" }
-deno_ffi = { version = "0.73.0" }
-deno_flash = { version = "0.22.0" }
-deno_http = { version = "0.81.0" }
-deno_net = { version = "0.78.0" }
-deno_node = { version = "0.23.0" }
-deno_tls = { version = "0.73.0" }
-deno_url = { version = "0.86.0" }
-deno_web = { version = "0.117.0" }
+deno_broadcast_channel = { version = "0.82.0" }
+deno_cache = { version = "0.20.0" }
+deno_console = { version = "0.88.0" }
+deno_crypto = { version = "0.102.0" }
+deno_fetch = { version = "0.112.0" }
+deno_ffi = { version = "0.75.0" }
+deno_flash = { version = "0.24.0" }
+deno_http = { version = "0.83.0" }
+deno_net = { version = "0.80.0" }
+deno_node = { version = "0.25.0" }
+deno_tls = { version = "0.75.0" }
+deno_url = { version = "0.88.0" }
+deno_web = { version = "0.119.0" }
 deno_webgpu = { version = "0.2.1", path = "./ext/webgpu", package = "denox_webgpu" }
-deno_webidl = { version = "0.86.0" }
-deno_websocket = { version = "0.91.0" }
-deno_webstorage = { version = "0.81.0" }
-deno_napi = { version = "0.16.0" }
+deno_webidl = { version = "0.88.0" }
+deno_websocket = { version = "0.93.0" }
+deno_webstorage = { version = "0.83.0" }
+deno_napi = { version = "0.18.0" }
 deno_wsi = { version = "0.2.1", path = "./ext/wsi", package = "denox_wsi" }
 
 anyhow = "1.0.57"
@@ -83,9 +83,9 @@ rusqlite = { version = "=0.28.0", features = ["unlock_notify", "bundled"] }
 rustls = "0.20.5"
 rustls-pemfile = "1.0.0"
 semver = "=1.0.14"
-serde = { version = "=1.0.149", features = ["derive"] }
+serde = { version = "1.0.149", features = ["derive"] }
 serde_bytes = "0.11"
-serde_json = "=1.0.85"
+serde_json = "1.0.85"
 serde_repr = "=0.1.9"
 sha2 = { version = "0.10.6", features = ["oid"] }
 smallvec = "1.8"

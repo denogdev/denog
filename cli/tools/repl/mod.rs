@@ -114,14 +114,11 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
             .await;
           // only output errors
           if let EvaluationOutput::Error(error_text) = output {
-            println!(
-              "Error in --eval-file file \"{}\": {}",
-              eval_file, error_text
-            );
+            println!("Error in --eval-file file \"{eval_file}\": {error_text}");
           }
         }
         Err(e) => {
-          println!("Error in --eval-file file \"{}\": {}", eval_file, e);
+          println!("Error in --eval-file file \"{eval_file}\": {e}");
         }
       }
     }
@@ -131,7 +128,7 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
     let output = repl_session.evaluate_line_and_get_output(&eval).await;
     // only output errors
     if let EvaluationOutput::Error(error_text) = output {
-      println!("Error in --eval flag: {}", error_text);
+      println!("Error in --eval flag: {error_text}");
     }
   }
 
@@ -168,7 +165,7 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
           break;
         }
 
-        println!("{}", output);
+        println!("{output}");
       }
       Err(ReadlineError::Interrupted) => {
         if editor.should_exit_on_interrupt() {
@@ -182,7 +179,7 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
         break;
       }
       Err(err) => {
-        println!("Error: {:?}", err);
+        println!("Error: {err:?}");
         break;
       }
     }
