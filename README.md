@@ -7,7 +7,7 @@ A fork of [Deno](https://github.com/denoland/deno) with built-in window system i
 Try running the [hello-triangle](./examples/hello-triangle/main.ts) example:
 
 ```sh
-denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.2.1/examples/hello-triangle/main.ts
+denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.3.0/examples/hello-triangle/main.ts
 ```
 
 ![A red triangle over a green background.](./examples/hello-triangle/screenshot.png)

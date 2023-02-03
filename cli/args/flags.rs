@@ -569,7 +569,7 @@ Bugs: https://github.com/denoxdev/denox/issues
 
 To execute a script with window system integration:
 
-  denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.2.1/examples/hello-triangle/main.ts
+  denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.3.0/examples/hello-triangle/main.ts
 "
   .to_string()
 });

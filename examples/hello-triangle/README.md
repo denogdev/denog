@@ -7,7 +7,7 @@ This example renders a triangle to a window.
 ## To Run
 
 ```
-denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.2.1/examples/hello-triangle/main.ts
+denox run --unstable --wsi https://raw.githubusercontent.com/denoxdev/denox/v0.3.0/examples/hello-triangle/main.ts
 ```
 
 ## Screenshots

@@ -3,7 +3,7 @@
 
 [package]
 name = "denox_webgpu"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["the Deno authors", "Jo Bates"]
 edition.workspace = true
 license = "MIT"
