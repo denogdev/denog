@@ -17,11 +17,12 @@ Or a minimal example without any graphics:
 ```ts
 Deno.wsi.createWindow();
 
+eventLoop:
 while (true) {
   const event = await Deno.wsi.nextEvent();
   switch (event.type) {
     case "close-requested": {
-      Deno.exit(0);
+      break eventLoop;
     }
   }
 }
