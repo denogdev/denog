@@ -1,7 +1,7 @@
 # Denox
 
-A fork of [Deno](https://github.com/denoland/deno) with built-in window system
-integration.
+A fork of [Deno](https://github.com/denoland/deno)
+with built-in window system integration.
 
 ### Install
 
@@ -40,11 +40,10 @@ documented below.
 
 Denox is compatible with the
 [vscode_deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno)
-extension. Once both Denox and the extension are installed, you can enable the
-extension and point it at Denox instead of Deno in your Visual Studio Code
-`settings.json`:
+extension. Once both Denox and the extension are installed, you can enable the extension
+and point it at Denox instead of Deno in your Visual Studio Code `settings.json`:
 
-```json
+```js
 {
     "deno.enable": true,
     "deno.unstable": true,
@@ -56,18 +55,17 @@ extension and point it at Denox instead of Deno in your Visual Studio Code
 
 ### Window System Integration (WSI)
 
-Denox enhances Deno by adding built-in support for window system integration
-(WSI) which can be enabled using the optional `--wsi` flag. It's currently only
-available to the `denox run` subcommand and requires the `--unstable` flag as
-well. Example:
+Denox enhances Deno by adding built-in support for window system integration (WSI)
+which can be enabled using the optional `--wsi` flag. It's currently only available
+to the `denox run` subcommand and requires the `--unstable` flag as well. Example:
 
 ```sh
 denox run --unstable --wsi https://denoxdev.github.io/hello-triangle.ts
 ```
 
 Denox's window system integration uses the Rust
-[`winit`](https://docs.rs/winit/0.27.5/winit/) library under the hood and provides
-much of the same functionality.
+[`winit`](https://docs.rs/winit/0.27.5/winit/) library
+under the hood and provides much of the same functionality.
 
 To create a window, use `Deno.wsi.createWindow`:
 
@@ -76,7 +74,7 @@ createWindow(options?: WSICreateWindowOptions): WSIWindow
 ```
 
 `WSICreateWindowOptions` provides most of the same options as
-[winit::window::WindowBuilder](https://docs.rs/winit/0.27.5/winit/window/struct.WindowBuilder.html):
+[`winit::window::WindowBuilder`](https://docs.rs/winit/0.27.5/winit/window/struct.WindowBuilder.html):
 
 ```ts
 declare interface WSICreateWindowOptions {
@@ -132,8 +130,8 @@ declare class WSIWindow {
 }
 ```
 
-After creating a window, you generally want to call `Deno.wsi.nextEvent` in an
-event loop.
+After creating a window, you generally want
+to call `Deno.wsi.nextEvent` in an event loop.
 
 ```ts
 nextEvent(): Promise<WSIEvent>
@@ -155,23 +153,23 @@ while (true) {
 }
 ```
 
-`WSIEvent` is a discriminated union. Each `WSIEvent.type` corresponds to a
-different event type from
-[winit::event::Event](https://docs.rs/winit/0.27.5/winit/event/enum.Event.html).
+`WSIEvent` is a discriminated union.
+Each `WSIEvent.type` corresponds to a different event type from
+[`winit::event::Event`](https://docs.rs/winit/0.27.5/winit/event/enum.Event.html).
 The properties of each event type are listed in
-[lib.deno.wsi.d.ts](./cli/tsc/dts/lib.deno.wsi.d.ts) along with links to the
-corresponding `winit` events.
+[lib.deno.wsi.d.ts](./cli/tsc/dts/lib.deno.wsi.d.ts)
+along with links to the corresponding `winit` events.
 
 ### WebGPU Integration
 
 You can render to a `WSIWindow` using the
 [WebGPU](https://www.w3.org/TR/webgpu/) API. Unlike standard WebGPU which uses
-[GPUCanvasContext](https://www.w3.org/TR/webgpu/#canvas-context) to render to an
-[HTMLCanvasElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement),
-Denox provides the non-standard `GPUSurface` class for rendering to a
-`WSIWindow`. Its interface is much closer to the
-[wgpu::Surface](https://docs.rs/wgpu/0.15.0/wgpu/struct.Surface.html) interface
-from the Rust `wgpu` library that Deno and Denox use under-the-hood.
+[`GPUCanvasContext`](https://www.w3.org/TR/webgpu/#canvas-context) to render to an
+[`HTMLCanvasElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement),
+Denox provides the non-standard `GPUSurface` class for rendering to a `WSIWindow`.
+Its interface is much closer to the
+[`wgpu::Surface`](https://docs.rs/wgpu/0.15.0/wgpu/struct.Surface.html)
+interface from the Rust `wgpu` library that Deno and Denox use under-the-hood.
 
 ```ts
 declare class GPUSurface {
@@ -216,5 +214,5 @@ declare class GPUSurfaceTexture extends GPUTexture {
 }
 ```
 
-See [hello-triangle](./examples/hello-triangle) for a full example of using WSI
-and WebGPU together.
+See [hello-triangle](./examples/hello-triangle)
+for a full example of using WSI and WebGPU together.
