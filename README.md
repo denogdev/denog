@@ -166,7 +166,7 @@ You can render to a `WSIWindow` using the
 [WebGPU](https://www.w3.org/TR/webgpu/) API. Unlike standard WebGPU which uses
 [`GPUCanvasContext`](https://www.w3.org/TR/webgpu/#canvas-context) to render to an
 [`HTMLCanvasElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement),
-Denox provides the non-standard `GPUSurface` class for rendering to a `WSIWindow`.
+Denox provides the non-standard `GPUSurface` class for rendering to a `WSIWindow` directly.
 Its interface is much closer to the
 [`wgpu::Surface`](https://docs.rs/wgpu/0.15.0/wgpu/struct.Surface.html)
 interface from the Rust `wgpu` library that Deno and Denox use under-the-hood.
@@ -214,5 +214,16 @@ declare class GPUSurfaceTexture extends GPUTexture {
 }
 ```
 
+Denox also adds a non-standard `compatibleSurface` property to
+[`GPURequestAdapterOptions`](https://www.w3.org/TR/webgpu/#dictdef-gpurequestadapteroptions):
+
+```ts
+declare interface GPURequestAdapterOptions {
+  powerPreference?: GPUPowerPreference;
+  forceFallbackAdapter?: boolean;
+  compatibleSurface?: GPUSurface;
+}
+```
+
 See [hello-triangle](./examples/hello-triangle)
-for a full example of using WSI and WebGPU together.
+for a complete example of using WSI and WebGPU together.
