@@ -866,7 +866,11 @@ impl Serialize for TsTypeLib {
         ]
       }
       Self::UnstableDenoWorker => {
-        vec!["deno.worker".to_string(), "deno.unstable".to_string()]
+        vec![
+          "deno.worker".to_string(),
+          "deno.unstable".to_string(),
+          "deno.wsi".to_string(),
+        ]
       }
     };
     Serialize::serialize(&value, serializer)

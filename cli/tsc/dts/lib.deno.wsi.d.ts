@@ -524,9 +524,9 @@ declare namespace Deno {
     setAlwaysOnTop(alwaysOnTop?: boolean): void;
     focus(): void;
   }
-}
 
-// https://docs.rs/winit/0.27.5/winit/window/enum.Theme.html
-export type WSIWindowTheme =
-  | "light"
-  | "dark";
+  // https://docs.rs/winit/0.27.5/winit/window/enum.Theme.html
+  export type WSIWindowTheme =
+    | "light"
+    | "dark";
+}
