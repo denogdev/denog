@@ -2,7 +2,7 @@
 
 [package]
 name = "denox_wsi"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Jo Bates"]
 edition.workspace = true
 license.workspace = true
