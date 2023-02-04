@@ -20,7 +20,5 @@
     "mutantdino.resourcemonitor"
   ],
 
-  "postCreateCommand": "git submodule update --init",
-
   "remoteUser": "vscode"
 }
