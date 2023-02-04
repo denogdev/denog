@@ -225,5 +225,5 @@ declare interface GPURequestAdapterOptions {
 }
 ```
 
-See [hello-triangle](./examples/hello-triangle)
+See [examples/hello-triangle](./examples/hello-triangle)
 for a complete example of using WSI and WebGPU together.
