@@ -1,14 +1,14 @@
 # Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 [package]
-name = "denox_wsi"
-version = "0.3.1"
+name = "denog_wsi"
+version = "0.3.2"
 authors = ["Jo Bates"]
 edition.workspace = true
 license.workspace = true
 readme = "README.md"
 repository.workspace = true
-description = "Window system integration for Denox"
+description = "Window system integration for Denog"
 
 [lib]
 path = "lib.rs"

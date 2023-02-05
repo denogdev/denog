@@ -95,7 +95,7 @@ async fn get_base_binary(
   }
 
   let target = target.unwrap_or_else(|| env!("TARGET").to_string());
-  let binary_name = format!("denox-{target}.zip");
+  let binary_name = format!("denog-{target}.zip");
 
   let binary_path_suffix = if crate::version::is_canary() {
     format!("canary/{}/{}", crate::version::GIT_COMMIT_HASH, binary_name)
@@ -129,7 +129,7 @@ async fn download_base_binary(
   binary_path_suffix: &str,
 ) -> Result<(), AnyError> {
   let download_url =
-    format!("https://denoxdev.github.io/dl/{binary_path_suffix}");
+    format!("https://denogdev.github.io/dl/{binary_path_suffix}");
   let maybe_bytes = {
     let progress_bars = ProgressBar::new(ProgressBarStyle::DownloadBars);
     let progress = progress_bars.update(&download_url);

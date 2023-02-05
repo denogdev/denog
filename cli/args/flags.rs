@@ -25,7 +25,7 @@ use super::flags_allow_net;
 static LONG_VERSION: Lazy<String> = Lazy::new(|| {
   format!(
     "{} ({}, {})\nv8 {}\ntypescript {}",
-    crate::version::denox_short(),
+    crate::version::denog_short(),
     if crate::version::is_canary() {
       "canary"
     } else {
@@ -38,7 +38,7 @@ static LONG_VERSION: Lazy<String> = Lazy::new(|| {
 });
 
 static SHORT_VERSION: Lazy<String> = Lazy::new(|| {
-  crate::version::denox_short()
+  crate::version::denog_short()
     .split('+')
     .next()
     .unwrap()
@@ -564,19 +564,19 @@ static ENV_VARIABLES_HELP: &str = r#"ENVIRONMENT VARIABLES:
 static DENO_HELP: Lazy<String> = Lazy::new(|| {
   "A fork of Deno with built-in window system integration
 
-Repository: https://github.com/denoxdev/denox
-Bugs: https://github.com/denoxdev/denox/issues
+Repository: https://github.com/denogdev/denog
+Bugs: https://github.com/denogdev/denog/issues
 
 To execute a script with window system integration:
 
-  denox run --unstable --wsi https://denoxdev.github.io/hello-triangle.ts
+  denog run --unstable --wsi https://denogdev.github.io/hello-triangle.ts
 "
   .to_string()
 });
 
 /// Main entry point for parsing deno's command line flags.
 pub fn flags_from_vec(args: Vec<String>) -> clap::Result<Flags> {
-  let version = crate::version::denox_short();
+  let version = crate::version::denog_short();
   let mut app = clap_root(&version);
   let matches = app.try_get_matches_from_mut(&args)?;
 
@@ -649,8 +649,8 @@ fn handle_repl_flags(flags: &mut Flags, repl_flags: ReplFlags) {
 }
 
 fn clap_root(version: &str) -> Command {
-  clap::Command::new("denox")
-    .bin_name("denox")
+  clap::Command::new("denog")
+    .bin_name("denog")
     .color(ColorChoice::Never)
     .max_term_width(80)
     .version(version)
@@ -1725,19 +1725,19 @@ The declaration file could be saved and used for typing information.",
 
 fn upgrade_subcommand<'a>() -> Command<'a> {
   Command::new("upgrade")
-    .about("Upgrade denox executable to given version")
+    .about("Upgrade denog executable to given version")
     .long_about(
-      "Upgrade denox executable to the given version.
+      "Upgrade denog executable to the given version.
 Defaults to latest.
 
 The version is downloaded from
-https://github.com/denoxdev/denox/releases
+https://github.com/denogdev/denog/releases
 and is used to replace the current executable.
 
-If you want to not replace the current Denox executable but instead download an
+If you want to not replace the current Denog executable but instead download an
 update to a different location, use the --output flag
 
-  denox upgrade --output $HOME/my_deno",
+  denog upgrade --output $HOME/my_deno",
     )
     .arg(
       Arg::new("version")

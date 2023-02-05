@@ -54,7 +54,7 @@ impl TypeCheckCache {
 
   fn try_new(db_file_path: &Path) -> Result<Self, AnyError> {
     let conn = Connection::open(db_file_path)?;
-    Self::from_connection(conn, crate::version::denox_long())
+    Self::from_connection(conn, crate::version::denog_long())
   }
 
   fn from_connection(

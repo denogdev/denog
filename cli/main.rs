@@ -195,14 +195,14 @@ fn setup_panic_hook() {
   let orig_hook = std::panic::take_hook();
   std::panic::set_hook(Box::new(move |panic_info| {
     eprintln!("\n============================================================");
-    eprintln!("Denox has panicked. This is a bug in Denox. Please report this");
-    eprintln!("at https://github.com/denoxdev/denox/issues/new.");
+    eprintln!("Denog has panicked. This is a bug in Denog. Please report this");
+    eprintln!("at https://github.com/denogdev/denog/issues/new.");
     eprintln!("If you can reliably reproduce this panic, include the");
     eprintln!("reproduction steps and re-run with the RUST_BACKTRACE=1 env");
     eprintln!("var set and include the backtrace in your report.");
     eprintln!();
     eprintln!("Platform: {} {}", env::consts::OS, env::consts::ARCH);
-    eprintln!("Version: {}", version::denox_short());
+    eprintln!("Version: {}", version::denog_short());
     eprintln!("Args: {:?}", env::args().collect::<Vec<_>>());
     eprintln!();
     orig_hook(panic_info);

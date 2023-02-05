@@ -3,18 +3,18 @@
 
 use deno_core::error::AnyError;
 use deno_core::FsModuleLoader;
-use denox_runtime::deno_broadcast_channel::InMemoryBroadcastChannel;
-use denox_runtime::deno_web::BlobStore;
-use denox_runtime::permissions::PermissionsContainer;
-use denox_runtime::worker::MainWorker;
-use denox_runtime::worker::WorkerOptions;
-use denox_runtime::BootstrapOptions;
+use denog_runtime::deno_broadcast_channel::InMemoryBroadcastChannel;
+use denog_runtime::deno_web::BlobStore;
+use denog_runtime::permissions::PermissionsContainer;
+use denog_runtime::worker::MainWorker;
+use denog_runtime::worker::WorkerOptions;
+use denog_runtime::BootstrapOptions;
 use std::path::Path;
 use std::rc::Rc;
 use std::sync::Arc;
 
 fn get_error_class_name(e: &AnyError) -> &'static str {
-  denox_runtime::errors::get_error_class_name(e).unwrap_or("Error")
+  denog_runtime::errors::get_error_class_name(e).unwrap_or("Error")
 }
 
 #[tokio::main]

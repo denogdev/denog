@@ -135,14 +135,14 @@ pub async fn run(flags: Flags, repl_flags: ReplFlags) -> Result<i32, AnyError> {
   // Doing this manually, instead of using `log::info!` because these messages
   // are supposed to go to stdout, not stderr.
   if !ps.options.is_quiet() {
-    println!("Denox {}", crate::version::denox_short());
+    println!("Denog {}", crate::version::denog_short());
     println!("exit using ctrl+d, ctrl+c, or close()");
     if repl_flags.is_default_command {
       println!(
         "{}",
         colors::yellow("REPL is running with all permissions allowed.")
       );
-      println!("To specify permissions, run `denox repl` with allow flags.")
+      println!("To specify permissions, run `denog repl` with allow flags.")
     }
   }
 

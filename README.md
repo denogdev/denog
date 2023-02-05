@@ -1,4 +1,4 @@
-# Denox
+# Denog
 
 A fork of [Deno](https://github.com/denoland/deno)
 with built-in window system integration.
@@ -8,62 +8,62 @@ with built-in window system integration.
 Shell (Mac, Linux):
 
 ```sh
-curl -fsSL https://denoxdev.github.io/install.sh | sh
+curl -fsSL https://denogdev.github.io/install.sh | sh
 ```
 
 PowerShell (Windows):
 
 ```powershell
-irm https://denoxdev.github.io/install.ps1 | iex
+irm https://denogdev.github.io/install.ps1 | iex
 ```
 
 ### Getting Started
 
 Try running the
-[hello-triangle](https://github.com/denoxdev/denoxdev.github.io/blob/main/hello-triangle.ts)
+[hello-triangle](https://github.com/denogdev/denogdev.github.io/blob/main/hello-triangle.ts)
 example:
 
 ```sh
-denox run --unstable --wsi https://denoxdev.github.io/hello-triangle.ts
+denog run --unstable --wsi https://denogdev.github.io/hello-triangle.ts
 ```
 
 ![A red triangle over a green background.](./examples/hello-triangle/screenshot.png)
 
-Denox is based on Deno and provides most of the same functionality. You can
+Denog is based on Deno and provides most of the same functionality. You can
 learn more about Deno from its [manual](https://deno.land/manual).
 
 Deno's complete API reference is available at the runtime
-[documentation](https://doc.deno.land). Denox's additions to this API are
+[documentation](https://doc.deno.land). Denog's additions to this API are
 documented below.
 
 ### Using Visual Studio Code
 
-Denox is compatible with the
+Denog is compatible with the
 [vscode_deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno)
-extension. Once both Denox and the extension are installed, you can enable the extension
-and point it at Denox instead of Deno in your Visual Studio Code `settings.json`:
+extension. Once both Denog and the extension are installed, you can enable the extension
+and point it at Denog instead of Deno in your Visual Studio Code `settings.json`:
 
 ```js
 {
     "deno.enable": true,
     "deno.unstable": true,
-    "deno.path": "C:/Users/<USERNAME>/.deno/bin/denox.exe"
-    // Or for macOS: "/Users/<USERNAME>/.deno/bin/denox"
-    // Or for Linux: "/home/<USERNAME>/.deno/bin/denox"
+    "deno.path": "C:/Users/<USERNAME>/.deno/bin/denog.exe"
+    // Or for macOS: "/Users/<USERNAME>/.deno/bin/denog"
+    // Or for Linux: "/home/<USERNAME>/.deno/bin/denog"
 }
 ```
 
 ### Window System Integration (WSI)
 
-Denox enhances Deno by adding built-in support for window system integration (WSI)
+Denog enhances Deno by adding built-in support for window system integration (WSI)
 which can be enabled using the optional `--wsi` flag. It's currently only available
-to the `denox run` subcommand and requires the `--unstable` flag as well. Example:
+to the `denog run` subcommand and requires the `--unstable` flag as well. Example:
 
 ```sh
-denox run --unstable --wsi https://denoxdev.github.io/hello-triangle.ts
+denog run --unstable --wsi https://denogdev.github.io/hello-triangle.ts
 ```
 
-Denox's window system integration uses the Rust
+Denog's window system integration uses the Rust
 [`winit`](https://docs.rs/winit/0.27.5/winit/) library
 under the hood and provides much of the same functionality.
 
@@ -166,10 +166,10 @@ You can render to a `WSIWindow` using the
 [WebGPU](https://www.w3.org/TR/webgpu/) API. Unlike standard WebGPU which uses
 [`GPUCanvasContext`](https://www.w3.org/TR/webgpu/#canvas-context) to render to an
 [`HTMLCanvasElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement),
-Denox provides the non-standard `GPUSurface` class for rendering to a `WSIWindow` directly.
+Denog provides the non-standard `GPUSurface` class for rendering to a `WSIWindow` directly.
 Its interface is much closer to the
 [`wgpu::Surface`](https://docs.rs/wgpu/0.15.0/wgpu/struct.Surface.html)
-interface from the Rust `wgpu` library that Deno and Denox use under-the-hood.
+interface from the Rust `wgpu` library that Deno and Denog use under-the-hood.
 
 ```ts
 declare class GPUSurface {
@@ -214,7 +214,7 @@ declare class GPUSurfaceTexture extends GPUTexture {
 }
 ```
 
-Denox also adds a non-standard `compatibleSurface` property to
+Denog also adds a non-standard `compatibleSurface` property to
 [`GPURequestAdapterOptions`](https://www.w3.org/TR/webgpu/#dictdef-gpurequestadapteroptions):
 
 ```ts

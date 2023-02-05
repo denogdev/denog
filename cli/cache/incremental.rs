@@ -167,7 +167,7 @@ impl SqlIncrementalCache {
   pub fn new(db_file_path: &Path, state_hash: u64) -> Result<Self, AnyError> {
     log::debug!("Loading incremental cache.");
     let conn = Connection::open(db_file_path)?;
-    Self::from_connection(conn, state_hash, crate::version::denox_long())
+    Self::from_connection(conn, state_hash, crate::version::denog_long())
   }
 
   fn from_connection(

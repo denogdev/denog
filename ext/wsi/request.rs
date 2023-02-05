@@ -374,7 +374,7 @@ pub fn handle_requests(
       Request::NextEvent => break,
 
       Request::CreateWindow { options, result_tx } => {
-        let mut builder = WindowBuilder::new().with_title("Denox");
+        let mut builder = WindowBuilder::new().with_title("Denog");
         if let Some(options) = options {
           builder = options.into_window_builder(builder);
         }

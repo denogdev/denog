@@ -1,7 +1,7 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-//! This module provides feature to upgrade denox executable
+//! This module provides feature to upgrade denog executable
 
 use crate::args::Flags;
 use crate::args::UpgradeFlags;
@@ -28,9 +28,9 @@ use std::process::Command;
 use std::time::Duration;
 
 static ARCHIVE_NAME: Lazy<String> =
-  Lazy::new(|| format!("denox-{}.zip", env!("TARGET")));
+  Lazy::new(|| format!("denog-{}.zip", env!("TARGET")));
 
-const RELEASE_URL: &str = "https://github.com/denoxdev/denox/releases";
+const RELEASE_URL: &str = "https://github.com/denogdev/denog/releases";
 
 // How often query server for new version. In hours.
 const UPGRADE_CHECK_INTERVAL: i64 = 24;
@@ -171,7 +171,7 @@ fn print_release_notes(current_version: &str, new_version: &str) {
   if get_minor_version(current_version) != get_minor_version(new_version) {
     log::info!(
       "{}{}",
-      "Release notes: https://github.com/denoxdev/denox/releases/tag/v",
+      "Release notes: https://github.com/denogdev/denog/releases/tag/v",
       &new_version,
     );
   }
@@ -203,24 +203,24 @@ pub fn check_for_upgrades(http_client: HttpClient, cache_file_path: PathBuf) {
       if version::is_canary() {
         eprint!(
           "{} ",
-          colors::green("A new canary release of Denox is available.")
+          colors::green("A new canary release of Denog is available.")
         );
         eprintln!(
           "{}",
-          colors::italic_gray("Run `denox upgrade --canary` to install it.")
+          colors::italic_gray("Run `denog upgrade --canary` to install it.")
         );
       } else {
         eprint!(
           "{} {} → {} ",
-          colors::green("A new release of Denox is available:"),
-          colors::cyan(version::denox_short()),
+          colors::green("A new release of Denog is available:"),
+          colors::cyan(version::denog_short()),
           colors::cyan(&upgrade_version)
         );
         eprintln!(
           "{}",
-          colors::italic_gray("Run `denox upgrade` to install it.")
+          colors::italic_gray("Run `denog upgrade` to install it.")
         );
-        print_release_notes(&version::denox_short(), &upgrade_version);
+        print_release_notes(&version::denog_short(), &upgrade_version);
       }
 
       update_checker.store_prompted();
@@ -274,8 +274,8 @@ pub async fn upgrade(
   {
     bail!(concat!(
       "You don't have write permission to {} because it's owned by root.\n",
-      "Consider updating denox through your package manager if its installed from it.\n",
-      "Otherwise run `denox upgrade` as root.",
+      "Consider updating denog through your package manager if its installed from it.\n",
+      "Otherwise run `denog upgrade` as root.",
     ), current_exe_path.display());
   }
 
@@ -296,7 +296,7 @@ pub async fn upgrade(
       let current_is_passed = if upgrade_flags.canary {
         crate::version::GIT_COMMIT_HASH == passed_version
       } else if !crate::version::is_canary() {
-        crate::version::denox_short() == passed_version
+        crate::version::denog_short() == passed_version
       } else {
         false
       };
@@ -307,7 +307,7 @@ pub async fn upgrade(
       {
         log::info!(
           "Version {} is already installed",
-          crate::version::denox_short()
+          crate::version::denog_short()
         );
         return Ok(());
       } else {
@@ -328,7 +328,7 @@ pub async fn upgrade(
         crate::version::GIT_COMMIT_HASH == latest_hash
       } else if !crate::version::is_canary() {
         let current =
-          semver::Version::parse(&crate::version::denox_short()).unwrap();
+          semver::Version::parse(&crate::version::denog_short()).unwrap();
         let latest = semver::Version::parse(&latest_version).unwrap();
         current >= latest
       } else {
@@ -340,11 +340,11 @@ pub async fn upgrade(
         && current_is_most_recent
       {
         log::info!(
-          "Local denox version {} is the most recent release",
+          "Local denog version {} is the most recent release",
           if upgrade_flags.canary {
             crate::version::GIT_COMMIT_HASH.to_string()
           } else {
-            crate::version::denox_short()
+            crate::version::denog_short()
           }
         );
         return Ok(());
@@ -361,7 +361,7 @@ pub async fn upgrade(
     }
 
     format!(
-      "https://denoxdev.github.io/dl/canary/{}/{}",
+      "https://denogdev.github.io/dl/canary/{}/{}",
       install_version, *ARCHIVE_NAME
     )
   } else {
@@ -375,7 +375,7 @@ pub async fn upgrade(
     .await
     .with_context(|| format!("Failed downloading {download_url}"))?;
 
-  log::info!("Denox is upgrading to version {}", &install_version);
+  log::info!("Denog is upgrading to version {}", &install_version);
 
   let temp_dir = secure_tempfile::TempDir::new()?;
   let new_exe_path = unpack_into_dir(archive_data, cfg!(windows), &temp_dir)?;
@@ -386,7 +386,7 @@ pub async fn upgrade(
     fs::remove_file(&new_exe_path)?;
     log::info!("Upgraded successfully (dry run)");
     if !upgrade_flags.canary {
-      print_release_notes(&version::denox_short(), &install_version);
+      print_release_notes(&version::denog_short(), &install_version);
     }
   } else {
     let output_exe_path =
@@ -403,9 +403,9 @@ pub async fn upgrade(
         return Err(err).with_context(|| {
           format!(
             concat!(
-              "Could not replace the denox executable. This may be because an ",
-              "existing denox process is running. Please ensure there are no ",
-              "running denox processes (ex. Stop-Process -Name denox ; denox {}), ",
+              "Could not replace the denog executable. This may be because an ",
+              "existing denog process is running. Please ensure there are no ",
+              "running denog processes (ex. Stop-Process -Name denog ; denog {}), ",
               "close any editors before upgrading, and ensure you have ",
               "sufficient permission to '{}'."
             ),
@@ -420,7 +420,7 @@ pub async fn upgrade(
     }
     log::info!("Upgraded successfully");
     if !upgrade_flags.canary {
-      print_release_notes(&version::denox_short(), &install_version);
+      print_release_notes(&version::denog_short(), &install_version);
     }
   }
 
@@ -432,7 +432,7 @@ async fn get_latest_release_version(
   client: &HttpClient,
 ) -> Result<String, AnyError> {
   let text = client
-    .download_text("https://denoxdev.github.io/dl/release-latest.txt")
+    .download_text("https://denogdev.github.io/dl/release-latest.txt")
     .await?;
   let version = text.trim().to_string();
   Ok(version.replace('v', ""))
@@ -442,7 +442,7 @@ async fn get_latest_canary_version(
   client: &HttpClient,
 ) -> Result<String, AnyError> {
   let text = client
-    .download_text("https://denoxdev.github.io/dl/canary-latest.txt")
+    .download_text("https://denogdev.github.io/dl/canary-latest.txt")
     .await?;
   let version = text.trim().to_string();
   Ok(version)
@@ -476,7 +476,7 @@ pub fn unpack_into_dir(
   is_windows: bool,
   temp_dir: &secure_tempfile::TempDir,
 ) -> Result<PathBuf, std::io::Error> {
-  const EXE_NAME: &str = "denox";
+  const EXE_NAME: &str = "denog";
   let temp_dir_path = temp_dir.path();
   let exe_ext = if is_windows { "exe" } else { "" };
   let archive_path = temp_dir_path.join(EXE_NAME).with_extension("zip");
@@ -542,7 +542,7 @@ pub fn unpack_into_dir(
 fn replace_exe(from: &Path, to: &Path) -> Result<(), std::io::Error> {
   if cfg!(windows) {
     // On windows you cannot replace the currently running executable.
-    // so first we rename it to denox.old.exe
+    // so first we rename it to denog.old.exe
     fs::rename(to, to.with_extension("old.exe"))?;
   } else {
     fs::remove_file(to)?;

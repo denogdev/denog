@@ -99,7 +99,7 @@ pub fn check(
   // that data here.
   let hash_data = vec![
     options.ts_config.as_bytes(),
-    version::denox_long().as_bytes().to_owned(),
+    version::denog_long().as_bytes().to_owned(),
   ];
 
   let response = tsc::exec(tsc::Request {

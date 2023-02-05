@@ -177,8 +177,8 @@ impl BenchReporter for ConsoleReporter {
       println!(
         "{}\n",
         colors::gray(format!(
-          "runtime: denox {} ({})",
-          crate::version::denox_short(),
+          "runtime: denog {} ({})",
+          crate::version::denog_short(),
           env!("TARGET")
         ))
       );

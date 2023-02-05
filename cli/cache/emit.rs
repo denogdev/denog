@@ -30,7 +30,7 @@ impl EmitCache {
   pub fn new(disk_cache: DiskCache) -> Self {
     Self {
       disk_cache,
-      cli_version: crate::version::denox_long(),
+      cli_version: crate::version::denog_long(),
     }
   }
 

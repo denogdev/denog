@@ -142,7 +142,7 @@ pub fn init(unstable: bool) -> Extension {
   Extension::builder("deno_webgpu")
     .dependencies(vec!["deno_webidl", "deno_web"])
     .js(include_js_files!(
-      prefix "denox:ext/webgpu",
+      prefix "denog:ext/webgpu",
       "01_webgpu.js",
       "02_idl_types.js",
     ))

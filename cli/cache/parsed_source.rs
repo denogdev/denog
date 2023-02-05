@@ -63,7 +63,7 @@ impl ParsedSourceCache {
   pub fn new(sql_cache_path: Option<PathBuf>) -> Self {
     Self {
       db_cache_path: sql_cache_path,
-      cli_version: crate::version::denox_long(),
+      cli_version: crate::version::denog_long(),
       sources: Default::default(),
     }
   }

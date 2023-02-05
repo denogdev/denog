@@ -403,13 +403,13 @@ fn main() {
 
   #[cfg(target_os = "windows")]
   println!(
-    "cargo:rustc-link-arg-bin=denox=/DEF:{}",
+    "cargo:rustc-link-arg-bin=denog=/DEF:{}",
     symbols_path.display()
   );
 
   #[cfg(target_os = "macos")]
   println!(
-    "cargo:rustc-link-arg-bin=denox=-Wl,-exported_symbols_list,{}",
+    "cargo:rustc-link-arg-bin=denog=-Wl,-exported_symbols_list,{}",
     symbols_path.display()
   );
 
@@ -421,10 +421,10 @@ fn main() {
     // Here, we assume that if a custom compiler is used, that it will be modern enough to support a dynamic symbol list.
     if env::var("CC").is_err() && ver.major <= 2 && ver.minor < 35 {
       println!("cargo:warning=Compiling with all symbols exported, this will result in a larger binary. Please use glibc 2.35 or later for an optimised build.");
-      println!("cargo:rustc-link-arg-bin=denox=-rdynamic");
+      println!("cargo:rustc-link-arg-bin=denog=-rdynamic");
     } else {
       println!(
-        "cargo:rustc-link-arg-bin=denox=-Wl,--export-dynamic-symbol-list={}",
+        "cargo:rustc-link-arg-bin=denog=-Wl,--export-dynamic-symbol-list={}",
         symbols_path.display()
       );
     }

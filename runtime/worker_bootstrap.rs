@@ -36,7 +36,7 @@ impl Default for BootstrapOptions {
       .map(|p| p.get())
       .unwrap_or(1);
 
-    let runtime_version = format!("denox-{}", env!("CARGO_PKG_VERSION"));
+    let runtime_version = format!("denog-{}", env!("CARGO_PKG_VERSION"));
     let user_agent = format!("Deno/{runtime_version}");
 
     Self {

@@ -2,13 +2,13 @@
 # Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 [package]
-name = "denox_runtime"
-version = "0.3.1"
+name = "denog_runtime"
+version = "0.3.2"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Provides the denox runtime library"
+description = "Provides the denog runtime library"
 
 [features]
 # "fake" feature that allows to generate docs on docs.rs
@@ -17,7 +17,7 @@ docsrs = []
 snapshot_from_snapshot = []
 
 [lib]
-name = "denox_runtime"
+name = "denog_runtime"
 path = "lib.rs"
 
 [[example]]

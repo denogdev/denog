@@ -1354,8 +1354,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "denox"
-version = "0.3.1"
+name = "denog"
+version = "0.3.2"
 dependencies = [
  "atty",
  "base32",
@@ -1376,7 +1376,7 @@ dependencies = [
  "deno_lint",
  "deno_lockfile",
  "deno_task_shell",
- "denox_runtime",
+ "denog_runtime",
  "dissimilar",
  "dotenv",
  "dprint-plugin-json",
@@ -1439,8 +1439,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "denox_runtime"
-version = "0.3.1"
+name = "denog_runtime"
+version = "0.3.2"
 dependencies = [
  "atty",
  "deno_broadcast_channel",
@@ -1461,8 +1461,8 @@ dependencies = [
  "deno_webidl",
  "deno_websocket",
  "deno_webstorage",
- "denox_webgpu",
- "denox_wsi",
+ "denog_webgpu",
+ "denog_wsi",
  "dlopen",
  "encoding_rs",
  "filetime",
@@ -1491,8 +1491,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "denox_webgpu"
-version = "0.3.1"
+name = "denog_webgpu"
+version = "0.3.2"
 dependencies = [
  "deno_core",
  "raw-window-handle 0.5.0",
@@ -1503,11 +1503,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "denox_wsi"
-version = "0.3.1"
+name = "denog_wsi"
+version = "0.3.2"
 dependencies = [
  "deno_core",
- "denox_webgpu",
+ "denog_webgpu",
  "raw-window-handle 0.5.0",
  "serde",
  "tokio",

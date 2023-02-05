@@ -849,7 +849,7 @@ impl Inner {
 
     let version = format!(
       "{} ({}, {})",
-      crate::version::denox_long(),
+      crate::version::denog_long(),
       env!("PROFILE"),
       env!("TARGET")
     );

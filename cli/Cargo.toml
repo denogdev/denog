@@ -2,18 +2,18 @@
 # Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 [package]
-name = "denox"
-version = "0.3.1"
+name = "denog"
+version = "0.3.2"
 authors.workspace = true
-default-run = "denox"
+default-run = "denog"
 edition.workspace = true
 exclude = ["tests/testdata/npm/registry/*"]
 license.workspace = true
 repository.workspace = true
-description = "Provides the denox executable"
+description = "Provides the denog executable"
 
 [[bin]]
-name = "denox"
+name = "denog"
 path = "main.rs"
 doc = false
 
@@ -130,8 +130,8 @@ trust-dns-client = "=0.22.0"
 trust-dns-server = "=0.22.0"
 
 [package.metadata.winres]
-# This section defines the metadata that appears in the denox.exe PE header.
-OriginalFilename = "denox.exe"
+# This section defines the metadata that appears in the denog.exe PE header.
+OriginalFilename = "denog.exe"
 LegalCopyright = "© Deno contributors & Deno Land Inc & Jo Bates. MIT licensed."
-ProductName = "Denox"
-FileDescription = "Denox: Deno with built-in window system integration"
+ProductName = "Denog"
+FileDescription = "Denog: Deno with built-in window system integration"

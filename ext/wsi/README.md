@@ -1,3 +1,3 @@
-# denox_wsi
+# denog_wsi
 
-Window system integration for Denox.
+Window system integration for Denog.
