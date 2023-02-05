@@ -84,7 +84,7 @@ while (true) {
       const renderPass = commandEncoder.beginRenderPass({
         colorAttachments: [{
           view,
-          clearValue: { r: 0, g: 1, b: 0, a: 1 },
+          clearValue: [0.0, 1.0, 0.0, 1.0],
           loadOp: "clear",
           storeOp: "store",
         }],
