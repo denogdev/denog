@@ -3,7 +3,7 @@
 
 [package]
 name = "denog_runtime"
-version = "0.3.2"
+version = "0.4.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
