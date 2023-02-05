@@ -15,6 +15,25 @@
     webidl.converters["unsigned long"],
   );
 
+  // ENUM: WSIWindowLevel
+  webidl.converters["WSIWindowLevel"] = webidl.createEnumConverter(
+    "WSIWindowLevel",
+    [
+      "always-on-bottom",
+      "normal",
+      "always-on-top",
+    ],
+  );
+
+  // ENUM: WSIWindowTheme
+  webidl.converters["WSIWindowTheme"] = webidl.createEnumConverter(
+    "WSIWindowTheme",
+    [
+      "light",
+      "dark",
+    ],
+  );
+
   // DICTIONARY: WSICreateWindowOptions
   const dictMembersWSICreateWindowOptions = [
     {
@@ -36,6 +55,10 @@
     {
       key: "resizable",
       converter: webidl.converters["boolean"],
+    },
+    {
+      key: "enableButtons",
+      converter: webidl.converters["unsigned long"],
     },
     {
       key: "title",
@@ -62,7 +85,23 @@
       converter: webidl.converters["boolean"],
     },
     {
-      key: "alwaysOnTop",
+      key: "level",
+      converter: webidl.converters["WSIWindowLevel"],
+    },
+    {
+      key: "theme",
+      converter: webidl.converters["WSIWindowTheme"],
+    },
+    {
+      key: "resizeIncrements",
+      converter: webidl.converters.WSISize,
+    },
+    {
+      key: "contentProtected",
+      converter: webidl.converters["boolean"],
+    },
+    {
+      key: "active",
       converter: webidl.converters["boolean"],
     },
   ];

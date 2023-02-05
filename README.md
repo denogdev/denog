@@ -64,7 +64,7 @@ denog run --unstable --wsi https://denogdev.github.io/hello-triangle.ts
 ```
 
 Denog's window system integration uses the Rust
-[`winit`](https://docs.rs/winit/0.27.5/winit/) library
+[`winit`](https://docs.rs/winit/0.28.1/winit/) library
 under the hood and provides much of the same functionality.
 
 To create a window, use `Deno.wsi.createWindow`:
@@ -74,7 +74,7 @@ createWindow(options?: WSICreateWindowOptions): WSIWindow
 ```
 
 `WSICreateWindowOptions` provides most of the same options as
-[`winit::window::WindowBuilder`](https://docs.rs/winit/0.27.5/winit/window/struct.WindowBuilder.html):
+[`winit::window::WindowBuilder`](https://docs.rs/winit/0.28.1/winit/window/struct.WindowBuilder.html):
 
 ```ts
 declare interface WSICreateWindowOptions {
@@ -83,13 +83,18 @@ declare interface WSICreateWindowOptions {
   maxInnerSize?: [number, number];
   position?: [number, number];
   resizable?: boolean;
+  enableButtons?: WSIWindowButtons;
   title?: string;
   fullscreen?: boolean;
   maximized?: boolean;
   visible?: boolean;
   transparent?: boolean;
   decorated?: boolean;
-  alwaysOnTop?: boolean;
+  level?: WSIWindowLevel;
+  theme?: WSIWindowTheme;
+  resizeIncrements?: [number, number];
+  contentProtected?: boolean;
+  active?: boolean;
 }
 ```
 
@@ -113,20 +118,32 @@ declare class WSIWindow {
   setMinInnerSize(width: number, height: number): void;
   setMaxInnerSize(size: [number, number] | null): void;
   setMaxInnerSize(width: number, height: number): void;
+  getResizeIncrements(): [number, number] | null;
+  setResizeIncrements(size: [number, number] | null): void;
+  setResizeIncrements(width: number, height: number): void;
   setTitle(title: string): void;
+  setTransparent(transparent?: boolean): void;
   setVisible(visible?: boolean): void;
   isVisible(): boolean | null;
   setResizable(resizable?: boolean): void;
   isResizable(): boolean;
+  setEnabledButtons(buttons: WSIWindowButtons): void;
+  getEnabledButtons(): WSIWindowButtons;
   setMinimized(minimized?: boolean): void;
+  isMinimized(): boolean | null;
   setMaximized(maximized?: boolean): void;
   isMaximized(): boolean;
   setFullscreen(fullscreen?: boolean): void;
   isFullscreen(): boolean;
   setDecorated(decorated?: boolean): void;
   isDecorated(): boolean;
-  setAlwaysOnTop(alwaysOnTop?: boolean): void;
+  setLevel(level: WSIWindowLevel): void;
   focus(): void;
+  hasFocus(): boolean;
+  setTheme(theme: WSIWindowTheme | null): void;
+  getTheme(): WSIWindowTheme | null;
+  setContentProtected(contentProtected?: boolean): void;
+  getTitle(): string;
 }
 ```
 
@@ -155,7 +172,7 @@ while (true) {
 
 `WSIEvent` is a discriminated union.
 Each `WSIEvent.type` corresponds to a different event type from
-[`winit::event::Event`](https://docs.rs/winit/0.27.5/winit/event/enum.Event.html).
+[`winit::event::Event`](https://docs.rs/winit/0.28.1/winit/event/enum.Event.html).
 The properties of each event type are listed in
 [lib.deno.wsi.d.ts](./cli/tsc/dts/lib.deno.wsi.d.ts)
 along with links to the corresponding `winit` events.

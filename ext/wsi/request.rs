@@ -1,6 +1,6 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-use crate::create_window_options::CreateWindowOptions;
+use crate::window::WsiCreateWindowOptions;
 use deno_webgpu::wgpu_core::id::SurfaceId;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::{
@@ -12,7 +12,10 @@ use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
   error::{NotSupportedError, OsError},
   event_loop::EventLoopWindowTarget,
-  window::{Fullscreen, Window, WindowBuilder, WindowId},
+  window::{
+    Fullscreen, Theme, Window, WindowBuilder, WindowButtons, WindowId,
+    WindowLevel,
+  },
 };
 
 // A request from the proxy thread to the real event loop.
@@ -20,7 +23,7 @@ pub enum Request {
   NextEvent,
 
   CreateWindow {
-    options: Option<Box<CreateWindowOptions>>,
+    options: Option<Box<WsiCreateWindowOptions>>,
     result_tx: SyncSender<Result<WindowId, OsError>>,
   },
 
@@ -89,9 +92,26 @@ pub enum Request {
     result_tx: SyncSender<()>,
   },
 
+  WindowResizeIncrements {
+    window_id: WindowId,
+    result_tx: SyncSender<Option<PhysicalSize<u32>>>,
+  },
+
+  WindowSetResizeIncrements {
+    window_id: WindowId,
+    increments: Option<PhysicalSize<u32>>,
+    result_tx: SyncSender<()>,
+  },
+
   WindowSetTitle {
     window_id: WindowId,
     title: String,
+    result_tx: SyncSender<()>,
+  },
+
+  WindowSetTransparent {
+    window_id: WindowId,
+    transparent: bool,
     result_tx: SyncSender<()>,
   },
 
@@ -117,10 +137,26 @@ pub enum Request {
     result_tx: SyncSender<bool>,
   },
 
+  WindowSetEnabledButtons {
+    window_id: WindowId,
+    buttons: WindowButtons,
+    result_tx: SyncSender<()>,
+  },
+
+  WindowEnabledButtons {
+    window_id: WindowId,
+    result_tx: SyncSender<WindowButtons>,
+  },
+
   WindowSetMinimized {
     window_id: WindowId,
     minimized: bool,
     result_tx: SyncSender<()>,
+  },
+
+  WindowIsMinimized {
+    window_id: WindowId,
+    result_tx: SyncSender<Option<bool>>,
   },
 
   WindowSetMaximized {
@@ -156,15 +192,42 @@ pub enum Request {
     result_tx: SyncSender<bool>,
   },
 
-  WindowSetAlwaysOnTop {
+  WindowSetLevel {
     window_id: WindowId,
-    always_on_top: bool,
+    level: WindowLevel,
     result_tx: SyncSender<()>,
   },
 
   FocusWindow {
     window_id: WindowId,
     result_tx: SyncSender<()>,
+  },
+
+  WindowHasFocus {
+    window_id: WindowId,
+    result_tx: SyncSender<bool>,
+  },
+
+  WindowSetTheme {
+    window_id: WindowId,
+    theme: Option<Theme>,
+    result_tx: SyncSender<()>,
+  },
+
+  WindowTheme {
+    window_id: WindowId,
+    result_tx: SyncSender<Option<Theme>>,
+  },
+
+  WindowSetContentProtected {
+    window_id: WindowId,
+    protected: bool,
+    result_tx: SyncSender<()>,
+  },
+
+  WindowTitle {
+    window_id: WindowId,
+    result_tx: SyncSender<String>,
   },
 }
 
@@ -173,37 +236,59 @@ impl Debug for Request {
     match self {
       Request::NextEvent => f.write_str("Request::NextEvent"),
 
-      Request::CreateWindow { options, .. } => f
+      Request::CreateWindow {
+        options,
+        result_tx: _,
+      } => f
         .debug_struct("Request::CreateWindow")
         .field("options", options)
         .finish_non_exhaustive(),
 
-      Request::DestroyWindow { window_id, .. } => f
+      Request::DestroyWindow {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::DestroyWindow")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
-      Request::CreateWebGpuSurface { window_id, .. } => f
+      Request::CreateWebGpuSurface {
+        window_id,
+        webgpu_instance: _,
+        result_tx: _,
+      } => f
         .debug_struct("Request::CreateWebGpuSurface")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
-      Request::WindowScaleFactor { window_id, .. } => f
+      Request::WindowScaleFactor {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowScaleFactor")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
-      Request::WindowRedraw { window_id, .. } => f
+      Request::WindowRedraw {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowRedraw")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
-      Request::WindowInnerPosition { window_id, .. } => f
+      Request::WindowInnerPosition {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowInnerPosition")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
-      Request::WindowOuterPosition { window_id, .. } => f
+      Request::WindowOuterPosition {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowOuterPosition")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
@@ -211,33 +296,43 @@ impl Debug for Request {
       Request::WindowSetOuterPosition {
         window_id,
         position,
-        ..
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetOuterPosition")
         .field("window_id", window_id)
         .field("position", position)
         .finish_non_exhaustive(),
 
-      Request::WindowInnerSize { window_id, .. } => f
+      Request::WindowInnerSize {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowInnerSize")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
       Request::WindowSetInnerSize {
-        window_id, size, ..
+        window_id,
+        size,
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetInnerSize")
         .field("window_id", window_id)
         .field("size", size)
         .finish_non_exhaustive(),
 
-      Request::WindowOuterSize { window_id, .. } => f
+      Request::WindowOuterSize {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowOuterSize")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
       Request::WindowSetMinInnerSize {
-        window_id, size, ..
+        window_id,
+        size,
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetMinInnerSize")
         .field("window_id", window_id)
@@ -245,30 +340,67 @@ impl Debug for Request {
         .finish_non_exhaustive(),
 
       Request::WindowSetMaxInnerSize {
-        window_id, size, ..
+        window_id,
+        size,
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetMaxInnerSize")
         .field("window_id", window_id)
         .field("size", size)
         .finish_non_exhaustive(),
 
+      Request::WindowResizeIncrements {
+        window_id,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowResizeIncrements")
+        .field("window_id", window_id)
+        .finish_non_exhaustive(),
+
+      Request::WindowSetResizeIncrements {
+        window_id,
+        increments,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowSetResizeIncrements")
+        .field("window_id", window_id)
+        .field("increments", increments)
+        .finish_non_exhaustive(),
+
       Request::WindowSetTitle {
-        window_id, title, ..
+        window_id,
+        title,
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetTitle")
         .field("window_id", window_id)
         .field("title", title)
         .finish_non_exhaustive(),
 
+      Request::WindowSetTransparent {
+        window_id,
+        transparent,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowSetTransparent")
+        .field("window_id", window_id)
+        .field("transparent", transparent)
+        .finish_non_exhaustive(),
+
       Request::WindowSetVisible {
-        window_id, visible, ..
+        window_id,
+        visible,
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetVisible")
         .field("window_id", window_id)
         .field("visible", visible)
         .finish_non_exhaustive(),
 
-      Request::WindowIsVisible { window_id, .. } => f
+      Request::WindowIsVisible {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowIsVisible")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
@@ -276,39 +408,71 @@ impl Debug for Request {
       Request::WindowSetResizable {
         window_id,
         resizable,
-        ..
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetResizable")
         .field("window_id", window_id)
         .field("resizable", resizable)
         .finish_non_exhaustive(),
 
-      Request::WindowIsResizable { window_id, .. } => f
+      Request::WindowIsResizable {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowIsResizable")
+        .field("window_id", window_id)
+        .finish_non_exhaustive(),
+
+      Request::WindowSetEnabledButtons {
+        window_id,
+        buttons,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowSetEnabledButtons")
+        .field("window_id", window_id)
+        .field("buttons", buttons)
+        .finish_non_exhaustive(),
+
+      Request::WindowEnabledButtons {
+        window_id,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowEnabledButtons")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
       Request::WindowSetMinimized {
         window_id,
         minimized,
-        ..
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetMinimized")
         .field("window_id", window_id)
         .field("minimized", minimized)
         .finish_non_exhaustive(),
 
+      Request::WindowIsMinimized {
+        window_id,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowIsMinimized")
+        .field("window_id", window_id)
+        .finish_non_exhaustive(),
+
       Request::WindowSetMaximized {
         window_id,
         maximized,
-        ..
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetMaximized")
         .field("window_id", window_id)
         .field("maximized", maximized)
         .finish_non_exhaustive(),
 
-      Request::WindowIsMaximized { window_id, .. } => f
+      Request::WindowIsMaximized {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowIsMaximized")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
@@ -316,14 +480,17 @@ impl Debug for Request {
       Request::WindowSetFullscreen {
         window_id,
         fullscreen,
-        ..
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetFullscreen")
         .field("window_id", window_id)
         .field("fullscreen", fullscreen)
         .finish_non_exhaustive(),
 
-      Request::WindowFullscreen { window_id, .. } => f
+      Request::WindowFullscreen {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowFullscreen")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
@@ -331,30 +498,80 @@ impl Debug for Request {
       Request::WindowSetDecorations {
         window_id,
         decorations,
-        ..
+        result_tx: _,
       } => f
         .debug_struct("Request::WindowSetDecorations")
         .field("window_id", window_id)
         .field("decorations", decorations)
         .finish_non_exhaustive(),
 
-      Request::WindowIsDecorated { window_id, .. } => f
+      Request::WindowIsDecorated {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::WindowIsDecorated")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
 
-      Request::WindowSetAlwaysOnTop {
+      Request::WindowSetLevel {
         window_id,
-        always_on_top,
-        ..
+        level,
+        result_tx: _,
       } => f
-        .debug_struct("Request::WindowSetAlwaysOnTop")
+        .debug_struct("Request::WindowSetLevel")
         .field("window_id", window_id)
-        .field("always_on_top", always_on_top)
+        .field("level", level)
         .finish_non_exhaustive(),
 
-      Request::FocusWindow { window_id, .. } => f
+      Request::FocusWindow {
+        window_id,
+        result_tx: _,
+      } => f
         .debug_struct("Request::FocusWindow")
+        .field("window_id", window_id)
+        .finish_non_exhaustive(),
+
+      Request::WindowHasFocus {
+        window_id,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowHasFocus")
+        .field("window_id", window_id)
+        .finish_non_exhaustive(),
+
+      Request::WindowSetTheme {
+        window_id,
+        theme,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowSetTheme")
+        .field("window_id", window_id)
+        .field("theme", theme)
+        .finish_non_exhaustive(),
+
+      Request::WindowTheme {
+        window_id,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowTheme")
+        .field("window_id", window_id)
+        .finish_non_exhaustive(),
+
+      Request::WindowSetContentProtected {
+        window_id,
+        protected,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowSetContentProtected")
+        .field("window_id", window_id)
+        .field("protected", protected)
+        .finish_non_exhaustive(),
+
+      Request::WindowTitle {
+        window_id,
+        result_tx: _,
+      } => f
+        .debug_struct("Request::WindowTitle")
         .field("window_id", window_id)
         .finish_non_exhaustive(),
     }
@@ -492,6 +709,25 @@ pub fn handle_requests(
         result_tx.send(window.set_max_inner_size(size)).unwrap();
       }
 
+      Request::WindowResizeIncrements {
+        window_id,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.resize_increments()).unwrap();
+      }
+
+      Request::WindowSetResizeIncrements {
+        window_id,
+        increments,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx
+          .send(window.set_resize_increments(increments))
+          .unwrap();
+      }
+
       Request::WindowSetTitle {
         window_id,
         title,
@@ -499,6 +735,15 @@ pub fn handle_requests(
       } => {
         let window = windows.get(&window_id).unwrap();
         result_tx.send(window.set_title(&title)).unwrap();
+      }
+
+      Request::WindowSetTransparent {
+        window_id,
+        transparent,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.set_transparent(transparent)).unwrap();
       }
 
       Request::WindowSetVisible {
@@ -535,6 +780,23 @@ pub fn handle_requests(
         result_tx.send(window.is_resizable()).unwrap();
       }
 
+      Request::WindowSetEnabledButtons {
+        window_id,
+        buttons,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.set_enabled_buttons(buttons)).unwrap();
+      }
+
+      Request::WindowEnabledButtons {
+        window_id,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.enabled_buttons()).unwrap();
+      }
+
       Request::WindowSetMinimized {
         window_id,
         minimized,
@@ -542,6 +804,14 @@ pub fn handle_requests(
       } => {
         let window = windows.get(&window_id).unwrap();
         result_tx.send(window.set_minimized(minimized)).unwrap();
+      }
+
+      Request::WindowIsMinimized {
+        window_id,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.is_minimized()).unwrap();
       }
 
       Request::WindowSetMaximized {
@@ -595,15 +865,13 @@ pub fn handle_requests(
         result_tx.send(window.is_decorated()).unwrap();
       }
 
-      Request::WindowSetAlwaysOnTop {
+      Request::WindowSetLevel {
         window_id,
-        always_on_top,
+        level,
         result_tx,
       } => {
         let window = windows.get(&window_id).unwrap();
-        result_tx
-          .send(window.set_always_on_top(always_on_top))
-          .unwrap();
+        result_tx.send(window.set_window_level(level)).unwrap();
       }
 
       Request::FocusWindow {
@@ -612,6 +880,50 @@ pub fn handle_requests(
       } => {
         let window = windows.get(&window_id).unwrap();
         result_tx.send(window.focus_window()).unwrap();
+      }
+
+      Request::WindowHasFocus {
+        window_id,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.has_focus()).unwrap();
+      }
+
+      Request::WindowSetTheme {
+        window_id,
+        theme,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.set_theme(theme)).unwrap();
+      }
+
+      Request::WindowTheme {
+        window_id,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.theme()).unwrap();
+      }
+
+      Request::WindowSetContentProtected {
+        window_id,
+        protected,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx
+          .send(window.set_content_protected(protected))
+          .unwrap();
+      }
+
+      Request::WindowTitle {
+        window_id,
+        result_tx,
+      } => {
+        let window = windows.get(&window_id).unwrap();
+        result_tx.send(window.title()).unwrap();
       }
     }
   }

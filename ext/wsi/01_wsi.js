@@ -114,6 +114,9 @@
         if (options.position != null) {
           checkPosition(prefix, options.position);
         }
+        if (options.resizeIncrements != null) {
+          checkSize(prefix, options.resizeIncrements);
+        }
       }
 
       const wid = ops.op_wsi_create_window(options);
@@ -283,6 +286,25 @@
       return ops.op_wsi_window_set_max_inner_size(wid, size);
     }
 
+    getResizeIncrements() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getResizeIncrements' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_resize_increments(wid);
+    }
+
+    setResizeIncrements(sizeOrWidth, height) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setResizeIncrements' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      const size = convertSize(prefix, sizeOrWidth, height, true);
+
+      return ops.op_wsi_window_set_resize_increments(wid, size);
+    }
+
     setTitle(title) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setTitle' on 'WSIWindow'";
@@ -295,6 +317,19 @@
       });
 
       return ops.op_wsi_window_set_title(wid, title);
+    }
+
+    setTransparent(transparent = true) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setTransparent' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      transparent = webidl.converters["boolean"](transparent, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_transparent(wid, transparent);
     }
 
     setVisible(visible = true) {
@@ -339,6 +374,28 @@
       return ops.op_wsi_window_is_resizable(wid);
     }
 
+    setEnabledButtons(buttons) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setEnabledButtons' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      buttons = webidl.converters["unsigned long"](buttons, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_enabled_buttons(wid, buttons);
+    }
+
+    getEnabledButtons() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getEnabledButtons' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_enabled_buttons(wid);
+    }
+
     setMinimized(minimized = true) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMinimized' on 'WSIWindow'";
@@ -350,6 +407,14 @@
       });
 
       return ops.op_wsi_window_set_minimized(wid, minimized);
+    }
+
+    isMinimized() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'isMinimized' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_is_minimized(wid);
     }
 
     setMaximized(maximized = true) {
@@ -415,17 +480,18 @@
       return ops.op_wsi_window_is_decorated(wid);
     }
 
-    setAlwaysOnTop(alwaysOnTop = true) {
+    setLevel(level) {
       webidl.assertBranded(this, WSIWindowPrototype);
-      const prefix = "Failed to execute 'setAlwaysOnTop' on 'WSIWindow'";
+      const prefix = "Failed to execute 'setLevel' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      alwaysOnTop = webidl.converters["boolean"](alwaysOnTop, {
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      level = webidl.converters["WSIWindowLevel"](level, {
         prefix,
         context: "Argument 1",
       });
 
-      return ops.op_wsi_window_set_always_on_top(wid, alwaysOnTop);
+      return ops.op_wsi_window_set_level(wid, level);
     }
 
     focus() {
@@ -435,13 +501,81 @@
 
       return ops.op_wsi_focus_window(wid);
     }
+
+    hasFocus() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'hasFocus' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_has_focus(wid);
+    }
+
+    setTheme(theme) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setTheme' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      theme = webidl.converters["WSIWindowTheme"](theme, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_theme(wid, theme);
+    }
+
+    getTheme() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getTheme' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_theme(wid);
+    }
+
+    setContentProtected(contentProtected = true) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setContentProtected' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      contentProtected = webidl.converters["boolean"](contentProtected, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_content_protected(wid, contentProtected);
+    }
+
+    getTitle() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'getTitle' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_title(wid);
+    }
   }
   const WSIWindowPrototype = WSIWindow.prototype;
+
+  class WSIWindowButton {
+    constructor() {
+      webidl.illegalConstructor();
+    }
+
+    static get CLOSE() {
+      return 0b001;
+    }
+    static get MINIMIZE() {
+      return 0b010;
+    }
+    static get MAXIMIZE() {
+      return 0b100;
+    }
+  }
 
   globalThis.__bootstrap.wsi = {
     wsi: webidl.createBranded(WSI),
     WSI,
     WSIModifierKey,
     WSIWindow,
+    WSIWindowButton,
   };
 })(this);

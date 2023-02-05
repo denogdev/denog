@@ -4,8 +4,9 @@ use crate::{
   device_ids::DeviceIds,
   input::{
     WsiButtonState, WsiKeyCode, WsiMouseButton, WsiMouseDelta, WsiScrollDelta,
-    WsiTouchForce, WsiTouchPhase, WsiWindowTheme,
+    WsiTouchForce, WsiTouchPhase,
   },
+  window::WsiWindowTheme,
 };
 use serde::Serialize;
 use std::path::PathBuf;
@@ -174,6 +175,18 @@ pub enum WsiEvent {
     scale_factor: f64,
   },
   #[serde(rename_all = "camelCase")]
+  SmartMagnify {
+    window: u64,
+    device_id: u32,
+  },
+  #[serde(rename_all = "camelCase")]
+  TouchpadMagnify {
+    window: u64,
+    device_id: u32,
+    delta: f64,
+    touch_phase: WsiTouchPhase,
+  },
+  #[serde(rename_all = "camelCase")]
   TouchpadPressure {
     window: u64,
     device_id: u32,
@@ -181,9 +194,16 @@ pub enum WsiEvent {
     click_level: i64,
   },
   #[serde(rename_all = "camelCase")]
+  TouchpadRotate {
+    window: u64,
+    device_id: u32,
+    delta: f32,
+    touch_phase: WsiTouchPhase,
+  },
+  #[serde(rename_all = "camelCase")]
   WindowFocus {
     window: u64,
-    is_focused: bool,
+    has_focus: bool,
   },
   #[serde(rename_all = "camelCase")]
   WindowMoved {
@@ -231,8 +251,8 @@ impl WsiEvent {
             window,
             code_point: c as u32,
           },
-          WindowEvent::Focused(is_focused) => {
-            Self::WindowFocus { window, is_focused }
+          WindowEvent::Focused(has_focus) => {
+            Self::WindowFocus { window, has_focus }
           }
           WindowEvent::KeyboardInput {
             device_id,
@@ -303,6 +323,30 @@ impl WsiEvent {
             device_id: device_ids.get(device_id),
             button: button.into(),
             state: state.into(),
+          },
+          WindowEvent::TouchpadMagnify {
+            device_id,
+            delta,
+            phase,
+          } => Self::TouchpadMagnify {
+            window,
+            device_id: device_ids.get(device_id),
+            delta,
+            touch_phase: phase.into(),
+          },
+          WindowEvent::SmartMagnify { device_id } => Self::SmartMagnify {
+            window,
+            device_id: device_ids.get(device_id),
+          },
+          WindowEvent::TouchpadRotate {
+            device_id,
+            delta,
+            phase,
+          } => Self::TouchpadRotate {
+            window,
+            device_id: device_ids.get(device_id),
+            delta,
+            touch_phase: phase.into(),
           },
           WindowEvent::TouchpadPressure {
             device_id,

@@ -155,5 +155,6 @@
     WSI: __bootstrap.wsi.WSI,
     WSIModifierKey: __bootstrap.wsi.WSIModifierKey,
     WSIWindow: __bootstrap.wsi.WSIWindow,
+    WSIWindowButton: __bootstrap.wsi.WSIWindowButton,
   };
 })(this);

@@ -1,22 +1,23 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-mod create_window_options;
 mod device_ids;
 mod event;
 pub mod event_loop;
 mod input;
 mod request;
+mod window;
 
 use crate::{
-  create_window_options::CreateWindowOptions, event::WsiEvent,
-  event_loop::WsiEventLoopProxy,
+  event::WsiEvent, event_loop::WsiEventLoopProxy,
+  window::WsiCreateWindowOptions,
 };
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
 use std::{cell::RefCell, rc::Rc};
+use window::{WsiWindowLevel, WsiWindowTheme};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
-  window::Fullscreen,
+  window::{Fullscreen, WindowButtons},
 };
 
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
@@ -42,20 +43,31 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_outer_size::decl(),
       op_wsi_window_set_min_inner_size::decl(),
       op_wsi_window_set_max_inner_size::decl(),
+      op_wsi_window_resize_increments::decl(),
+      op_wsi_window_set_resize_increments::decl(),
       op_wsi_window_set_title::decl(),
+      op_wsi_window_set_transparent::decl(),
       op_wsi_window_set_visible::decl(),
       op_wsi_window_is_visible::decl(),
       op_wsi_window_set_resizable::decl(),
       op_wsi_window_is_resizable::decl(),
+      op_wsi_window_set_enabled_buttons::decl(),
+      op_wsi_window_enabled_buttons::decl(),
       op_wsi_window_set_minimized::decl(),
+      op_wsi_window_is_minimized::decl(),
       op_wsi_window_set_maximized::decl(),
       op_wsi_window_is_maximized::decl(),
       op_wsi_window_set_fullscreen::decl(),
       op_wsi_window_is_fullscreen::decl(),
       op_wsi_window_set_decorated::decl(),
       op_wsi_window_is_decorated::decl(),
-      op_wsi_window_set_always_on_top::decl(),
+      op_wsi_window_set_level::decl(),
       op_wsi_focus_window::decl(),
+      op_wsi_window_has_focus::decl(),
+      op_wsi_window_set_theme::decl(),
+      op_wsi_window_theme::decl(),
+      op_wsi_window_set_content_protected::decl(),
+      op_wsi_window_title::decl(),
     ])
     .state(move |state| {
       if let Some(event_loop_proxy) = &event_loop_proxy {
@@ -72,8 +84,7 @@ fn try_borrow_event_loop_proxy<'a>(
 ) -> &'a Rc<WsiEventLoopProxy> {
   state.try_borrow::<Rc<WsiEventLoopProxy>>().unwrap_or_else(|| {
     eprintln!(
-      "WSI API '{}'. Only available in the main worker and the --wsi flag must be provided.",
-      api_name
+      "WSI API '{api_name}'. Only available in the main worker and the --wsi flag must be provided.",
     );
     std::process::exit(70);
   })
@@ -96,7 +107,7 @@ async fn op_wsi_next_event(
 #[op]
 fn op_wsi_create_window(
   state: &mut OpState,
-  options: Option<Box<CreateWindowOptions>>,
+  options: Option<Box<WsiCreateWindowOptions>>,
 ) -> Result<u64, anyhow::Error> {
   match try_borrow_event_loop_proxy(state, "Deno.wsi.createWindow")
     .create_window(options)
@@ -236,10 +247,46 @@ fn op_wsi_window_set_max_inner_size(
 }
 
 #[op]
+fn op_wsi_window_resize_increments(
+  state: &mut OpState,
+  wid: u64,
+) -> Option<(u32, u32)> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_resize_increments(wid.into())
+    .map(|PhysicalSize { width, height }| (width, height))
+}
+
+#[op]
+fn op_wsi_window_set_resize_increments(
+  state: &mut OpState,
+  wid: u64,
+  increments: Option<(u32, u32)>,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_set_resize_increments(
+      wid.into(),
+      increments.map(|(width, height)| PhysicalSize { width, height }),
+    )
+}
+
+#[op]
 fn op_wsi_window_set_title(state: &mut OpState, wid: u64, title: String) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .window_set_title(wid.into(), title)
+}
+
+#[op]
+fn op_wsi_window_set_transparent(
+  state: &mut OpState,
+  wid: u64,
+  transparent: bool,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_set_transparent(wid.into(), transparent)
 }
 
 #[op]
@@ -271,10 +318,39 @@ fn op_wsi_window_is_resizable(state: &mut OpState, wid: u64) -> bool {
 }
 
 #[op]
+fn op_wsi_window_set_enabled_buttons(
+  state: &mut OpState,
+  wid: u64,
+  buttons: u32,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_set_enabled_buttons(
+      wid.into(),
+      WindowButtons::from_bits_truncate(buttons),
+    )
+}
+
+#[op]
+fn op_wsi_window_enabled_buttons(state: &mut OpState, wid: u64) -> u32 {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_enabled_buttons(wid.into())
+    .bits()
+}
+
+#[op]
 fn op_wsi_window_set_minimized(state: &mut OpState, wid: u64, minimized: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .window_set_minimized(wid.into(), minimized)
+}
+
+#[op]
+fn op_wsi_window_is_minimized(state: &mut OpState, wid: u64) -> Option<bool> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_is_minimized(wid.into())
 }
 
 #[op]
@@ -331,14 +407,14 @@ fn op_wsi_window_is_decorated(state: &mut OpState, wid: u64) -> bool {
 }
 
 #[op]
-fn op_wsi_window_set_always_on_top(
+fn op_wsi_window_set_level(
   state: &mut OpState,
   wid: u64,
-  always_on_top: bool,
+  level: WsiWindowLevel,
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_always_on_top(wid.into(), always_on_top)
+    .window_set_level(wid.into(), level.into())
 }
 
 #[op]
@@ -346,4 +422,51 @@ fn op_wsi_focus_window(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .focus_window(wid.into())
+}
+
+#[op]
+fn op_wsi_window_has_focus(state: &mut OpState, wid: u64) -> bool {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_has_focus(wid.into())
+}
+
+#[op]
+fn op_wsi_window_set_theme(
+  state: &mut OpState,
+  wid: u64,
+  theme: Option<WsiWindowTheme>,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_set_theme(wid.into(), theme.map(Into::into))
+}
+
+#[op]
+fn op_wsi_window_theme(
+  state: &mut OpState,
+  wid: u64,
+) -> Option<WsiWindowTheme> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_theme(wid.into())
+    .map(Into::into)
+}
+
+#[op]
+fn op_wsi_window_set_content_protected(
+  state: &mut OpState,
+  wid: u64,
+  protected: bool,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_set_content_protected(wid.into(), protected)
+}
+
+#[op]
+fn op_wsi_window_title(state: &mut OpState, wid: u64) -> String {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .window_title(wid.into())
 }

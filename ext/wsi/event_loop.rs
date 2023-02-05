@@ -1,10 +1,10 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use crate::{
-  create_window_options::CreateWindowOptions,
   device_ids::DeviceIds,
   event::WsiEvent,
   request::{handle_requests, Request},
+  window::WsiCreateWindowOptions,
 };
 use deno_core::anyhow;
 use deno_webgpu::wgpu_core::id::SurfaceId;
@@ -16,7 +16,7 @@ use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
   error::{NotSupportedError, OsError},
   event_loop::{EventLoop, EventLoopProxy},
-  window::{Fullscreen, WindowId},
+  window::{Fullscreen, Theme, WindowButtons, WindowId, WindowLevel},
 };
 
 // Spawn a proxy thread and hijack the calling thread for the real event loop.
@@ -106,7 +106,7 @@ impl WsiEventLoopProxy {
 
   pub(crate) fn create_window(
     &self,
-    options: Option<Box<CreateWindowOptions>>,
+    options: Option<Box<WsiCreateWindowOptions>>,
   ) -> Result<WindowId, OsError> {
     let (result_tx, result_rx) = std_mpsc::sync_channel(0);
     self.send_request(Request::CreateWindow { options, result_tx });
@@ -258,11 +258,51 @@ impl WsiEventLoopProxy {
     result_rx.recv().unwrap()
   }
 
+  pub(crate) fn window_resize_increments(
+    &self,
+    window_id: WindowId,
+  ) -> Option<PhysicalSize<u32>> {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowResizeIncrements {
+      window_id,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_set_resize_increments(
+    &self,
+    window_id: WindowId,
+    increments: Option<PhysicalSize<u32>>,
+  ) {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowSetResizeIncrements {
+      window_id,
+      increments,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
   pub(crate) fn window_set_title(&self, window_id: WindowId, title: String) {
     let (result_tx, result_rx) = std_mpsc::sync_channel(0);
     self.send_request(Request::WindowSetTitle {
       window_id,
       title,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_set_transparent(
+    &self,
+    window_id: WindowId,
+    transparent: bool,
+  ) {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowSetTransparent {
+      window_id,
+      transparent,
       result_tx,
     });
     result_rx.recv().unwrap()
@@ -310,6 +350,32 @@ impl WsiEventLoopProxy {
     result_rx.recv().unwrap()
   }
 
+  pub(crate) fn window_set_enabled_buttons(
+    &self,
+    window_id: WindowId,
+    buttons: WindowButtons,
+  ) {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowSetEnabledButtons {
+      window_id,
+      buttons,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_enabled_buttons(
+    &self,
+    window_id: WindowId,
+  ) -> WindowButtons {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowEnabledButtons {
+      window_id,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
   pub(crate) fn window_set_minimized(
     &self,
     window_id: WindowId,
@@ -319,6 +385,18 @@ impl WsiEventLoopProxy {
     self.send_request(Request::WindowSetMinimized {
       window_id,
       minimized,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_is_minimized(
+    &self,
+    window_id: WindowId,
+  ) -> Option<bool> {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowIsMinimized {
+      window_id,
       result_tx,
     });
     result_rx.recv().unwrap()
@@ -396,15 +474,15 @@ impl WsiEventLoopProxy {
     result_rx.recv().unwrap()
   }
 
-  pub(crate) fn window_set_always_on_top(
+  pub(crate) fn window_set_level(
     &self,
     window_id: WindowId,
-    always_on_top: bool,
+    level: WindowLevel,
   ) {
     let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetAlwaysOnTop {
+    self.send_request(Request::WindowSetLevel {
       window_id,
-      always_on_top,
+      level,
       result_tx,
     });
     result_rx.recv().unwrap()
@@ -413,6 +491,61 @@ impl WsiEventLoopProxy {
   pub(crate) fn focus_window(&self, window_id: WindowId) {
     let (result_tx, result_rx) = std_mpsc::sync_channel(0);
     self.send_request(Request::FocusWindow {
+      window_id,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_has_focus(&self, window_id: WindowId) -> bool {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowHasFocus {
+      window_id,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_set_theme(
+    &self,
+    window_id: WindowId,
+    theme: Option<Theme>,
+  ) {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowSetTheme {
+      window_id,
+      theme,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_theme(&self, window_id: WindowId) -> Option<Theme> {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowTheme {
+      window_id,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_set_content_protected(
+    &self,
+    window_id: WindowId,
+    protected: bool,
+  ) {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowSetContentProtected {
+      window_id,
+      protected,
+      result_tx,
+    });
+    result_rx.recv().unwrap()
+  }
+
+  pub(crate) fn window_title(&self, window_id: WindowId) -> String {
+    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
+    self.send_request(Request::WindowTitle {
       window_id,
       result_tx,
     });

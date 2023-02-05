@@ -1,10 +1,7 @@
 use serde::{Serialize, Serializer};
-use winit::{
-  event::{
-    ElementState, Force, MouseButton, MouseScrollDelta, TouchPhase,
-    VirtualKeyCode,
-  },
-  window::Theme,
+use winit::event::{
+  ElementState, Force, MouseButton, MouseScrollDelta, TouchPhase,
+  VirtualKeyCode,
 };
 
 #[derive(Debug, Serialize)]
@@ -332,22 +329,6 @@ impl From<TouchPhase> for WsiTouchPhase {
       TouchPhase::Moved => Self::Moved,
       TouchPhase::Ended => Self::Ended,
       TouchPhase::Cancelled => Self::Cancelled,
-    }
-  }
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum WsiWindowTheme {
-  Light,
-  Dark,
-}
-
-impl From<Theme> for WsiWindowTheme {
-  fn from(theme: Theme) -> Self {
-    match theme {
-      Theme::Light => Self::Light,
-      Theme::Dark => Self::Dark,
     }
   }
 }
