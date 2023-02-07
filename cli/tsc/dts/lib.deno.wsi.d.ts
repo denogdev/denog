@@ -20,23 +20,23 @@ declare namespace Deno {
 
   // https://docs.rs/winit/0.28.1/winit/window/struct.WindowBuilder.html
   export interface WSICreateWindowOptions {
+    active?: boolean;
+    contentProtected?: boolean;
+    decorated?: boolean;
+    enabledButtons?: WSIWindowButtons;
+    fullscreen?: boolean;
+    position?: [number, number];
     innerSize?: [number, number];
     minInnerSize?: [number, number];
     maxInnerSize?: [number, number];
-    position?: [number, number];
-    resizable?: boolean;
-    enableButtons?: WSIWindowButtons;
-    title?: string;
-    fullscreen?: boolean;
-    maximized?: boolean;
-    visible?: boolean;
-    transparent?: boolean;
-    decorated?: boolean;
     level?: WSIWindowLevel;
-    theme?: WSIWindowTheme;
+    maximized?: boolean;
+    resizable?: boolean;
     resizeIncrements?: [number, number];
-    contentProtected?: boolean;
-    active?: boolean;
+    theme?: WSIWindowTheme;
+    title?: string;
+    transparent?: boolean;
+    visible?: boolean;
   }
 
   // https://docs.rs/winit/0.28.1/winit/event/enum.Event.html
@@ -520,48 +520,48 @@ declare namespace Deno {
 
   // https://docs.rs/winit/0.28.1/winit/window/struct.Window.html
   export class WSIWindow {
-    destroy(): void;
+    setContentProtected(contentProtected?: boolean): void;
+    isDecorated(): boolean;
+    setDecorated(decorated?: boolean): void;
+    getEnabledButtons(): WSIWindowButtons;
+    setEnabledButtons(buttons: WSIWindowButtons): void;
+    hasFocus(): boolean;
+    focus(): void;
+    isFullscreen(): boolean;
+    setFullscreen(fullscreen?: boolean): void;
     getGPUSurface(): GPUSurface;
-    getScaleFactor(): number;
-    requestRedraw(): void;
     getInnerPosition(): [number, number] | null;
     getOuterPosition(): [number, number] | null;
     setOuterPosition(position: [number, number]): void;
     setOuterPosition(x: number, y: number): void;
     getInnerSize(): [number, number];
+    getOuterSize(): [number, number];
     setInnerSize(size: [number, number]): void;
     setInnerSize(width: number, height: number): void;
-    getOuterSize(): [number, number];
     setMinInnerSize(size: [number, number] | null): void;
     setMinInnerSize(width: number, height: number): void;
     setMaxInnerSize(size: [number, number] | null): void;
     setMaxInnerSize(width: number, height: number): void;
+    setLevel(level: WSIWindowLevel): void;
+    isMinimized(): boolean | null;
+    setMinimized(minimized?: boolean): void;
+    isMaximized(): boolean;
+    setMaximized(maximized?: boolean): void;
+    isResizable(): boolean;
+    setResizable(resizable?: boolean): void;
     getResizeIncrements(): [number, number] | null;
     setResizeIncrements(size: [number, number] | null): void;
     setResizeIncrements(width: number, height: number): void;
+    getScaleFactor(): number;
+    getTheme(): WSIWindowTheme | null;
+    setTheme(theme: WSIWindowTheme | null): void;
+    getTitle(): string;
     setTitle(title: string): void;
     setTransparent(transparent?: boolean): void;
-    setVisible(visible?: boolean): void;
     isVisible(): boolean | null;
-    setResizable(resizable?: boolean): void;
-    isResizable(): boolean;
-    setEnabledButtons(buttons: WSIWindowButtons): void;
-    getEnabledButtons(): WSIWindowButtons;
-    setMinimized(minimized?: boolean): void;
-    isMinimized(): boolean | null;
-    setMaximized(maximized?: boolean): void;
-    isMaximized(): boolean;
-    setFullscreen(fullscreen?: boolean): void;
-    isFullscreen(): boolean;
-    setDecorated(decorated?: boolean): void;
-    isDecorated(): boolean;
-    setLevel(level: WSIWindowLevel): void;
-    focus(): void;
-    hasFocus(): boolean;
-    setTheme(theme: WSIWindowTheme | null): void;
-    getTheme(): WSIWindowTheme | null;
-    setContentProtected(contentProtected?: boolean): void;
-    getTitle(): string;
+    setVisible(visible?: boolean): void;
+    requestRedraw(): void;
+    destroy(): void;
   }
 
   // https://docs.rs/winit/latest/winit/window/struct.WindowButtons.html

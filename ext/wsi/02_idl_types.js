@@ -37,6 +37,30 @@
   // DICTIONARY: WSICreateWindowOptions
   const dictMembersWSICreateWindowOptions = [
     {
+      key: "active",
+      converter: webidl.converters["boolean"],
+    },
+    {
+      key: "contentProtected",
+      converter: webidl.converters["boolean"],
+    },
+    {
+      key: "decorated",
+      converter: webidl.converters["boolean"],
+    },
+    {
+      key: "enabledButtons",
+      converter: webidl.converters["unsigned long"],
+    },
+    {
+      key: "fullscreen",
+      converter: webidl.converters["boolean"],
+    },
+    {
+      key: "position",
+      converter: webidl.converters.WSIPosition,
+    },
+    {
       key: "innerSize",
       converter: webidl.converters.WSISize,
     },
@@ -49,59 +73,35 @@
       converter: webidl.converters.WSISize,
     },
     {
-      key: "position",
-      converter: webidl.converters.WSIPosition,
-    },
-    {
-      key: "resizable",
-      converter: webidl.converters["boolean"],
-    },
-    {
-      key: "enableButtons",
-      converter: webidl.converters["unsigned long"],
-    },
-    {
-      key: "title",
-      converter: webidl.converters["DOMString"],
-    },
-    {
-      key: "fullscreen",
-      converter: webidl.converters["boolean"],
+      key: "level",
+      converter: webidl.converters["WSIWindowLevel"],
     },
     {
       key: "maximized",
       converter: webidl.converters["boolean"],
     },
     {
-      key: "visible",
+      key: "resizable",
       converter: webidl.converters["boolean"],
-    },
-    {
-      key: "transparent",
-      converter: webidl.converters["boolean"],
-    },
-    {
-      key: "decorated",
-      converter: webidl.converters["boolean"],
-    },
-    {
-      key: "level",
-      converter: webidl.converters["WSIWindowLevel"],
-    },
-    {
-      key: "theme",
-      converter: webidl.converters["WSIWindowTheme"],
     },
     {
       key: "resizeIncrements",
       converter: webidl.converters.WSISize,
     },
     {
-      key: "contentProtected",
+      key: "theme",
+      converter: webidl.converters["WSIWindowTheme"],
+    },
+    {
+      key: "title",
+      converter: webidl.converters["DOMString"],
+    },
+    {
+      key: "transparent",
       converter: webidl.converters["boolean"],
     },
     {
-      key: "active",
+      key: "visible",
       converter: webidl.converters["boolean"],
     },
   ];

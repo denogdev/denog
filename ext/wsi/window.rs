@@ -52,24 +52,23 @@ impl From<Theme> for WsiWindowTheme {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WsiCreateWindowOptions {
+  pub active: Option<bool>,
+  pub content_protected: Option<bool>,
+  pub decorated: Option<bool>,
+  pub enabled_buttons: Option<u32>,
+  pub fullscreen: Option<bool>,
+  pub position: Option<(i32, i32)>,
   pub inner_size: Option<(u32, u32)>,
   pub min_inner_size: Option<(u32, u32)>,
   pub max_inner_size: Option<(u32, u32)>,
-  pub position: Option<(i32, i32)>,
-  pub resizable: Option<bool>,
-  pub enable_buttons: Option<u32>,
-  pub title: Option<String>,
-  pub fullscreen: Option<bool>, // TODO
-  pub maximized: Option<bool>,
-  pub visible: Option<bool>,
-  pub transparent: Option<bool>,
-  pub decorated: Option<bool>,
   pub level: Option<WsiWindowLevel>,
-  // TODO: icon
-  pub theme: Option<WsiWindowTheme>,
+  pub maximized: Option<bool>,
+  pub resizable: Option<bool>,
   pub resize_increments: Option<(u32, u32)>,
-  pub content_protected: Option<bool>,
-  pub active: Option<bool>,
+  pub theme: Option<WsiWindowTheme>,
+  pub title: Option<String>,
+  pub transparent: Option<bool>,
+  pub visible: Option<bool>,
 }
 
 impl WsiCreateWindowOptions {
@@ -77,6 +76,25 @@ impl WsiCreateWindowOptions {
     self,
     mut builder: WindowBuilder,
   ) -> WindowBuilder {
+    if let Some(active) = self.active {
+      builder = builder.with_active(active);
+    }
+    if let Some(content_protected) = self.content_protected {
+      builder = builder.with_content_protected(content_protected);
+    }
+    if let Some(decorated) = self.decorated {
+      builder = builder.with_decorations(decorated);
+    }
+    if let Some(bits) = self.enabled_buttons {
+      let buttons = WindowButtons::from_bits_truncate(bits);
+      builder = builder.with_enabled_buttons(buttons);
+    }
+    if let Some(true) = self.fullscreen {
+      builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+    }
+    if let Some((x, y)) = self.position {
+      builder = builder.with_position(PhysicalPosition { x, y });
+    }
     if let Some((width, height)) = self.inner_size {
       builder = builder.with_inner_size(PhysicalSize { width, height });
     }
@@ -86,48 +104,29 @@ impl WsiCreateWindowOptions {
     if let Some((width, height)) = self.max_inner_size {
       builder = builder.with_max_inner_size(PhysicalSize { width, height });
     }
-    if let Some((x, y)) = self.position {
-      builder = builder.with_position(PhysicalPosition { x, y });
-    }
-    if let Some(resizable) = self.resizable {
-      builder = builder.with_resizable(resizable);
-    }
-    if let Some(bits) = self.enable_buttons {
-      let buttons = WindowButtons::from_bits_truncate(bits);
-      builder = builder.with_enabled_buttons(buttons);
-    }
-    if let Some(title) = self.title {
-      builder = builder.with_title(title);
-    }
-    if let Some(true) = self.fullscreen {
-      builder = builder.with_fullscreen(Some(Fullscreen::Borderless(None)));
+    if let Some(level) = self.level {
+      builder = builder.with_window_level(level.into());
     }
     if let Some(maximized) = self.maximized {
       builder = builder.with_maximized(maximized);
     }
-    if let Some(visible) = self.visible {
-      builder = builder.with_visible(visible);
-    }
-    if let Some(transparent) = self.transparent {
-      builder = builder.with_transparent(transparent);
-    }
-    if let Some(decorated) = self.decorated {
-      builder = builder.with_decorations(decorated);
-    }
-    if let Some(level) = self.level {
-      builder = builder.with_window_level(level.into());
-    }
-    if let Some(theme) = self.theme {
-      builder = builder.with_theme(Some(theme.into()));
+    if let Some(resizable) = self.resizable {
+      builder = builder.with_resizable(resizable);
     }
     if let Some((width, height)) = self.resize_increments {
       builder = builder.with_resize_increments(PhysicalSize { width, height });
     }
-    if let Some(content_protected) = self.content_protected {
-      builder = builder.with_content_protected(content_protected);
+    if let Some(theme) = self.theme {
+      builder = builder.with_theme(Some(theme.into()));
     }
-    if let Some(active) = self.active {
-      builder = builder.with_active(active);
+    if let Some(title) = self.title {
+      builder = builder.with_title(title);
+    }
+    if let Some(transparent) = self.transparent {
+      builder = builder.with_transparent(transparent);
+    }
+    if let Some(visible) = self.visible {
+      builder = builder.with_visible(visible);
     }
     builder
   }
