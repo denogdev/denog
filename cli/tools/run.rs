@@ -2,7 +2,6 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::io::Read;
-use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
 
