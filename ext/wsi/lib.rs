@@ -24,7 +24,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
   Extension::builder("deno_wsi")
     .dependencies(vec!["deno_webgpu", "deno_webidl"])
     .js(include_js_files!(
-      prefix "denog:ext/wsi",
+      prefix "internal:ext/wsi",
       "01_wsi.js",
       "02_idl_types.js",
     ))

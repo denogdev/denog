@@ -21,34 +21,34 @@ repository = "https://github.com/denogdev/denog"
 v8 = { version = "0.60.1", default-features = false }
 deno_ast = { version = "0.23.2", features = ["transpiling"] }
 
-deno_core = { version = "0.170.0" }
-deno_ops = { version = "0.48.0" }
-serde_v8 = { version = "0.81.0" }
+deno_core = { version = "0.171.0" }
+deno_ops = { version = "0.49.0" }
+serde_v8 = { version = "0.82.0" }
 deno_runtime = { version = "0.4.0", path = "./runtime", package = "denog_runtime" }
-napi_sym = { version = "0.18.0" }
-deno_bench_util = { version = "0.82.0" }
+napi_sym = { version = "0.19.0" }
+deno_bench_util = { version = "0.83.0" }
 test_util = { path = "./test_util" }
-deno_lockfile = { version = "0.4.0" }
+deno_lockfile = { version = "0.5.0" }
 
 # exts
-deno_broadcast_channel = { version = "0.82.0" }
-deno_cache = { version = "0.20.0" }
-deno_console = { version = "0.88.0" }
-deno_crypto = { version = "0.102.0" }
-deno_fetch = { version = "0.112.0" }
-deno_ffi = { version = "0.75.0" }
-deno_flash = { version = "0.24.0" }
-deno_http = { version = "0.83.0" }
-deno_net = { version = "0.80.0" }
-deno_node = { version = "0.25.0" }
-deno_tls = { version = "0.75.0" }
-deno_url = { version = "0.88.0" }
-deno_web = { version = "0.119.0" }
+deno_broadcast_channel = { version = "0.83.0" }
+deno_cache = { version = "0.21.0" }
+deno_console = { version = "0.89.0" }
+deno_crypto = { version = "0.103.0" }
+deno_fetch = { version = "0.113.0" }
+deno_ffi = { version = "0.76.0" }
+deno_flash = { version = "0.25.0" }
+deno_http = { version = "0.84.0" }
+deno_net = { version = "0.81.0" }
+deno_node = { version = "0.26.0" }
+deno_tls = { version = "0.76.0" }
+deno_url = { version = "0.89.0" }
+deno_web = { version = "0.120.0" }
 deno_webgpu = { version = "0.4.0", path = "./ext/webgpu", package = "denog_webgpu" }
-deno_webidl = { version = "0.88.0" }
-deno_websocket = { version = "0.93.0" }
-deno_webstorage = { version = "0.83.0" }
-deno_napi = { version = "0.18.0" }
+deno_webidl = { version = "0.89.0" }
+deno_websocket = { version = "0.94.0" }
+deno_webstorage = { version = "0.84.0" }
+deno_napi = { version = "0.19.0" }
 deno_wsi = { version = "0.4.0", path = "./ext/wsi", package = "denog_wsi" }
 
 anyhow = "1.0.57"
