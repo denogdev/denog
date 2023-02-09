@@ -13,11 +13,12 @@ use crate::{
 };
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
+use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::{cell::RefCell, rc::Rc};
 use window::{WsiWindowLevel, WsiWindowTheme};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
-  window::{Fullscreen, WindowButtons},
+  window::{Fullscreen, WindowBuilder, WindowButtons},
 };
 
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
@@ -107,14 +108,24 @@ async fn op_wsi_next_event(
 #[op]
 fn op_wsi_create_window(
   state: &mut OpState,
-  options: Option<Box<WsiCreateWindowOptions>>,
+  options: Option<WsiCreateWindowOptions>,
 ) -> Result<u64, anyhow::Error> {
-  match try_borrow_event_loop_proxy(state, "Deno.wsi.createWindow")
-    .create_window(options)
-  {
-    Ok(window_id) => Ok(window_id.into()),
-    Err(e) => Err(e.into()),
-  }
+  try_borrow_event_loop_proxy(state, "Deno.wsi.createWindow").execute(
+    |window_target, windows| {
+      let mut builder = WindowBuilder::new().with_title("Denog");
+      if let Some(options) = options {
+        builder = options.into_window_builder(builder);
+      }
+      builder
+        .build(window_target)
+        .map(|window| {
+          let wid = window.id().into();
+          windows.insert(wid, window);
+          wid
+        })
+        .map_err(Into::into)
+    },
+  )
 }
 
 #[op]
@@ -125,29 +136,30 @@ fn op_wsi_window_set_content_protected(
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_content_protected(wid.into(), protected)
+    .execute_with_window(wid, move |window| {
+      window.set_content_protected(protected)
+    })
 }
 
 #[op]
 fn op_wsi_window_is_decorated(state: &mut OpState, wid: u64) -> bool {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_is_decorated(wid.into())
+    .execute_with_window(wid, |window| window.is_decorated())
 }
 
 #[op]
 fn op_wsi_window_set_decorated(state: &mut OpState, wid: u64, decorated: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_decorations(wid.into(), decorated)
+    .execute_with_window(wid, move |window| window.set_decorations(decorated))
 }
 
 #[op]
 fn op_wsi_window_get_enabled_buttons(state: &mut OpState, wid: u64) -> u32 {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_enabled_buttons(wid.into())
-    .bits()
+    .execute_with_window(wid, |window| window.enabled_buttons().bits())
 }
 
 #[op]
@@ -156,34 +168,33 @@ fn op_wsi_window_set_enabled_buttons(
   wid: u64,
   buttons: u32,
 ) {
-  state
-    .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_enabled_buttons(
-      wid.into(),
-      WindowButtons::from_bits_truncate(buttons),
-    )
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.set_enabled_buttons(WindowButtons::from_bits_truncate(buttons))
+    },
+  )
 }
 
 #[op]
 fn op_wsi_window_has_focus(state: &mut OpState, wid: u64) -> bool {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_has_focus(wid.into())
+    .execute_with_window(wid, |window| window.has_focus())
 }
 
 #[op]
 fn op_wsi_focus_window(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .focus_window(wid.into())
+    .execute_with_window(wid, |window| window.focus_window())
 }
 
 #[op]
 fn op_wsi_window_is_fullscreen(state: &mut OpState, wid: u64) -> bool {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_fullscreen(wid.into())
-    .is_some()
+    .execute_with_window(wid, |window| window.fullscreen().is_some())
 }
 
 #[op]
@@ -192,15 +203,15 @@ fn op_wsi_window_set_fullscreen(
   wid: u64,
   fullscreen: bool,
 ) {
-  state
-    .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_fullscreen(
-      wid.into(),
-      match fullscreen {
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.set_fullscreen(match fullscreen {
         true => Some(Fullscreen::Borderless(None)),
         false => None,
-      },
-    )
+      })
+    },
+  )
 }
 
 #[op]
@@ -211,9 +222,16 @@ fn op_wsi_create_webgpu_surface(state: &mut OpState, wid: u64) -> ResourceId {
 
   let (webgpu_instance, surface_id) = state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .create_webgpu_surface(wid.into(), Box::new(webgpu_instance));
+    .execute_with_window(wid, |window| {
+      let surface_id = webgpu_instance.instance_create_surface(
+        window.raw_display_handle(),
+        window.raw_window_handle(),
+        (),
+      );
+      (webgpu_instance, surface_id)
+    });
 
-  state.put(*webgpu_instance);
+  state.put(webgpu_instance);
   state.resource_table.add(WebGpuSurface(surface_id))
 }
 
@@ -222,13 +240,12 @@ fn op_wsi_window_get_inner_position(
   state: &mut OpState,
   wid: u64,
 ) -> Option<(i32, i32)> {
-  match state
+  state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_inner_position(wid.into())
-  {
-    Ok(PhysicalPosition { x, y }) => Some((x, y)),
-    Err(_) => None,
-  }
+    .execute_with_window(wid, |window| match window.inner_position() {
+      Ok(PhysicalPosition { x, y }) => Some((x, y)),
+      Err(_) => None,
+    })
 }
 
 #[op]
@@ -236,13 +253,12 @@ fn op_wsi_window_get_outer_position(
   state: &mut OpState,
   wid: u64,
 ) -> Option<(i32, i32)> {
-  match state
+  state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_outer_position(wid.into())
-  {
-    Ok(PhysicalPosition { x, y }) => Some((x, y)),
-    Err(_) => None,
-  }
+    .execute_with_window(wid, |window| match window.outer_position() {
+      Ok(PhysicalPosition { x, y }) => Some((x, y)),
+      Err(_) => None,
+    })
 }
 
 #[op]
@@ -253,23 +269,29 @@ fn op_wsi_window_set_outer_position(
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_outer_position(wid.into(), PhysicalPosition { x, y })
+    .execute_with_window(wid, move |window| {
+      window.set_outer_position(PhysicalPosition { x, y })
+    })
 }
 
 #[op]
 fn op_wsi_window_get_inner_size(state: &mut OpState, wid: u64) -> (u32, u32) {
-  let PhysicalSize { width, height } = state
+  state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_inner_size(wid.into());
-  (width, height)
+    .execute_with_window(wid, |window| {
+      let size = window.inner_size();
+      (size.width, size.height)
+    })
 }
 
 #[op]
 fn op_wsi_window_get_outer_size(state: &mut OpState, wid: u64) -> (u32, u32) {
-  let PhysicalSize { width, height } = state
+  state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_outer_size(wid.into());
-  (width, height)
+    .execute_with_window(wid, |window| {
+      let size = window.outer_size();
+      (size.width, size.height)
+    })
 }
 
 #[op]
@@ -280,7 +302,9 @@ fn op_wsi_window_set_inner_size(
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_inner_size(wid.into(), PhysicalSize { width, height })
+    .execute_with_window(wid, move |window| {
+      window.set_inner_size(PhysicalSize { width, height })
+    })
 }
 
 #[op]
@@ -289,12 +313,14 @@ fn op_wsi_window_set_min_inner_size(
   wid: u64,
   size: Option<(u32, u32)>,
 ) {
-  state
-    .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_min_inner_size(
-      wid.into(),
-      size.map(|(width, height)| PhysicalSize { width, height }),
-    )
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.set_min_inner_size(
+        size.map(|(width, height)| PhysicalSize { width, height }),
+      )
+    },
+  )
 }
 
 #[op]
@@ -303,12 +329,14 @@ fn op_wsi_window_set_max_inner_size(
   wid: u64,
   size: Option<(u32, u32)>,
 ) {
-  state
-    .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_max_inner_size(
-      wid.into(),
-      size.map(|(width, height)| PhysicalSize { width, height }),
-    )
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.set_max_inner_size(
+        size.map(|(width, height)| PhysicalSize { width, height }),
+      )
+    },
+  )
 }
 
 #[op]
@@ -319,49 +347,49 @@ fn op_wsi_window_set_level(
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_level(wid.into(), level.into())
+    .execute_with_window(wid, |window| window.set_window_level(level.into()))
 }
 
 #[op]
 fn op_wsi_window_is_minimized(state: &mut OpState, wid: u64) -> Option<bool> {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_is_minimized(wid.into())
+    .execute_with_window(wid, |window| window.is_minimized())
 }
 
 #[op]
 fn op_wsi_window_set_minimized(state: &mut OpState, wid: u64, minimized: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_minimized(wid.into(), minimized)
+    .execute_with_window(wid, move |window| window.set_minimized(minimized))
 }
 
 #[op]
 fn op_wsi_window_is_maximized(state: &mut OpState, wid: u64) -> bool {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_is_maximized(wid.into())
+    .execute_with_window(wid, |window| window.is_maximized())
 }
 
 #[op]
 fn op_wsi_window_set_maximized(state: &mut OpState, wid: u64, maximized: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_maximized(wid.into(), maximized)
+    .execute_with_window(wid, move |window| window.set_maximized(maximized))
 }
 
 #[op]
 fn op_wsi_window_is_resizable(state: &mut OpState, wid: u64) -> bool {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_is_resizable(wid.into())
+    .execute_with_window(wid, |window| window.is_resizable())
 }
 
 #[op]
 fn op_wsi_window_set_resizable(state: &mut OpState, wid: u64, resizable: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_resizable(wid.into(), resizable)
+    .execute_with_window(wid, move |window| window.set_resizable(resizable))
 }
 
 #[op]
@@ -371,7 +399,7 @@ fn op_wsi_window_get_resize_increments(
 ) -> Option<(u32, u32)> {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_resize_increments(wid.into())
+    .execute_with_window(wid, |window| window.resize_increments())
     .map(|PhysicalSize { width, height }| (width, height))
 }
 
@@ -381,19 +409,21 @@ fn op_wsi_window_set_resize_increments(
   wid: u64,
   increments: Option<(u32, u32)>,
 ) {
-  state
-    .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_resize_increments(
-      wid.into(),
-      increments.map(|(width, height)| PhysicalSize { width, height }),
-    )
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.set_resize_increments(
+        increments.map(|(width, height)| PhysicalSize { width, height }),
+      )
+    },
+  )
 }
 
 #[op]
 fn op_wsi_window_get_scale_factor(state: &mut OpState, wid: u64) -> f64 {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_scale_factor(wid.into())
+    .execute_with_window(wid, |window| window.scale_factor())
 }
 
 #[op]
@@ -403,8 +433,7 @@ fn op_wsi_window_get_theme(
 ) -> Option<WsiWindowTheme> {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_theme(wid.into())
-    .map(Into::into)
+    .execute_with_window(wid, |window| window.theme().map(Into::into))
 }
 
 #[op]
@@ -415,21 +444,21 @@ fn op_wsi_window_set_theme(
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_theme(wid.into(), theme.map(Into::into))
+    .execute_with_window(wid, |window| window.set_theme(theme.map(Into::into)))
 }
 
 #[op]
 fn op_wsi_window_get_title(state: &mut OpState, wid: u64) -> String {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_title(wid.into())
+    .execute_with_window(wid, |window| window.title())
 }
 
 #[op]
 fn op_wsi_window_set_title(state: &mut OpState, wid: u64, title: String) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_title(wid.into(), title)
+    .execute_with_window(wid, move |window| window.set_title(&title))
 }
 
 #[op]
@@ -440,33 +469,35 @@ fn op_wsi_window_set_transparent(
 ) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_transparent(wid.into(), transparent)
+    .execute_with_window(wid, move |window| window.set_transparent(transparent))
 }
 
 #[op]
 fn op_wsi_window_is_visible(state: &mut OpState, wid: u64) -> Option<bool> {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_is_visible(wid.into())
+    .execute_with_window(wid, |window| window.is_visible())
 }
 
 #[op]
 fn op_wsi_window_set_visible(state: &mut OpState, wid: u64, visible: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .window_set_visible(wid.into(), visible)
+    .execute_with_window(wid, move |window| window.set_visible(visible))
 }
 
 #[op]
 fn op_wsi_request_window_redraw(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .request_window_redraw(wid.into())
+    .execute_with_window(wid, |window| window.request_redraw())
 }
 
 #[op]
 fn op_wsi_destroy_window(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .destroy_window(wid.into())
+    .execute(move |_, windows| {
+      windows.remove(&wid);
+    })
 }

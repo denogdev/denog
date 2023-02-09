@@ -3,20 +3,16 @@
 use crate::{
   device_ids::DeviceIds,
   event::WsiEvent,
-  request::{handle_requests, Request},
-  window::WsiCreateWindowOptions,
+  request::{ExecuteRequestFn, Request},
 };
 use deno_core::anyhow;
-use deno_webgpu::wgpu_core::id::SurfaceId;
 use std::{
   cell::Cell, collections::HashMap, rc::Rc, sync::mpsc as std_mpsc, thread,
 };
 use tokio::sync::mpsc as tokio_mpsc;
 use winit::{
-  dpi::{PhysicalPosition, PhysicalSize},
-  error::{NotSupportedError, OsError},
-  event_loop::{EventLoop, EventLoopProxy},
-  window::{Fullscreen, Theme, WindowButtons, WindowId, WindowLevel},
+  event_loop::{EventLoop, EventLoopProxy, EventLoopWindowTarget},
+  window::Window,
 };
 
 // Spawn a proxy thread and hijack the calling thread for the real event loop.
@@ -45,16 +41,30 @@ where
 
   // Handle requests until the proxy thread is ready for the first event.
   let mut windows = HashMap::new();
-  handle_requests(&event_loop, &mut request_rx, &mut windows);
+  handle_requests(&mut request_rx, &event_loop, &mut windows);
 
   // Run the real event loop.
   let mut device_ids = DeviceIds::new();
   event_loop.run(move |event, window_target, control_flow| {
     let event = WsiEvent::from(event, &mut device_ids);
     event_tx.blocking_send(event).unwrap();
-    handle_requests(window_target, &mut request_rx, &mut windows);
+    handle_requests(&mut request_rx, window_target, &mut windows);
     control_flow.set_wait();
   });
+
+  // Handle requests until the proxy thread is ready for the next event.
+  fn handle_requests(
+    request_rx: &mut std_mpsc::Receiver<Request>,
+    window_target: &EventLoopWindowTarget<()>,
+    windows: &mut HashMap<u64, Window>,
+  ) {
+    loop {
+      match request_rx.recv().unwrap() {
+        Request::NextEvent => break,
+        Request::Execute(f) => f(window_target, windows),
+      }
+    }
+  }
 }
 
 // Event loop proxy.
@@ -89,9 +99,9 @@ impl WsiEventLoopProxy {
     Ok(event)
   }
 
-  // Send a request from the proxy thread to the real event loop.
-  fn send_request(&self, request: Request) {
-    self.request_tx.send(request).unwrap();
+  // Send an execute request from the proxy thread to the real event loop.
+  fn send_execute_request(&self, f: Box<ExecuteRequestFn>) {
+    self.request_tx.send(Request::Execute(f)).unwrap();
 
     // Send an event to the real event loop if the proxy thread is currently
     // waiting to receive an event. The real event loop might be waiting on an
@@ -104,451 +114,27 @@ impl WsiEventLoopProxy {
     }
   }
 
-  pub(crate) fn create_window(
-    &self,
-    options: Option<Box<WsiCreateWindowOptions>>,
-  ) -> Result<WindowId, OsError> {
+  // Execute the given function in the real event loop thread.
+  pub(crate) fn execute<F, R>(&self, f: F) -> R
+  where
+    F: FnOnce(&EventLoopWindowTarget<()>, &mut HashMap<u64, Window>) -> R,
+    F: Send + 'static,
+    R: Send + 'static,
+  {
     let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::CreateWindow { options, result_tx });
+    self.send_execute_request(Box::new(move |window_target, windows| {
+      result_tx.send(f(window_target, windows)).unwrap();
+    }));
     result_rx.recv().unwrap()
   }
 
-  pub(crate) fn window_set_content_protected(
-    &self,
-    window_id: WindowId,
-    protected: bool,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetContentProtected {
-      window_id,
-      protected,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_is_decorated(&self, window_id: WindowId) -> bool {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowIsDecorated {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_decorations(
-    &self,
-    window_id: WindowId,
-    decorations: bool,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetDecorations {
-      window_id,
-      decorations,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_enabled_buttons(
-    &self,
-    window_id: WindowId,
-  ) -> WindowButtons {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowEnabledButtons {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_enabled_buttons(
-    &self,
-    window_id: WindowId,
-    buttons: WindowButtons,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetEnabledButtons {
-      window_id,
-      buttons,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_has_focus(&self, window_id: WindowId) -> bool {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowHasFocus {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn focus_window(&self, window_id: WindowId) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::FocusWindow {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_fullscreen(
-    &self,
-    window_id: WindowId,
-  ) -> Option<Fullscreen> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowFullscreen {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_fullscreen(
-    &self,
-    window_id: WindowId,
-    fullscreen: Option<Fullscreen>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetFullscreen {
-      window_id,
-      fullscreen,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn create_webgpu_surface(
-    &self,
-    window_id: WindowId,
-    webgpu_instance: Box<deno_webgpu::Instance>,
-  ) -> (Box<deno_webgpu::Instance>, SurfaceId) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::CreateWebGpuSurface {
-      window_id,
-      webgpu_instance,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_inner_position(
-    &self,
-    window_id: WindowId,
-  ) -> Result<PhysicalPosition<i32>, NotSupportedError> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowInnerPosition {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_outer_position(
-    &self,
-    window_id: WindowId,
-  ) -> Result<PhysicalPosition<i32>, NotSupportedError> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowOuterPosition {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_outer_position(
-    &self,
-    window_id: WindowId,
-    position: PhysicalPosition<i32>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetOuterPosition {
-      window_id,
-      position,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_inner_size(
-    &self,
-    window_id: WindowId,
-  ) -> PhysicalSize<u32> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowInnerSize {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_outer_size(
-    &self,
-    window_id: WindowId,
-  ) -> PhysicalSize<u32> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowOuterSize {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_inner_size(
-    &self,
-    window_id: WindowId,
-    size: PhysicalSize<u32>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetInnerSize {
-      window_id,
-      size,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_min_inner_size(
-    &self,
-    window_id: WindowId,
-    size: Option<PhysicalSize<u32>>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetMinInnerSize {
-      window_id,
-      size,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_max_inner_size(
-    &self,
-    window_id: WindowId,
-    size: Option<PhysicalSize<u32>>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetMaxInnerSize {
-      window_id,
-      size,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_level(
-    &self,
-    window_id: WindowId,
-    level: WindowLevel,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetLevel {
-      window_id,
-      level,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_is_minimized(
-    &self,
-    window_id: WindowId,
-  ) -> Option<bool> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowIsMinimized {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_minimized(
-    &self,
-    window_id: WindowId,
-    minimized: bool,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetMinimized {
-      window_id,
-      minimized,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_is_maximized(&self, window_id: WindowId) -> bool {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowIsMaximized {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_maximized(
-    &self,
-    window_id: WindowId,
-    maximized: bool,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetMaximized {
-      window_id,
-      maximized,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_is_resizable(&self, window_id: WindowId) -> bool {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowIsResizable {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_resizable(
-    &self,
-    window_id: WindowId,
-    resizable: bool,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetResizable {
-      window_id,
-      resizable,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_resize_increments(
-    &self,
-    window_id: WindowId,
-  ) -> Option<PhysicalSize<u32>> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowResizeIncrements {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_resize_increments(
-    &self,
-    window_id: WindowId,
-    increments: Option<PhysicalSize<u32>>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetResizeIncrements {
-      window_id,
-      increments,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_scale_factor(&self, window_id: WindowId) -> f64 {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowScaleFactor {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_theme(&self, window_id: WindowId) -> Option<Theme> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowTheme {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_theme(
-    &self,
-    window_id: WindowId,
-    theme: Option<Theme>,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetTheme {
-      window_id,
-      theme,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_title(&self, window_id: WindowId) -> String {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowTitle {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_title(&self, window_id: WindowId, title: String) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetTitle {
-      window_id,
-      title,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_transparent(
-    &self,
-    window_id: WindowId,
-    transparent: bool,
-  ) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetTransparent {
-      window_id,
-      transparent,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_is_visible(&self, window_id: WindowId) -> Option<bool> {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowIsVisible {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn window_set_visible(&self, window_id: WindowId, visible: bool) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowSetVisible {
-      window_id,
-      visible,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn request_window_redraw(&self, window_id: WindowId) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::WindowRedraw {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
-  }
-
-  pub(crate) fn destroy_window(&self, window_id: WindowId) {
-    let (result_tx, result_rx) = std_mpsc::sync_channel(0);
-    self.send_request(Request::DestroyWindow {
-      window_id,
-      result_tx,
-    });
-    result_rx.recv().unwrap()
+  // Execute the given function in the real event loop with the given window.
+  pub(crate) fn execute_with_window<F, R>(&self, wid: u64, f: F) -> R
+  where
+    F: FnOnce(&Window) -> R,
+    F: Send + 'static,
+    R: Send + 'static,
+  {
+    self.execute(move |_, windows| f(windows.get(&wid).unwrap()))
   }
 }
