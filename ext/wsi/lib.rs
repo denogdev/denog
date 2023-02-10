@@ -38,10 +38,10 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_get_enabled_buttons::decl(),
       op_wsi_window_set_enabled_buttons::decl(),
       op_wsi_window_has_focus::decl(),
-      op_wsi_focus_window::decl(),
+      op_wsi_window_take_focus::decl(),
       op_wsi_window_is_fullscreen::decl(),
       op_wsi_window_set_fullscreen::decl(),
-      op_wsi_create_webgpu_surface::decl(),
+      op_wsi_window_create_gpu_surface::decl(),
       op_wsi_window_get_inner_position::decl(),
       op_wsi_window_get_outer_position::decl(),
       op_wsi_window_set_outer_position::decl(),
@@ -67,8 +67,8 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_set_transparent::decl(),
       op_wsi_window_is_visible::decl(),
       op_wsi_window_set_visible::decl(),
-      op_wsi_request_window_redraw::decl(),
-      op_wsi_destroy_window::decl(),
+      op_wsi_window_request_redraw::decl(),
+      op_wsi_window_destroy::decl(),
     ])
     .state(move |state| {
       if let Some(event_loop_proxy) = &event_loop_proxy {
@@ -184,7 +184,7 @@ fn op_wsi_window_has_focus(state: &mut OpState, wid: u64) -> bool {
 }
 
 #[op]
-fn op_wsi_focus_window(state: &mut OpState, wid: u64) {
+fn op_wsi_window_take_focus(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute_with_window(wid, |window| window.focus_window())
@@ -215,7 +215,10 @@ fn op_wsi_window_set_fullscreen(
 }
 
 #[op]
-fn op_wsi_create_webgpu_surface(state: &mut OpState, wid: u64) -> ResourceId {
+fn op_wsi_window_create_gpu_surface(
+  state: &mut OpState,
+  wid: u64,
+) -> ResourceId {
   let webgpu_instance = state
     .try_take::<deno_webgpu::Instance>()
     .unwrap_or_else(deno_webgpu::create_instance);
@@ -487,14 +490,14 @@ fn op_wsi_window_set_visible(state: &mut OpState, wid: u64, visible: bool) {
 }
 
 #[op]
-fn op_wsi_request_window_redraw(state: &mut OpState, wid: u64) {
+fn op_wsi_window_request_redraw(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute_with_window(wid, |window| window.request_redraw())
 }
 
 #[op]
-fn op_wsi_destroy_window(state: &mut OpState, wid: u64) {
+fn op_wsi_window_destroy(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute(move |_, windows| {

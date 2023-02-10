@@ -526,7 +526,7 @@ declare namespace Deno {
     getEnabledButtons(): WSIWindowButtons;
     setEnabledButtons(buttons: WSIWindowButtons): void;
     hasFocus(): boolean;
-    focus(): void;
+    takeFocus(): void;
     isFullscreen(): boolean;
     setFullscreen(fullscreen?: boolean): void;
     getGPUSurface(): GPUSurface;

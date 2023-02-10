@@ -230,12 +230,12 @@
       return ops.op_wsi_window_has_focus(wid);
     }
 
-    focus() {
+    takeFocus() {
       webidl.assertBranded(this, WSIWindowPrototype);
-      const prefix = "Failed to execute 'focus' on 'WSIWindow'";
+      const prefix = "Failed to execute 'takeFocus' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      return ops.op_wsi_focus_window(wid);
+      return ops.op_wsi_window_take_focus(wid);
     }
 
     isFullscreen() {
@@ -267,7 +267,7 @@
       if (this[_gpuSurface] != null) {
         return this[_gpuSurface];
       } else {
-        const rid = ops.op_wsi_create_webgpu_surface(wid);
+        const rid = ops.op_wsi_window_create_gpu_surface(wid);
         return this[_gpuSurface] = webgpu.createGPUSurface(rid);
       }
     }
@@ -535,7 +535,7 @@
       const prefix = "Failed to execute 'requestRedraw' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      return ops.op_wsi_request_window_redraw(wid);
+      return ops.op_wsi_window_request_redraw(wid);
     }
 
     destroy() {
@@ -548,7 +548,7 @@
         this[_gpuSurface] = undefined;
       }
 
-      ops.op_wsi_destroy_window(wid);
+      ops.op_wsi_window_destroy(wid);
       windows.delete(wid);
       this[_wid] = undefined;
     }
