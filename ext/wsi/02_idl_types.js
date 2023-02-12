@@ -72,6 +72,21 @@
     webidl.converters["long"],
   );
 
+  // ENUM: WSIResizeDirection
+  webidl.converters["WSIResizeDirection"] = webidl.createEnumConverter(
+    "WSIResizeDirection",
+    [
+      "east",
+      "north",
+      "northeast",
+      "northwest",
+      "south",
+      "southeast",
+      "southwest",
+      "west",
+    ],
+  );
+
   // TYPEDEF: WSISize
   webidl.converters["WSISize"] = webidl.createSequenceConverter(
     webidl.converters["unsigned long"],

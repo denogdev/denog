@@ -153,6 +153,8 @@ declare class WSIWindow {
   setTransparent(transparent?: boolean): void;
   isVisible(): boolean | null;
   setVisible(visible?: boolean): void;
+  beginDragMove(): void;
+  beginDragResize(direction: WSIResizeDirection): void;
   requestRedraw(): void;
   requestUserAttention(type: WSIUserAttentionType | null): void;
   destroy(): void;

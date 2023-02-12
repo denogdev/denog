@@ -541,6 +541,17 @@ declare namespace Deno {
     y: number;
   };
 
+  // https://docs.rs/winit/0.28.1/winit/window/enum.ResizeDirection.html
+  export type WSIResizeDirection =
+    | "east"
+    | "north"
+    | "northeast"
+    | "northwest"
+    | "south"
+    | "southeast"
+    | "southwest"
+    | "west";
+
   // https://docs.rs/winit/0.28.1/winit/event/enum.MouseScrollDelta.html
   export type WSIScrollDelta = {
     type: "line-delta" | "pixel-delta";
@@ -624,6 +635,8 @@ declare namespace Deno {
     setTransparent(transparent?: boolean): void;
     isVisible(): boolean | null;
     setVisible(visible?: boolean): void;
+    beginDragMove(): void;
+    beginDragResize(direction: WSIResizeDirection): void;
     requestRedraw(): void;
     requestUserAttention(type: WSIUserAttentionType | null): void;
     destroy(): void;

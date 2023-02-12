@@ -9,15 +9,14 @@ mod request;
 mod window;
 
 use crate::{
-  cursor::WsiCursorIcon,
+  cursor::{WsiCursorGrabMode, WsiCursorIcon},
   event::WsiEvent,
   event_loop::WsiEventLoopProxy,
   window::{
-    WsiCreateWindowOptions, WsiImePurpose, WsiUserAttentionType,
-    WsiWindowLevel, WsiWindowTheme,
+    WsiCreateWindowOptions, WsiImePurpose, WsiResizeDirection,
+    WsiUserAttentionType, WsiWindowLevel, WsiWindowTheme,
   },
 };
-use cursor::WsiCursorGrabMode;
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
@@ -80,6 +79,8 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_set_transparent::decl(),
       op_wsi_window_is_visible::decl(),
       op_wsi_window_set_visible::decl(),
+      op_wsi_window_begin_drag_move::decl(),
+      op_wsi_window_begin_drag_resize::decl(),
       op_wsi_window_request_redraw::decl(),
       op_wsi_window_request_user_attention::decl(),
       op_wsi_window_destroy::decl(),
@@ -577,6 +578,31 @@ fn op_wsi_window_set_visible(state: &mut OpState, wid: u64, visible: bool) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute_with_window(wid, move |window| window.set_visible(visible))
+}
+
+#[op]
+fn op_wsi_window_begin_drag_move(
+  state: &mut OpState,
+  wid: u64,
+) -> Result<(), anyhow::Error> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, |window| window.drag_window())
+    .map_err(Into::into)
+}
+
+#[op]
+fn op_wsi_window_begin_drag_resize(
+  state: &mut OpState,
+  wid: u64,
+  direction: WsiResizeDirection,
+) -> Result<(), anyhow::Error> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| {
+      window.drag_resize_window(direction.into())
+    })
+    .map_err(Into::into)
 }
 
 #[op]

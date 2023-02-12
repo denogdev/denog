@@ -620,6 +620,28 @@
       return ops.op_wsi_window_set_visible(wid, visible);
     }
 
+    beginDragMove() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'beginDragMove' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      return ops.op_wsi_window_begin_drag_move(wid);
+    }
+
+    beginDragResize(direction) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'beginDragResize' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      direction = webidl.converters["WSIResizeDirection"](direction, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_begin_drag_resize(wid, direction);
+    }
+
     requestRedraw() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'requestRedraw' on 'WSIWindow'";

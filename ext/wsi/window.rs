@@ -4,8 +4,8 @@ use serde::{self, Deserialize, Serialize};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
   window::{
-    Fullscreen, ImePurpose, Theme, UserAttentionType, WindowBuilder,
-    WindowButtons, WindowLevel,
+    Fullscreen, ImePurpose, ResizeDirection, Theme, UserAttentionType,
+    WindowBuilder, WindowButtons, WindowLevel,
   },
 };
 
@@ -23,6 +23,34 @@ impl From<WsiImePurpose> for ImePurpose {
       WsiImePurpose::Normal => Self::Normal,
       WsiImePurpose::Password => Self::Password,
       WsiImePurpose::Terminal => Self::Terminal,
+    }
+  }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WsiResizeDirection {
+  East,
+  North,
+  Northeast,
+  Northwest,
+  South,
+  Southeast,
+  Southwest,
+  West,
+}
+
+impl From<WsiResizeDirection> for ResizeDirection {
+  fn from(direction: WsiResizeDirection) -> Self {
+    match direction {
+      WsiResizeDirection::East => Self::East,
+      WsiResizeDirection::North => Self::North,
+      WsiResizeDirection::Northeast => Self::NorthEast,
+      WsiResizeDirection::Northwest => Self::NorthWest,
+      WsiResizeDirection::South => Self::South,
+      WsiResizeDirection::Southeast => Self::SouthEast,
+      WsiResizeDirection::Southwest => Self::SouthWest,
+      WsiResizeDirection::West => Self::West,
     }
   }
 }
