@@ -14,14 +14,13 @@ use crate::{
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
-use serde::Deserialize;
 use std::{cell::RefCell, rc::Rc};
-use window::{WsiWindowLevel, WsiWindowTheme};
+use window::{
+  WsiImePurpose, WsiUserAttentionType, WsiWindowLevel, WsiWindowTheme,
+};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
-  window::{
-    Fullscreen, ImePurpose, UserAttentionType, WindowBuilder, WindowButtons,
-  },
+  window::{Fullscreen, WindowBuilder, WindowButtons},
 };
 
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
@@ -265,30 +264,17 @@ fn op_wsi_window_set_ime_position(
     })
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum WsiImePurpose {
-  Normal,
-  Password,
-  Terminal,
-}
-
 #[op]
 fn op_wsi_window_set_ime_purpose(
   state: &mut OpState,
   wid: u64,
   purpose: WsiImePurpose,
 ) {
-  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
-    wid,
-    move |window| {
-      window.set_ime_purpose(match purpose {
-        WsiImePurpose::Normal => ImePurpose::Normal,
-        WsiImePurpose::Password => ImePurpose::Password,
-        WsiImePurpose::Terminal => ImePurpose::Terminal,
-      })
-    },
-  )
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| {
+      window.set_ime_purpose(purpose.into())
+    })
 }
 
 #[op]
@@ -549,33 +535,17 @@ fn op_wsi_window_request_redraw(state: &mut OpState, wid: u64) {
     .execute_with_window(wid, |window| window.request_redraw())
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum WsiUserAttentionType {
-  Critical,
-  Informational,
-}
-
 #[op]
 fn op_wsi_window_request_user_attention(
   state: &mut OpState,
   wid: u64,
   attention_type: Option<WsiUserAttentionType>,
 ) {
-  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
-    wid,
-    move |window| {
-      window.request_user_attention(match attention_type {
-        None => None,
-        Some(WsiUserAttentionType::Critical) => {
-          Some(UserAttentionType::Critical)
-        }
-        Some(WsiUserAttentionType::Informational) => {
-          Some(UserAttentionType::Informational)
-        }
-      })
-    },
-  )
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| {
+      window.request_user_attention(attention_type.map(Into::into))
+    })
 }
 
 #[op]

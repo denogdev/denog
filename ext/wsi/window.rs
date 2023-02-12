@@ -3,8 +3,45 @@
 use serde::{self, Deserialize, Serialize};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
-  window::{Fullscreen, Theme, WindowBuilder, WindowButtons, WindowLevel},
+  window::{
+    Fullscreen, ImePurpose, Theme, UserAttentionType, WindowBuilder,
+    WindowButtons, WindowLevel,
+  },
 };
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WsiImePurpose {
+  Normal,
+  Password,
+  Terminal,
+}
+
+impl From<WsiImePurpose> for ImePurpose {
+  fn from(purpose: WsiImePurpose) -> Self {
+    match purpose {
+      WsiImePurpose::Normal => Self::Normal,
+      WsiImePurpose::Password => Self::Password,
+      WsiImePurpose::Terminal => Self::Terminal,
+    }
+  }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WsiUserAttentionType {
+  Critical,
+  Informational,
+}
+
+impl From<WsiUserAttentionType> for UserAttentionType {
+  fn from(attention_type: WsiUserAttentionType) -> Self {
+    match attention_type {
+      WsiUserAttentionType::Critical => Self::Critical,
+      WsiUserAttentionType::Informational => Self::Informational,
+    }
+  }
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
