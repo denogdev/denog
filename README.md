@@ -114,6 +114,10 @@ declare class WSIWindow {
   isFullscreen(): boolean;
   setFullscreen(fullscreen?: boolean): void;
   getGPUSurface(): GPUSurface;
+  setIMEAllowed(allowed?: boolean): void;
+  setIMEPosition(position: [number, number]): void;
+  setIMEPosition(x: number, y: number): void;
+  setIMEPurpose(purpose: WSIIMEPurpose): void;
   getInnerPosition(): [number, number] | null;
   getOuterPosition(): [number, number] | null;
   setOuterPosition(position: [number, number]): void;

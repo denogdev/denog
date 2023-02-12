@@ -5,6 +5,16 @@
 ((globalThis) => {
   const webidl = globalThis.__bootstrap.webidl;
 
+  // ENUM: WSIIMEPurpose
+  webidl.converters["WSIIMEPurpose"] = webidl.createEnumConverter(
+    "WSIIMEPurpose",
+    [
+      "normal",
+      "password",
+      "terminal",
+    ],
+  );
+
   // TYPEDEF: WSIPosition
   webidl.converters.WSIPosition = webidl.createSequenceConverter(
     webidl.converters["long"],

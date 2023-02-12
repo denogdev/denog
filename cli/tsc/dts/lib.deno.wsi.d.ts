@@ -303,6 +303,12 @@ declare namespace Deno {
       theme: WSIWindowTheme;
     };
 
+  // https://docs.rs/winit/latest/winit/window/enum.ImePurpose.html
+  export type WSIIMEPurpose =
+    | "normal"
+    | "password"
+    | "terminal";
+
   // https://docs.rs/winit/0.28.1/winit/event/enum.VirtualKeyCode.html
   export type WSIKeyCode =
     | "1"
@@ -530,6 +536,10 @@ declare namespace Deno {
     isFullscreen(): boolean;
     setFullscreen(fullscreen?: boolean): void;
     getGPUSurface(): GPUSurface;
+    setIMEAllowed(allowed?: boolean): void;
+    setIMEPosition(position: [number, number]): void;
+    setIMEPosition(x: number, y: number): void;
+    setIMEPurpose(purpose: WSIIMEPurpose): void;
     getInnerPosition(): [number, number] | null;
     getOuterPosition(): [number, number] | null;
     setOuterPosition(position: [number, number]): void;

@@ -272,6 +272,44 @@
       }
     }
 
+    setIMEAllowed(allowed = true) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setIMEAllowed' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      allowed = webidl.converters["boolean"](allowed, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_ime_allowed(wid, allowed);
+    }
+
+    setIMEPosition(positionOrX, y) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setIMEPosition' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      const position = convertPosition(prefix, positionOrX, y);
+
+      return ops.op_wsi_window_set_ime_position(wid, position);
+    }
+
+    setIMEPurpose(purpose) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setIMEPurpose' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      purpose = webidl.converters["WSIIMEPurpose"](purpose, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_ime_purpose(wid, purpose);
+    }
+
     getInnerPosition() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'getInnerPosition' on 'WSIWindow'";

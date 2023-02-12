@@ -14,11 +14,12 @@ use crate::{
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
+use serde::Deserialize;
 use std::{cell::RefCell, rc::Rc};
 use window::{WsiWindowLevel, WsiWindowTheme};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
-  window::{Fullscreen, WindowBuilder, WindowButtons},
+  window::{Fullscreen, ImePurpose, WindowBuilder, WindowButtons},
 };
 
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
@@ -42,6 +43,9 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_is_fullscreen::decl(),
       op_wsi_window_set_fullscreen::decl(),
       op_wsi_window_create_gpu_surface::decl(),
+      op_wsi_window_set_ime_allowed::decl(),
+      op_wsi_window_set_ime_position::decl(),
+      op_wsi_window_set_ime_purpose::decl(),
       op_wsi_window_get_inner_position::decl(),
       op_wsi_window_get_outer_position::decl(),
       op_wsi_window_set_outer_position::decl(),
@@ -236,6 +240,52 @@ fn op_wsi_window_create_gpu_surface(
 
   state.put(webgpu_instance);
   state.resource_table.add(WebGpuSurface(surface_id))
+}
+
+#[op]
+fn op_wsi_window_set_ime_allowed(state: &mut OpState, wid: u64, allowed: bool) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| window.set_ime_allowed(allowed))
+}
+
+#[op]
+fn op_wsi_window_set_ime_position(
+  state: &mut OpState,
+  wid: u64,
+  (x, y): (i32, i32),
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| {
+      window.set_ime_position(PhysicalPosition { x, y })
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WsiImePurpose {
+  Normal,
+  Password,
+  Terminal,
+}
+
+#[op]
+fn op_wsi_window_set_ime_purpose(
+  state: &mut OpState,
+  wid: u64,
+  purpose: WsiImePurpose,
+) {
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.set_ime_purpose(match purpose {
+        WsiImePurpose::Normal => ImePurpose::Normal,
+        WsiImePurpose::Password => ImePurpose::Password,
+        WsiImePurpose::Terminal => ImePurpose::Terminal,
+      })
+    },
+  )
 }
 
 #[op]

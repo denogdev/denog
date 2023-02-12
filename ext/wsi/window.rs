@@ -6,7 +6,7 @@ use winit::{
   window::{Fullscreen, Theme, WindowBuilder, WindowButtons, WindowLevel},
 };
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum WsiWindowLevel {
   AlwaysOnBottom,
@@ -49,7 +49,7 @@ impl From<Theme> for WsiWindowTheme {
   }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WsiCreateWindowOptions {
   pub active: Option<bool>,
