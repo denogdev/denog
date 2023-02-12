@@ -591,8 +591,8 @@ declare namespace Deno {
     setIMEPosition(position: [number, number]): void;
     setIMEPosition(x: number, y: number): void;
     setIMEPurpose(purpose: WSIIMEPurpose): void;
-    getInnerPosition(): [number, number] | null;
-    getOuterPosition(): [number, number] | null;
+    getInnerPosition(): [number, number];
+    getOuterPosition(): [number, number];
     setOuterPosition(position: [number, number]): void;
     setOuterPosition(x: number, y: number): void;
     getInnerSize(): [number, number];

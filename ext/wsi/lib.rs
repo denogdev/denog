@@ -307,26 +307,24 @@ fn op_wsi_window_set_ime_purpose(
 fn op_wsi_window_get_inner_position(
   state: &mut OpState,
   wid: u64,
-) -> Option<(i32, i32)> {
+) -> Result<(i32, i32), anyhow::Error> {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .execute_with_window(wid, |window| match window.inner_position() {
-      Ok(PhysicalPosition { x, y }) => Some((x, y)),
-      Err(_) => None,
-    })
+    .execute_with_window(wid, |window| window.inner_position())
+    .map(|PhysicalPosition { x, y }| (x, y))
+    .map_err(Into::into)
 }
 
 #[op]
 fn op_wsi_window_get_outer_position(
   state: &mut OpState,
   wid: u64,
-) -> Option<(i32, i32)> {
+) -> Result<(i32, i32), anyhow::Error> {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
-    .execute_with_window(wid, |window| match window.outer_position() {
-      Ok(PhysicalPosition { x, y }) => Some((x, y)),
-      Err(_) => None,
-    })
+    .execute_with_window(wid, |window| window.outer_position())
+    .map(|PhysicalPosition { x, y }| (x, y))
+    .map_err(Into::into)
 }
 
 #[op]
