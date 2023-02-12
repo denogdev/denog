@@ -12,24 +12,25 @@
 
   const windows = new Map();
 
-  function convertPosition(prefix, positionOrX, y) {
-    if (y === undefined) {
-      const position = webidl.converters.WSIPosition(positionOrX, {
+  function convertPosition(prefix, args) {
+    if (args.length >= 2) {
+      const x = webidl.converters["long"](args[0], {
+        prefix,
+        context: "Argument 1",
+      });
+      const y = webidl.converters["long"](args[1], {
+        prefix,
+        context: "Argument 2",
+      });
+      return [x, y];
+    } else {
+      webidl.requiredArguments(args.length, 1, { prefix });
+      const position = webidl.converters["WSIPosition"](args[0], {
         prefix,
         context: "Argument 1",
       });
       checkPosition(prefix, position);
       return position;
-    } else {
-      const x = webidl.converters["long"](positionOrX, {
-        prefix,
-        context: "Argument 1",
-      });
-      y = webidl.converters["long"](y, {
-        prefix,
-        context: "Argument 2",
-      });
-      return [x, y];
     }
   }
 
@@ -42,28 +43,29 @@
     }
   }
 
-  function convertSize(prefix, sizeOrWidth, height, optional = false) {
-    if (height === undefined) {
-      if (optional && sizeOrWidth === null) {
+  function convertSize(prefix, args, nullable = false) {
+    if (args.length >= 2) {
+      const width = webidl.converters["unsigned long"](args[0], {
+        prefix,
+        context: "Argument 1",
+      });
+      const height = webidl.converters["unsigned long"](args[1], {
+        prefix,
+        context: "Argument 2",
+      });
+      return [width, height];
+    } else {
+      webidl.requiredArguments(args.length, 1, { prefix });
+      if (nullable && args[0] === null) {
         return null;
       } else {
-        const size = webidl.converters.WSISize(sizeOrWidth, {
+        const size = webidl.converters["WSISize"](args[0], {
           prefix,
           context: "Argument 1",
         });
         checkSize(prefix, size);
         return size;
       }
-    } else {
-      const width = webidl.converters["unsigned long"](sizeOrWidth, {
-        prefix,
-        context: "Argument 1",
-      });
-      height = webidl.converters["unsigned long"](height, {
-        prefix,
-        context: "Argument 2",
-      });
-      return [width, height];
     }
   }
 
@@ -98,7 +100,7 @@
       const prefix = "Failed to execute 'createWindow' on 'WSI'";
 
       if (options !== undefined) {
-        options = webidl.converters.WSICreateWindowOptions(options, {
+        options = webidl.converters["WSICreateWindowOptions"](options, {
           prefix,
           context: "Argument 1",
         });
@@ -285,13 +287,12 @@
       return ops.op_wsi_window_set_ime_allowed(wid, allowed);
     }
 
-    setIMEPosition(positionOrX, y) {
+    setIMEPosition() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setIMEPosition' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      webidl.requiredArguments(arguments.length, 1, { prefix });
-      const position = convertPosition(prefix, positionOrX, y);
+      const position = convertPosition(prefix, arguments);
 
       return ops.op_wsi_window_set_ime_position(wid, position);
     }
@@ -326,13 +327,12 @@
       return ops.op_wsi_window_get_outer_position(wid);
     }
 
-    setOuterPosition(positionOrX, y) {
+    setOuterPosition() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setOuterPosition' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      webidl.requiredArguments(arguments.length, 1, { prefix });
-      const position = convertPosition(prefix, positionOrX, y);
+      const position = convertPosition(prefix, arguments);
 
       return ops.op_wsi_window_set_outer_position(wid, position);
     }
@@ -353,35 +353,34 @@
       return ops.op_wsi_window_get_outer_size(wid);
     }
 
-    setInnerSize(sizeOrWidth, height) {
+    setInnerSize() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setInnerSize' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      webidl.requiredArguments(arguments.length, 1, { prefix });
-      const size = convertSize(prefix, sizeOrWidth, height);
+      const size = convertSize(prefix, arguments);
 
       return ops.op_wsi_window_set_inner_size(wid, size);
     }
 
-    setMinInnerSize(sizeOrWidth, height) {
+    setMinInnerSize() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMinInnerSize' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      webidl.requiredArguments(arguments.length, 1, { prefix });
-      const size = convertSize(prefix, sizeOrWidth, height, true);
+      const nullable = true;
+      const size = convertSize(prefix, arguments, nullable);
 
       return ops.op_wsi_window_set_min_inner_size(wid, size);
     }
 
-    setMaxInnerSize(sizeOrWidth, height) {
+    setMaxInnerSize() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setMaxInnerSize' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      webidl.requiredArguments(arguments.length, 1, { prefix });
-      const size = convertSize(prefix, sizeOrWidth, height, true);
+      const nullable = true;
+      const size = convertSize(prefix, arguments, nullable);
 
       return ops.op_wsi_window_set_max_inner_size(wid, size);
     }
@@ -471,13 +470,13 @@
       return ops.op_wsi_window_get_resize_increments(wid);
     }
 
-    setResizeIncrements(sizeOrWidth, height) {
+    setResizeIncrements() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setResizeIncrements' on 'WSIWindow'";
       const wid = assertWindow(this, { prefix, context: "this" });
 
-      webidl.requiredArguments(arguments.length, 1, { prefix });
-      const size = convertSize(prefix, sizeOrWidth, height, true);
+      const nullable = true;
+      const size = convertSize(prefix, arguments, nullable);
 
       return ops.op_wsi_window_set_resize_increments(wid, size);
     }

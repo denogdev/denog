@@ -16,12 +16,12 @@
   );
 
   // TYPEDEF: WSIPosition
-  webidl.converters.WSIPosition = webidl.createSequenceConverter(
+  webidl.converters["WSIPosition"] = webidl.createSequenceConverter(
     webidl.converters["long"],
   );
 
   // TYPEDEF: WSISize
-  webidl.converters.WSISize = webidl.createSequenceConverter(
+  webidl.converters["WSISize"] = webidl.createSequenceConverter(
     webidl.converters["unsigned long"],
   );
 
@@ -68,19 +68,19 @@
     },
     {
       key: "position",
-      converter: webidl.converters.WSIPosition,
+      converter: webidl.converters["WSIPosition"],
     },
     {
       key: "innerSize",
-      converter: webidl.converters.WSISize,
+      converter: webidl.converters["WSISize"],
     },
     {
       key: "minInnerSize",
-      converter: webidl.converters.WSISize,
+      converter: webidl.converters["WSISize"],
     },
     {
       key: "maxInnerSize",
-      converter: webidl.converters.WSISize,
+      converter: webidl.converters["WSISize"],
     },
     {
       key: "level",
@@ -96,7 +96,7 @@
     },
     {
       key: "resizeIncrements",
-      converter: webidl.converters.WSISize,
+      converter: webidl.converters["WSISize"],
     },
     {
       key: "theme",
@@ -115,7 +115,7 @@
       converter: webidl.converters["boolean"],
     },
   ];
-  webidl.converters.WSICreateWindowOptions = webidl
+  webidl.converters["WSICreateWindowOptions"] = webidl
     .createDictionaryConverter(
       "WSICreateWindowOptions",
       dictMembersWSICreateWindowOptions,
