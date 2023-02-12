@@ -149,6 +149,7 @@ declare class WSIWindow {
   isVisible(): boolean | null;
   setVisible(visible?: boolean): void;
   requestRedraw(): void;
+  requestUserAttention(type: WSIUserAttentionType | null): void;
   destroy(): void;
 }
 ```

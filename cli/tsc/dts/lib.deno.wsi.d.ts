@@ -303,7 +303,7 @@ declare namespace Deno {
       theme: WSIWindowTheme;
     };
 
-  // https://docs.rs/winit/latest/winit/window/enum.ImePurpose.html
+  // https://docs.rs/winit/0.28.1/winit/window/enum.ImePurpose.html
   export type WSIIMEPurpose =
     | "normal"
     | "password"
@@ -524,6 +524,11 @@ declare namespace Deno {
     | "ended"
     | "cancelled";
 
+  // https://docs.rs/winit/0.28.1/winit/window/enum.UserAttentionType.html
+  export type WSIUserAttentionType =
+    | "critical"
+    | "informational";
+
   // https://docs.rs/winit/0.28.1/winit/window/struct.Window.html
   export class WSIWindow {
     setContentProtected(contentProtected?: boolean): void;
@@ -571,10 +576,11 @@ declare namespace Deno {
     isVisible(): boolean | null;
     setVisible(visible?: boolean): void;
     requestRedraw(): void;
+    requestUserAttention(type: WSIUserAttentionType | null): void;
     destroy(): void;
   }
 
-  // https://docs.rs/winit/latest/winit/window/struct.WindowButtons.html
+  // https://docs.rs/winit/0.28.1/winit/window/struct.WindowButtons.html
   export type WSIWindowButtons = number;
   export class WSIWindowButton {
     static CLOSE: 0b001;
@@ -582,7 +588,7 @@ declare namespace Deno {
     static MAXIMIZE: 0b100;
   }
 
-  // https://docs.rs/winit/latest/winit/window/enum.WindowLevel.html
+  // https://docs.rs/winit/0.28.1/winit/window/enum.WindowLevel.html
   export type WSIWindowLevel =
     | "always-on-bottom"
     | "normal"

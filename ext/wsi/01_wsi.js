@@ -575,6 +575,22 @@
       return ops.op_wsi_window_request_redraw(wid);
     }
 
+    requestUserAttention(type) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'requestUserAttention' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      if (type !== null) {
+        type = webidl.converters["WSIUserAttentionType"](type, {
+          prefix,
+          context: "Argument 1",
+        });
+      }
+
+      return ops.op_wsi_window_request_user_attention(wid, type);
+    }
+
     destroy() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'destroy' on 'WSIWindow'";

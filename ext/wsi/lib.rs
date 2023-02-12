@@ -19,7 +19,9 @@ use std::{cell::RefCell, rc::Rc};
 use window::{WsiWindowLevel, WsiWindowTheme};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
-  window::{Fullscreen, ImePurpose, WindowBuilder, WindowButtons},
+  window::{
+    Fullscreen, ImePurpose, UserAttentionType, WindowBuilder, WindowButtons,
+  },
 };
 
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
@@ -72,6 +74,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_is_visible::decl(),
       op_wsi_window_set_visible::decl(),
       op_wsi_window_request_redraw::decl(),
+      op_wsi_window_request_user_attention::decl(),
       op_wsi_window_destroy::decl(),
     ])
     .state(move |state| {
@@ -544,6 +547,35 @@ fn op_wsi_window_request_redraw(state: &mut OpState, wid: u64) {
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute_with_window(wid, |window| window.request_redraw())
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WsiUserAttentionType {
+  Critical,
+  Informational,
+}
+
+#[op]
+fn op_wsi_window_request_user_attention(
+  state: &mut OpState,
+  wid: u64,
+  attention_type: Option<WsiUserAttentionType>,
+) {
+  state.borrow::<Rc<WsiEventLoopProxy>>().execute_with_window(
+    wid,
+    move |window| {
+      window.request_user_attention(match attention_type {
+        None => None,
+        Some(WsiUserAttentionType::Critical) => {
+          Some(UserAttentionType::Critical)
+        }
+        Some(WsiUserAttentionType::Informational) => {
+          Some(UserAttentionType::Informational)
+        }
+      })
+    },
+  )
 }
 
 #[op]

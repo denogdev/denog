@@ -25,6 +25,15 @@
     webidl.converters["unsigned long"],
   );
 
+  // ENUM: WSIUserAttentionType
+  webidl.converters["WSIUserAttentionType"] = webidl.createEnumConverter(
+    "WSIUserAttentionType",
+    [
+      "critical",
+      "informational",
+    ],
+  );
+
   // ENUM: WSIWindowLevel
   webidl.converters["WSIWindowLevel"] = webidl.createEnumConverter(
     "WSIWindowLevel",
