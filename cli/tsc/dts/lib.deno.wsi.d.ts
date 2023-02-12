@@ -39,6 +39,12 @@ declare namespace Deno {
     visible?: boolean;
   }
 
+  // https://docs.rs/winit/0.28.1/winit/window/enum.CursorGrabMode.html
+  export type WSICursorGrabMode =
+    | "none"
+    | "confined"
+    | "locked";
+
   // https://docs.rs/winit/0.28.1/winit/window/enum.CursorIcon.html
   export type WSICursorIcon =
     | "default"
@@ -570,6 +576,7 @@ declare namespace Deno {
   // https://docs.rs/winit/0.28.1/winit/window/struct.Window.html
   export class WSIWindow {
     setContentProtected(contentProtected?: boolean): void;
+    setCursorGrabMode(mode: WSICursorGrabMode): void;
     setCursorIcon(icon: WSICursorIcon): void;
     isDecorated(): boolean;
     setDecorated(decorated?: boolean): void;

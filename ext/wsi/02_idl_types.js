@@ -5,6 +5,16 @@
 ((globalThis) => {
   const webidl = globalThis.__bootstrap.webidl;
 
+  // ENUM: WSICursorGrabMode
+  webidl.converters["WSICursorGrabMode"] = webidl.createEnumConverter(
+    "WSICursorGrabMode",
+    [
+      "none",
+      "confined",
+      "locked",
+    ],
+  );
+
   // ENUM: WSICursorIcon
   webidl.converters["WSICursorIcon"] = webidl.createEnumConverter(
     "WSICursorIcon",

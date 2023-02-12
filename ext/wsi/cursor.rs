@@ -1,5 +1,18 @@
 use serde::Deserialize;
-use winit::window::CursorIcon;
+use winit::window::{CursorGrabMode, CursorIcon};
+
+#[derive(Deserialize)]
+pub struct WsiCursorGrabMode(
+  #[serde(with = "WsiCursorGrabModeDef")] pub CursorGrabMode,
+);
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case", remote = "CursorGrabMode")]
+enum WsiCursorGrabModeDef {
+  None,
+  Confined,
+  Locked,
+}
 
 #[derive(Deserialize)]
 pub struct WsiCursorIcon(#[serde(with = "WsiCursorIconDef")] pub CursorIcon);

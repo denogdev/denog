@@ -105,6 +105,7 @@ You can read and/or modify more properties after a window has been created:
 ```ts
 declare class WSIWindow {
   setContentProtected(contentProtected?: boolean): void;
+  setCursorGrabMode(mode: WSICursorGrabMode): void;
   setCursorIcon(icon: WSICursorIcon): void;
   isDecorated(): boolean;
   setDecorated(decorated?: boolean): void;

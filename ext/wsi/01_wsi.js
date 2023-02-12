@@ -181,6 +181,20 @@
       return ops.op_wsi_window_set_content_protected(wid, contentProtected);
     }
 
+    setCursorGrabMode(mode) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setCursorGrabMode' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      mode = webidl.converters["WSICursorGrabMode"](mode, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_cursor_grab_mode(wid, mode);
+    }
+
     setCursorIcon(icon) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setCursorIcon' on 'WSIWindow'";

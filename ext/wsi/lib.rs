@@ -9,17 +9,19 @@ mod request;
 mod window;
 
 use crate::{
-  event::WsiEvent, event_loop::WsiEventLoopProxy,
-  window::WsiCreateWindowOptions,
+  cursor::WsiCursorIcon,
+  event::WsiEvent,
+  event_loop::WsiEventLoopProxy,
+  window::{
+    WsiCreateWindowOptions, WsiImePurpose, WsiUserAttentionType,
+    WsiWindowLevel, WsiWindowTheme,
+  },
 };
-use cursor::WsiCursorIcon;
+use cursor::WsiCursorGrabMode;
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::{cell::RefCell, rc::Rc};
-use window::{
-  WsiImePurpose, WsiUserAttentionType, WsiWindowLevel, WsiWindowTheme,
-};
 use winit::{
   dpi::{PhysicalPosition, PhysicalSize},
   window::{Fullscreen, WindowBuilder, WindowButtons},
@@ -37,6 +39,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_next_event::decl(),
       op_wsi_create_window::decl(),
       op_wsi_window_set_content_protected::decl(),
+      op_wsi_window_set_cursor_grab_mode::decl(),
       op_wsi_window_set_cursor_icon::decl(),
       op_wsi_window_is_decorated::decl(),
       op_wsi_window_set_decorated::decl(),
@@ -119,22 +122,19 @@ fn op_wsi_create_window(
   state: &mut OpState,
   options: Option<WsiCreateWindowOptions>,
 ) -> Result<u64, anyhow::Error> {
-  try_borrow_event_loop_proxy(state, "Deno.wsi.createWindow").execute(
-    |window_target, windows| {
+  try_borrow_event_loop_proxy(state, "Deno.wsi.createWindow")
+    .execute(|window_target, windows| {
       let mut builder = WindowBuilder::new().with_title("Denog");
       if let Some(options) = options {
         builder = options.into_window_builder(builder);
       }
-      builder
-        .build(window_target)
-        .map(|window| {
-          let wid = window.id().into();
-          windows.insert(wid, window);
-          wid
-        })
-        .map_err(Into::into)
-    },
-  )
+      builder.build(window_target).map(|window| {
+        let wid = window.id().into();
+        windows.insert(wid, window);
+        wid
+      })
+    })
+    .map_err(Into::into)
 }
 
 #[op]
@@ -148,6 +148,18 @@ fn op_wsi_window_set_content_protected(
     .execute_with_window(wid, move |window| {
       window.set_content_protected(protected)
     })
+}
+
+#[op]
+fn op_wsi_window_set_cursor_grab_mode(
+  state: &mut OpState,
+  wid: u64,
+  mode: WsiCursorGrabMode,
+) -> Result<(), anyhow::Error> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| window.set_cursor_grab(mode.0))
+    .map_err(Into::into)
 }
 
 #[op]
