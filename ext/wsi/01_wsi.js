@@ -181,6 +181,20 @@
       return ops.op_wsi_window_set_content_protected(wid, contentProtected);
     }
 
+    setCursorIcon(icon) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setCursorIcon' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      icon = webidl.converters["WSICursorIcon"](icon, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_cursor_icon(wid, icon);
+    }
+
     isDecorated() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'isDecorated' on 'WSIWindow'";
@@ -503,10 +517,12 @@
       const wid = assertWindow(this, { prefix, context: "this" });
 
       webidl.requiredArguments(arguments.length, 1, { prefix });
-      theme = webidl.converters["WSIWindowTheme"](theme, {
-        prefix,
-        context: "Argument 1",
-      });
+      if (theme !== null) {
+        theme = webidl.converters["WSIWindowTheme"](theme, {
+          prefix,
+          context: "Argument 1",
+        });
+      }
 
       return ops.op_wsi_window_set_theme(wid, theme);
     }

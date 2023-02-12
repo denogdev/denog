@@ -1,5 +1,6 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
+mod cursor;
 mod device_ids;
 mod event;
 pub mod event_loop;
@@ -11,6 +12,7 @@ use crate::{
   event::WsiEvent, event_loop::WsiEventLoopProxy,
   window::WsiCreateWindowOptions,
 };
+use cursor::WsiCursorIcon;
 use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
 use deno_webgpu::surface::WebGpuSurface;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
@@ -35,6 +37,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_next_event::decl(),
       op_wsi_create_window::decl(),
       op_wsi_window_set_content_protected::decl(),
+      op_wsi_window_set_cursor_icon::decl(),
       op_wsi_window_is_decorated::decl(),
       op_wsi_window_set_decorated::decl(),
       op_wsi_window_get_enabled_buttons::decl(),
@@ -145,6 +148,17 @@ fn op_wsi_window_set_content_protected(
     .execute_with_window(wid, move |window| {
       window.set_content_protected(protected)
     })
+}
+
+#[op]
+fn op_wsi_window_set_cursor_icon(
+  state: &mut OpState,
+  wid: u64,
+  icon: WsiCursorIcon,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| window.set_cursor_icon(icon.0))
 }
 
 #[op]

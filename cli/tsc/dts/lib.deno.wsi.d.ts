@@ -39,6 +39,44 @@ declare namespace Deno {
     visible?: boolean;
   }
 
+  // https://docs.rs/winit/0.28.1/winit/window/enum.CursorIcon.html
+  export type WSICursorIcon =
+    | "default"
+    | "crosshair"
+    | "hand"
+    | "arrow"
+    | "move"
+    | "text"
+    | "wait"
+    | "help"
+    | "progress"
+    | "not-allowed"
+    | "context-menu"
+    | "cell"
+    | "vertical-text"
+    | "alias"
+    | "copy"
+    | "no-drop"
+    | "grab"
+    | "grabbing"
+    | "all-scroll"
+    | "zoom-in"
+    | "zoom-out"
+    | "e-resize"
+    | "n-resize"
+    | "ne-resize"
+    | "nw-resize"
+    | "s-resize"
+    | "se-resize"
+    | "sw-resize"
+    | "w-resize"
+    | "ew-resize"
+    | "ns-resize"
+    | "nesw-resize"
+    | "nwse-resize"
+    | "col-resize"
+    | "row-resize";
+
   // https://docs.rs/winit/0.28.1/winit/event/enum.Event.html
   export type WSIEvent =
     | {
@@ -532,6 +570,7 @@ declare namespace Deno {
   // https://docs.rs/winit/0.28.1/winit/window/struct.Window.html
   export class WSIWindow {
     setContentProtected(contentProtected?: boolean): void;
+    setCursorIcon(icon: WSICursorIcon): void;
     isDecorated(): boolean;
     setDecorated(decorated?: boolean): void;
     getEnabledButtons(): WSIWindowButtons;

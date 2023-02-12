@@ -100,11 +100,12 @@ declare interface WSICreateWindowOptions {
 }
 ```
 
-You can read and/or modify most properties after a window has been created:
+You can read and/or modify more properties after a window has been created:
 
 ```ts
 declare class WSIWindow {
   setContentProtected(contentProtected?: boolean): void;
+  setCursorIcon(icon: WSICursorIcon): void;
   isDecorated(): boolean;
   setDecorated(decorated?: boolean): void;
   getEnabledButtons(): WSIWindowButtons;
