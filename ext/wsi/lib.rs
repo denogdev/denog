@@ -39,6 +39,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_create_window::decl(),
       op_wsi_window_set_content_protected::decl(),
       op_wsi_window_set_cursor_grab_mode::decl(),
+      op_wsi_window_set_cursor_hit_test_enabled::decl(),
       op_wsi_window_set_cursor_icon::decl(),
       op_wsi_window_set_cursor_position::decl(),
       op_wsi_window_set_cursor_visible::decl(),
@@ -162,6 +163,18 @@ fn op_wsi_window_set_cursor_grab_mode(
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute_with_window(wid, move |window| window.set_cursor_grab(mode.0))
+    .map_err(Into::into)
+}
+
+#[op]
+fn op_wsi_window_set_cursor_hit_test_enabled(
+  state: &mut OpState,
+  wid: u64,
+  enabled: bool,
+) -> Result<(), anyhow::Error> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| window.set_cursor_hittest(enabled))
     .map_err(Into::into)
 }
 

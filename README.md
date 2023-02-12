@@ -106,6 +106,7 @@ You can read and/or modify more properties after a window has been created:
 declare class WSIWindow {
   setContentProtected(contentProtected?: boolean): void;
   setCursorGrabMode(mode: WSICursorGrabMode): void;
+  setCursorHitTestEnabled(enabled?: boolean): void;
   setCursorIcon(icon: WSICursorIcon): void;
   setCursorPosition(position: [number, number]): void;
   setCursorPosition(x: number, y: number): void;

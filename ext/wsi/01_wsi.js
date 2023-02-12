@@ -195,6 +195,19 @@
       return ops.op_wsi_window_set_cursor_grab_mode(wid, mode);
     }
 
+    setCursorHitTestEnabled(enabled = true) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setCursorHitTestEnabled' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      enabled = webidl.converters["boolean"](enabled, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_cursor_hit_test_enabled(wid, enabled);
+    }
+
     setCursorIcon(icon) {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'setCursorIcon' on 'WSIWindow'";
