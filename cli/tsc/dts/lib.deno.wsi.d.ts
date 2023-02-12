@@ -578,6 +578,9 @@ declare namespace Deno {
     setContentProtected(contentProtected?: boolean): void;
     setCursorGrabMode(mode: WSICursorGrabMode): void;
     setCursorIcon(icon: WSICursorIcon): void;
+    setCursorPosition(position: [number, number]): void;
+    setCursorPosition(x: number, y: number): void;
+    setCursorVisible(visible?: boolean): void;
     isDecorated(): boolean;
     setDecorated(decorated?: boolean): void;
     getEnabledButtons(): WSIWindowButtons;

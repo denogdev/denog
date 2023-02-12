@@ -209,6 +209,29 @@
       return ops.op_wsi_window_set_cursor_icon(wid, icon);
     }
 
+    setCursorPosition() {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setCursorPosition' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      const position = convertPosition(prefix, arguments);
+
+      return ops.op_wsi_window_set_cursor_position(wid, position);
+    }
+
+    setCursorVisible(visible = true) {
+      webidl.assertBranded(this, WSIWindowPrototype);
+      const prefix = "Failed to execute 'setCursorVisible' on 'WSIWindow'";
+      const wid = assertWindow(this, { prefix, context: "this" });
+
+      visible = webidl.converters["boolean"](visible, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_window_set_cursor_visible(wid, visible);
+    }
+
     isDecorated() {
       webidl.assertBranded(this, WSIWindowPrototype);
       const prefix = "Failed to execute 'isDecorated' on 'WSIWindow'";

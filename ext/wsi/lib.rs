@@ -41,6 +41,8 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       op_wsi_window_set_content_protected::decl(),
       op_wsi_window_set_cursor_grab_mode::decl(),
       op_wsi_window_set_cursor_icon::decl(),
+      op_wsi_window_set_cursor_position::decl(),
+      op_wsi_window_set_cursor_visible::decl(),
       op_wsi_window_is_decorated::decl(),
       op_wsi_window_set_decorated::decl(),
       op_wsi_window_get_enabled_buttons::decl(),
@@ -171,6 +173,31 @@ fn op_wsi_window_set_cursor_icon(
   state
     .borrow::<Rc<WsiEventLoopProxy>>()
     .execute_with_window(wid, move |window| window.set_cursor_icon(icon.0))
+}
+
+#[op]
+fn op_wsi_window_set_cursor_position(
+  state: &mut OpState,
+  wid: u64,
+  (x, y): (i32, i32),
+) -> Result<(), anyhow::Error> {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| {
+      window.set_cursor_position(PhysicalPosition { x, y })
+    })
+    .map_err(Into::into)
+}
+
+#[op]
+fn op_wsi_window_set_cursor_visible(
+  state: &mut OpState,
+  wid: u64,
+  visible: bool,
+) {
+  state
+    .borrow::<Rc<WsiEventLoopProxy>>()
+    .execute_with_window(wid, move |window| window.set_cursor_visible(visible))
 }
 
 #[op]
