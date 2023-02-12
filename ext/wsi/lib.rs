@@ -12,6 +12,7 @@ use crate::{
   cursor::{WsiCursorGrabMode, WsiCursorIcon},
   event::WsiEvent,
   event_loop::WsiEventLoopProxy,
+  input::WsiDeviceEventFilter,
   window::{
     WsiCreateWindowOptions, WsiImePurpose, WsiResizeDirection,
     WsiUserAttentionType, WsiWindowLevel, WsiWindowTheme,
@@ -36,6 +37,7 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
     ))
     .ops(vec![
       op_wsi_next_event::decl(),
+      op_wsi_set_device_event_filter::decl(),
       op_wsi_create_window::decl(),
       op_wsi_window_set_content_protected::decl(),
       op_wsi_window_set_cursor_grab_mode::decl(),
@@ -119,6 +121,16 @@ async fn op_wsi_next_event(
       event => return Ok(event),
     }
   }
+}
+
+#[op]
+fn op_wsi_set_device_event_filter(
+  state: &mut OpState,
+  filter: WsiDeviceEventFilter,
+) {
+  try_borrow_event_loop_proxy(state, "Deno.wsi.setDeviceEventFilter").execute(
+    |window_target, _| window_target.set_device_event_filter(filter.into()),
+  )
 }
 
 #[op]

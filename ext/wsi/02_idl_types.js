@@ -57,6 +57,16 @@
     ],
   );
 
+  // ENUM: WSIDeviceEventFilter
+  webidl.converters["WSIDeviceEventFilter"] = webidl.createEnumConverter(
+    "WSIDeviceEventFilter",
+    [
+      "always",
+      "unfocused",
+      "never",
+    ],
+  );
+
   // ENUM: WSIIMEPurpose
   webidl.converters["WSIIMEPurpose"] = webidl.createEnumConverter(
     "WSIIMEPurpose",

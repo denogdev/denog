@@ -95,6 +95,19 @@
       return event;
     }
 
+    setDeviceEventFilter(filter) {
+      webidl.assertBranded(this, WSIPrototype);
+      const prefix = "Failed to execute 'setDeviceEventFilter' on 'WSI'";
+
+      webidl.requiredArguments(arguments.length, 1, { prefix });
+      filter = webidl.converters["WSIDeviceEventFilter"](filter, {
+        prefix,
+        context: "Argument 1",
+      });
+
+      return ops.op_wsi_set_device_event_filter(filter);
+    }
+
     createWindow(options) {
       webidl.assertBranded(this, WSIPrototype);
       const prefix = "Failed to execute 'createWindow' on 'WSI'";

@@ -10,6 +10,7 @@ declare namespace Deno {
   export const wsi: WSI;
   export class WSI {
     nextEvent(): Promise<WSIEvent>;
+    setDeviceEventFilter(filter: WSIDeviceEventFilter): void;
     createWindow(options?: WSICreateWindowOptions): WSIWindow;
   }
 
@@ -82,6 +83,12 @@ declare namespace Deno {
     | "nwse-resize"
     | "col-resize"
     | "row-resize";
+
+  // https://docs.rs/winit/0.28.1/winit/event_loop/enum.DeviceEventFilter.html
+  export type WSIDeviceEventFilter =
+    | "always"
+    | "unfocused"
+    | "never";
 
   // https://docs.rs/winit/0.28.1/winit/event/enum.Event.html
   export type WSIEvent =

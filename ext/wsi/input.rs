@@ -1,7 +1,10 @@
-use serde::{Serialize, Serializer};
-use winit::event::{
-  ElementState, Force, MouseButton, MouseScrollDelta, TouchPhase,
-  VirtualKeyCode,
+use serde::{Deserialize, Serialize, Serializer};
+use winit::{
+  event::{
+    ElementState, Force, MouseButton, MouseScrollDelta, TouchPhase,
+    VirtualKeyCode,
+  },
+  event_loop::DeviceEventFilter,
 };
 
 #[derive(Debug, Serialize)]
@@ -16,6 +19,24 @@ impl From<ElementState> for WsiButtonState {
     match state {
       ElementState::Pressed => Self::Pressed,
       ElementState::Released => Self::Released,
+    }
+  }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum WsiDeviceEventFilter {
+  Always,
+  Unfocused,
+  Never,
+}
+
+impl From<WsiDeviceEventFilter> for DeviceEventFilter {
+  fn from(filter: WsiDeviceEventFilter) -> Self {
+    match filter {
+      WsiDeviceEventFilter::Always => Self::Always,
+      WsiDeviceEventFilter::Unfocused => Self::Unfocused,
+      WsiDeviceEventFilter::Never => Self::Never,
     }
   }
 }
