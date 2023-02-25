@@ -5,6 +5,8 @@ use deno_bench_util::bench_or_profile;
 use deno_bench_util::bencher::benchmark_group;
 use deno_bench_util::bencher::Bencher;
 use deno_core::Extension;
+use deno_core::ExtensionFileSource;
+use deno_core::ExtensionFileSourceCode;
 use deno_web::BlobStore;
 
 struct Permissions;
@@ -28,11 +30,15 @@ fn setup() -> Vec<Extension> {
     deno_console::init(),
     deno_web::init::<Permissions>(BlobStore::default(), None),
     Extension::builder("bench_setup")
-    .js(vec![
-      ("setup", r#"
-      const { setTimeout, handleTimerMacrotask } = globalThis.__bootstrap.timers;
+    .esm(vec![
+      ExtensionFileSource {
+        specifier: "internal:setup".to_string(), 
+        code: ExtensionFileSourceCode::IncludedInBinary(r#"
+      import { setTimeout, handleTimerMacrotask } from "internal:deno_web/02_timers.js";
+      globalThis.setTimeout = setTimeout;
       Deno.core.setMacrotaskCallback(handleTimerMacrotask);
-      "#),
+      "#)
+      },
     ])
     .state(|state| {
       state.put(Permissions{});

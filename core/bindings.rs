@@ -10,6 +10,7 @@ use v8::MapFnTo;
 use crate::error::is_instance_of_error;
 use crate::modules::get_asserted_module_type_from_assertions;
 use crate::modules::parse_import_assertions;
+use crate::modules::resolve_helper;
 use crate::modules::validate_import_assertions;
 use crate::modules::ImportAssertionsKind;
 use crate::modules::ModuleMap;
@@ -110,26 +111,38 @@ pub fn initialize_context<'s>(
 
   let scope = &mut v8::ContextScope::new(scope, context);
 
+  let deno_str = v8::String::new(scope, "Deno").unwrap();
+  let core_str = v8::String::new(scope, "core").unwrap();
+  let ops_str = v8::String::new(scope, "ops").unwrap();
+
   // Snapshot already registered `Deno.core.ops` but
   // extensions may provide ops that aren't part of the snapshot.
   if snapshot_options.loaded() {
     // Grab the Deno.core.ops object & init it
-    let ops_obj = JsRuntime::eval::<v8::Object>(scope, "Deno.core.ops")
-      .expect("Deno.core.ops to exist");
+    let deno_obj: v8::Local<v8::Object> = global
+      .get(scope, deno_str.into())
+      .unwrap()
+      .try_into()
+      .unwrap();
+    let core_obj: v8::Local<v8::Object> = deno_obj
+      .get(scope, core_str.into())
+      .unwrap()
+      .try_into()
+      .unwrap();
+    let ops_obj: v8::Local<v8::Object> = core_obj
+      .get(scope, ops_str.into())
+      .expect("Deno.core.ops to exist")
+      .try_into()
+      .unwrap();
     initialize_ops(scope, ops_obj, op_ctxs, snapshot_options);
-    if snapshot_options != SnapshotOptions::CreateFromExisting {
-      initialize_async_ops_info(scope, ops_obj, op_ctxs);
-    }
     return scope.escape(context);
   }
 
   // global.Deno = { core: { } };
   let deno_obj = v8::Object::new(scope);
-  let deno_str = v8::String::new(scope, "Deno").unwrap();
   global.set(scope, deno_str.into(), deno_obj.into());
 
   let core_obj = v8::Object::new(scope);
-  let core_str = v8::String::new(scope, "core").unwrap();
   deno_obj.set(scope, core_str.into(), core_obj.into());
 
   // Bind functions to Deno.core.*
@@ -143,12 +156,8 @@ pub fn initialize_context<'s>(
 
   // Bind functions to Deno.core.ops.*
   let ops_obj = v8::Object::new(scope);
-  let ops_str = v8::String::new(scope, "ops").unwrap();
   core_obj.set(scope, ops_str.into(), ops_obj.into());
 
-  if !snapshot_options.will_snapshot() {
-    initialize_async_ops_info(scope, ops_obj, op_ctxs);
-  }
   initialize_ops(scope, ops_obj, op_ctxs, snapshot_options);
   scope.escape(context)
 }
@@ -267,45 +276,47 @@ pub fn host_import_module_dynamically_callback<'s>(
     .unwrap()
     .to_rust_string_lossy(scope);
 
+  let is_internal_module = specifier_str.starts_with("internal:");
   let resolver = v8::PromiseResolver::new(scope).unwrap();
   let promise = resolver.get_promise(scope);
 
-  let assertions = parse_import_assertions(
-    scope,
-    import_assertions,
-    ImportAssertionsKind::DynamicImport,
-  );
+  if !is_internal_module {
+    let assertions = parse_import_assertions(
+      scope,
+      import_assertions,
+      ImportAssertionsKind::DynamicImport,
+    );
 
-  {
-    let tc_scope = &mut v8::TryCatch::new(scope);
-    validate_import_assertions(tc_scope, &assertions);
-    if tc_scope.has_caught() {
-      let e = tc_scope.exception().unwrap();
-      resolver.reject(tc_scope, e);
+    {
+      let tc_scope = &mut v8::TryCatch::new(scope);
+      validate_import_assertions(tc_scope, &assertions);
+      if tc_scope.has_caught() {
+        let e = tc_scope.exception().unwrap();
+        resolver.reject(tc_scope, e);
+      }
+    }
+    let asserted_module_type =
+      get_asserted_module_type_from_assertions(&assertions);
+
+    let resolver_handle = v8::Global::new(scope, resolver);
+    {
+      let state_rc = JsRuntime::state(scope);
+      let module_map_rc = JsRuntime::module_map(scope);
+
+      debug!(
+        "dyn_import specifier {} referrer {} ",
+        specifier_str, referrer_name_str
+      );
+      ModuleMap::load_dynamic_import(
+        module_map_rc,
+        &specifier_str,
+        &referrer_name_str,
+        asserted_module_type,
+        resolver_handle,
+      );
+      state_rc.borrow_mut().notify_new_dynamic_import();
     }
   }
-  let asserted_module_type =
-    get_asserted_module_type_from_assertions(&assertions);
-
-  let resolver_handle = v8::Global::new(scope, resolver);
-  {
-    let state_rc = JsRuntime::state(scope);
-    let module_map_rc = JsRuntime::module_map(scope);
-
-    debug!(
-      "dyn_import specifier {} referrer {} ",
-      specifier_str, referrer_name_str
-    );
-    ModuleMap::load_dynamic_import(
-      module_map_rc,
-      &specifier_str,
-      &referrer_name_str,
-      asserted_module_type,
-      resolver_handle,
-    );
-    state_rc.borrow_mut().notify_new_dynamic_import();
-  }
-
   // Map errors from module resolution (not JS errors from module execution) to
   // ones rethrown from this scope, so they include the call stack of the
   // dynamic import site. Error objects without any stack frames are assumed to
@@ -316,6 +327,14 @@ pub fn host_import_module_dynamically_callback<'s>(
     v8::FunctionBuilder::<v8::Function>::build(builder, scope).unwrap();
 
   let promise = promise.catch(scope, map_err).unwrap();
+
+  if is_internal_module {
+    let message =
+      v8::String::new(scope, "Cannot load internal module from external code")
+        .unwrap();
+    let exception = v8::Exception::type_error(scope, message);
+    resolver.reject(scope, exception);
+  }
 
   Some(promise)
 }
@@ -369,9 +388,12 @@ fn import_meta_resolve(
     url_prop.to_rust_string_lossy(scope)
   };
   let module_map_rc = JsRuntime::module_map(scope);
-  let loader = {
+  let (loader, snapshot_loaded_and_not_snapshotting) = {
     let module_map = module_map_rc.borrow();
-    module_map.loader.clone()
+    (
+      module_map.loader.clone(),
+      module_map.snapshot_loaded_and_not_snapshotting,
+    )
   };
   let specifier_str = specifier.to_rust_string_lossy(scope);
 
@@ -380,8 +402,13 @@ fn import_meta_resolve(
     return;
   }
 
-  match loader.resolve(&specifier_str, &referrer, ResolutionKind::DynamicImport)
-  {
+  match resolve_helper(
+    snapshot_loaded_and_not_snapshotting,
+    loader,
+    &specifier_str,
+    &referrer,
+    ResolutionKind::DynamicImport,
+  ) {
     Ok(resolved) => {
       let resolved_val = serde_v8::to_v8(scope, resolved.as_str()).unwrap();
       rv.set(resolved_val);
@@ -623,85 +650,4 @@ pub fn throw_type_error(scope: &mut v8::HandleScope, message: impl AsRef<str>) {
   let message = v8::String::new(scope, message.as_ref()).unwrap();
   let exception = v8::Exception::type_error(scope, message);
   scope.throw_exception(exception);
-}
-
-struct AsyncOpsInfo {
-  ptr: *const OpCtx,
-  len: usize,
-}
-
-impl<'s> IntoIterator for &'s AsyncOpsInfo {
-  type Item = &'s OpCtx;
-  type IntoIter = AsyncOpsInfoIterator<'s>;
-
-  fn into_iter(self) -> Self::IntoIter {
-    AsyncOpsInfoIterator {
-      // SAFETY: OpCtx slice is valid for the lifetime of the Isolate
-      info: unsafe { std::slice::from_raw_parts(self.ptr, self.len) },
-      index: 0,
-    }
-  }
-}
-
-struct AsyncOpsInfoIterator<'s> {
-  info: &'s [OpCtx],
-  index: usize,
-}
-
-impl<'s> Iterator for AsyncOpsInfoIterator<'s> {
-  type Item = &'s OpCtx;
-
-  fn next(&mut self) -> Option<Self::Item> {
-    loop {
-      match self.info.get(self.index) {
-        Some(ctx) if ctx.decl.is_async => {
-          self.index += 1;
-          return Some(ctx);
-        }
-        Some(_) => {
-          self.index += 1;
-        }
-        None => return None,
-      }
-    }
-  }
-}
-
-fn async_ops_info(
-  scope: &mut v8::HandleScope,
-  args: v8::FunctionCallbackArguments,
-  mut rv: v8::ReturnValue,
-) {
-  let async_op_names = v8::Object::new(scope);
-  let external: v8::Local<v8::External> = args.data().try_into().unwrap();
-  let info: &AsyncOpsInfo =
-    // SAFETY: external is guaranteed to be a valid pointer to AsyncOpsInfo
-    unsafe { &*(external.value() as *const AsyncOpsInfo) };
-  for ctx in info {
-    let name = v8::String::new(scope, ctx.decl.name).unwrap();
-    let argc = v8::Integer::new(scope, ctx.decl.argc as i32);
-    async_op_names.set(scope, name.into(), argc.into());
-  }
-  rv.set(async_op_names.into());
-}
-
-fn initialize_async_ops_info(
-  scope: &mut v8::HandleScope,
-  ops_obj: v8::Local<v8::Object>,
-  op_ctxs: &[OpCtx],
-) {
-  let key = v8::String::new(scope, "asyncOpsInfo").unwrap();
-  let external = v8::External::new(
-    scope,
-    Box::into_raw(Box::new(AsyncOpsInfo {
-      ptr: op_ctxs as *const [OpCtx] as _,
-      len: op_ctxs.len(),
-    })) as *mut c_void,
-  );
-  let val = v8::Function::builder(async_ops_info)
-    .data(external.into())
-    .build(scope)
-    .unwrap();
-  val.set_name(key);
-  ops_obj.set(scope, key.into(), val.into());
 }

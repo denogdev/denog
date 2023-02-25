@@ -1,12 +1,45 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 use crate::OpState;
+use anyhow::Context as _;
 use anyhow::Error;
 use std::cell::RefCell;
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::task::Context;
 use v8::fast_api::FastFunction;
 
-pub type SourcePair = (&'static str, &'static str);
+#[derive(Clone, Debug)]
+pub enum ExtensionFileSourceCode {
+  /// Source code is included in the binary produced. Either by being defined
+  /// inline, or included using `include_str!()`. If you are snapshotting, this
+  /// will result in two copies of the source code being included - one in the
+  /// snapshot, the other the static string in the `Extension`.
+  IncludedInBinary(&'static str),
+
+  // Source code is loaded from a file on disk. It's meant to be used if the
+  // embedder is creating snapshots. Files will be loaded from the filesystem
+  // during the build time and they will only be present in the V8 snapshot.
+  LoadedFromFsDuringSnapshot(PathBuf),
+}
+
+impl ExtensionFileSourceCode {
+  pub fn load(&self) -> Result<String, Error> {
+    match self {
+      ExtensionFileSourceCode::IncludedInBinary(code) => Ok(code.to_string()),
+      ExtensionFileSourceCode::LoadedFromFsDuringSnapshot(path) => {
+        let msg = format!("Failed to read \"{}\"", path.display());
+        let code = std::fs::read_to_string(path).context(msg)?;
+        Ok(code)
+      }
+    }
+  }
+}
+
+#[derive(Clone, Debug)]
+pub struct ExtensionFileSource {
+  pub specifier: String,
+  pub code: ExtensionFileSourceCode,
+}
 pub type OpFnRef = v8::FunctionCallback;
 pub type OpMiddlewareFn = dyn Fn(OpDecl) -> OpDecl;
 pub type OpStateFn = dyn Fn(&mut OpState) -> Result<(), Error>;
@@ -37,7 +70,9 @@ impl OpDecl {
 
 #[derive(Default)]
 pub struct Extension {
-  js_files: Option<Vec<SourcePair>>,
+  js_files: Option<Vec<ExtensionFileSource>>,
+  esm_files: Option<Vec<ExtensionFileSource>>,
+  esm_entry_point: Option<&'static str>,
   ops: Option<Vec<OpDecl>>,
   opstate_fn: Option<Box<OpStateFn>>,
   middleware_fn: Option<Box<OpMiddlewareFn>>,
@@ -81,11 +116,22 @@ impl Extension {
 
   /// returns JS source code to be loaded into the isolate (either at snapshotting,
   /// or at startup).  as a vector of a tuple of the file name, and the source code.
-  pub fn init_js(&self) -> &[SourcePair] {
+  pub fn get_js_sources(&self) -> &[ExtensionFileSource] {
     match &self.js_files {
       Some(files) => files,
       None => &[],
     }
+  }
+
+  pub fn get_esm_sources(&self) -> &[ExtensionFileSource] {
+    match &self.esm_files {
+      Some(files) => files,
+      None => &[],
+    }
+  }
+
+  pub fn get_esm_entry_point(&self) -> Option<&'static str> {
+    self.esm_entry_point
   }
 
   /// Called at JsRuntime startup to initialize ops in the isolate.
@@ -144,7 +190,9 @@ impl Extension {
 // Provides a convenient builder pattern to declare Extensions
 #[derive(Default)]
 pub struct ExtensionBuilder {
-  js: Vec<SourcePair>,
+  js: Vec<ExtensionFileSource>,
+  esm: Vec<ExtensionFileSource>,
+  esm_entry_point: Option<&'static str>,
   ops: Vec<OpDecl>,
   state: Option<Box<OpStateFn>>,
   middleware: Option<Box<OpMiddlewareFn>>,
@@ -159,8 +207,35 @@ impl ExtensionBuilder {
     self
   }
 
-  pub fn js(&mut self, js_files: Vec<SourcePair>) -> &mut Self {
+  pub fn js(&mut self, js_files: Vec<ExtensionFileSource>) -> &mut Self {
+    let js_files =
+      // TODO(bartlomieju): if we're automatically remapping here, then we should
+      // use a different result struct that `ExtensionFileSource` as it's confusing
+      // when (and why) the remapping happens.
+      js_files.into_iter().map(|file_source| ExtensionFileSource {
+        specifier: format!("internal:{}/{}", self.name, file_source.specifier),
+        code: file_source.code,
+      });
     self.js.extend(js_files);
+    self
+  }
+
+  pub fn esm(&mut self, esm_files: Vec<ExtensionFileSource>) -> &mut Self {
+    let esm_files = esm_files
+      .into_iter()
+      // TODO(bartlomieju): if we're automatically remapping here, then we should
+      // use a different result struct that `ExtensionFileSource` as it's confusing
+      // when (and why) the remapping happens.
+      .map(|file_source| ExtensionFileSource {
+        specifier: format!("internal:{}/{}", self.name, file_source.specifier),
+        code: file_source.code,
+      });
+    self.esm.extend(esm_files);
+    self
+  }
+
+  pub fn esm_entry_point(&mut self, entry_point: &'static str) -> &mut Self {
+    self.esm_entry_point = Some(entry_point);
     self
   }
 
@@ -195,10 +270,13 @@ impl ExtensionBuilder {
 
   pub fn build(&mut self) -> Extension {
     let js_files = Some(std::mem::take(&mut self.js));
+    let esm_files = Some(std::mem::take(&mut self.esm));
     let ops = Some(std::mem::take(&mut self.ops));
     let deps = Some(std::mem::take(&mut self.deps));
     Extension {
       js_files,
+      esm_files,
+      esm_entry_point: self.esm_entry_point.take(),
       ops,
       opstate_fn: self.state.take(),
       middleware_fn: self.middleware.take(),
@@ -210,25 +288,83 @@ impl ExtensionBuilder {
     }
   }
 }
-/// Helps embed JS files in an extension. Returns Vec<(&'static str, &'static str)>
-/// representing the filename and source code.
+
+/// Helps embed JS files in an extension. Returns a vector of
+/// `ExtensionFileSource`, that represent the filename and source code. All
+/// specified files are rewritten into "internal:<extension_name>/<file_name>".
 ///
-/// Example:
+/// An optional "dir" option can be specified to prefix all files with a
+/// directory name.
+///
+/// Example (for "my_extension"):
 /// ```ignore
 /// include_js_files!(
-///   prefix "internal:extensions/hello",
 ///   "01_hello.js",
 ///   "02_goodbye.js",
 /// )
+/// // Produces following specifiers:
+/// - "internal:my_extension/01_hello.js"
+/// - "internal:my_extension/02_goodbye.js"
+///
+/// /// Example with "dir" option (for "my_extension"):
+/// ```ignore
+/// include_js_files!(
+///   dir "js",
+///   "01_hello.js",
+///   "02_goodbye.js",
+/// )
+/// // Produces following specifiers:
+/// - "internal:my_extension/js/01_hello.js"
+/// - "internal:my_extension/js/02_goodbye.js"
 /// ```
+#[cfg(not(feature = "include_js_files_for_snapshotting"))]
 #[macro_export]
 macro_rules! include_js_files {
-  (prefix $prefix:literal, $($file:literal,)+) => {
+  (dir $dir:literal, $($file:literal,)+) => {
     vec![
-      $((
-        concat!($prefix, "/", $file),
-        include_str!($file),
-      ),)+
+      $($crate::ExtensionFileSource {
+        specifier: concat!($dir, "/", $file).to_string(),
+        code: $crate::ExtensionFileSourceCode::IncludedInBinary(
+          include_str!(concat!($dir, "/", $file)
+        )),
+      },)+
+    ]
+  };
+
+  ($($file:literal,)+) => {
+    vec![
+      $($crate::ExtensionFileSource {
+        specifier: $file.to_string(),
+        code: $crate::ExtensionFileSourceCode::IncludedInBinary(
+          include_str!($file)
+        ),
+      },)+
+    ]
+  };
+}
+
+#[cfg(feature = "include_js_files_for_snapshotting")]
+#[macro_export]
+macro_rules! include_js_files {
+  (dir $dir:literal, $($file:literal,)+) => {
+    vec![
+      $($crate::ExtensionFileSource {
+        specifier: concat!($dir, "/", $file).to_string(),
+        code: $crate::ExtensionFileSourceCode::LoadedFromFsDuringSnapshot(
+          std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join($dir).join($file)
+        ),
+      },)+
+    ]
+  };
+
+  ($($file:literal,)+) => {
+    vec![
+      $($crate::ExtensionFileSource {
+        specifier: $file.to_string(),
+        code: $crate::ExtensionFileSourceCode::LoadedFromFsDuringSnapshot(
+          std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join($file)
+        ),
+      },)+
     ]
   };
 }

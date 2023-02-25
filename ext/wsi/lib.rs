@@ -30,11 +30,7 @@ use winit::{
 pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
   Extension::builder("deno_wsi")
     .dependencies(vec!["deno_webgpu", "deno_webidl"])
-    .js(include_js_files!(
-      prefix "internal:ext/wsi",
-      "01_wsi.js",
-      "02_idl_types.js",
-    ))
+    .esm(include_js_files!("01_wsi.js", "02_idl_types.js",))
     .ops(vec![
       op_wsi_next_event::decl(),
       op_wsi_set_device_event_filter::decl(),

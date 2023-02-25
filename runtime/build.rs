@@ -2,18 +2,62 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
 use std::env;
-
 use std::path::PathBuf;
 
-// This is a shim that allows to generate documentation on docs.rs
-#[cfg(not(feature = "docsrs"))]
-mod not_docs {
+#[cfg(all(
+  not(feature = "docsrs"),
+  not(feature = "dont_create_runtime_snapshot")
+))]
+mod startup_snapshot {
   use std::path::Path;
 
   use super::*;
+  use deno_ast::MediaType;
+  use deno_ast::ParseParams;
+  use deno_ast::SourceTextInfo;
   use deno_cache::SqliteBackedCache;
+  use deno_core::error::AnyError;
+  use deno_core::include_js_files;
   use deno_core::snapshot_util::*;
   use deno_core::Extension;
+  use deno_core::ExtensionFileSource;
+
+  fn transpile_ts_for_snapshotting(
+    file_source: &ExtensionFileSource,
+  ) -> Result<String, AnyError> {
+    let media_type = MediaType::from(Path::new(&file_source.specifier));
+
+    let should_transpile = match media_type {
+      MediaType::JavaScript => false,
+      MediaType::Mjs => false,
+      MediaType::TypeScript => true,
+      _ => panic!(
+        "Unsupported media type for snapshotting {media_type:?} for file {}",
+        file_source.specifier
+      ),
+    };
+    let code = file_source.code.load()?;
+
+    if !should_transpile {
+      return Ok(code);
+    }
+
+    let parsed = deno_ast::parse_module(ParseParams {
+      specifier: file_source.specifier.to_string(),
+      text_info: SourceTextInfo::from_string(code),
+      media_type,
+      capture_tokens: false,
+      scope_analysis: false,
+      maybe_syntax: None,
+    })?;
+    let transpiled_source = parsed.transpile(&deno_ast::EmitOptions {
+      imports_not_used_as_values: deno_ast::ImportsNotUsedAsValues::Remove,
+      inline_source_map: false,
+      ..Default::default()
+    })?;
+
+    Ok(transpiled_source.text)
+  }
 
   struct Permissions;
 
@@ -122,8 +166,62 @@ mod not_docs {
     }
   }
 
-  fn create_runtime_snapshot(snapshot_path: PathBuf, files: Vec<PathBuf>) {
-    let extensions_with_js: Vec<Extension> = vec![
+  fn create_runtime_snapshot(
+    snapshot_path: PathBuf,
+    maybe_additional_extension: Option<Extension>,
+  ) {
+    let runtime_extension = Extension::builder("runtime")
+      .dependencies(vec![
+        "deno_webidl",
+        "deno_console",
+        "deno_url",
+        "deno_tls",
+        "deno_web",
+        "deno_fetch",
+        "deno_cache",
+        "deno_websocket",
+        "deno_webstorage",
+        "deno_crypto",
+        "deno_webgpu",
+        "deno_broadcast_channel",
+        // FIXME(bartlomieju): this should be reenabled
+        // "deno_node",
+        "deno_ffi",
+        "deno_net",
+        "deno_napi",
+        "deno_http",
+        "deno_flash",
+        "deno_wsi",
+      ])
+      .esm(include_js_files!(
+        dir "js",
+        "01_build.js",
+        "01_errors.js",
+        "01_version.ts",
+        "06_util.js",
+        "10_permissions.js",
+        "11_workers.js",
+        "12_io.js",
+        "13_buffer.js",
+        "30_fs.js",
+        "30_os.js",
+        "40_diagnostics.js",
+        "40_files.js",
+        "40_fs_events.js",
+        "40_http.js",
+        "40_process.js",
+        "40_read_file.js",
+        "40_signals.js",
+        "40_spawn.js",
+        "40_tty.js",
+        "40_write_file.js",
+        "41_prompt.js",
+        "90_deno_ns.js",
+        "98_global_scope.js",
+      ))
+      .build();
+
+    let mut extensions_with_js: Vec<Extension> = vec![
       deno_webidl::init(),
       deno_console::init(),
       deno_url::init(),
@@ -142,17 +240,25 @@ mod not_docs {
         deno_broadcast_channel::InMemoryBroadcastChannel::default(),
         false, // No --unstable.
       ),
-      deno_node::init::<Permissions>(None),
       deno_ffi::init::<Permissions>(false),
       deno_net::init::<Permissions>(
         None, false, // No --unstable.
         None,
       ),
-      deno_napi::init::<Permissions>(false),
+      deno_napi::init::<Permissions>(),
       deno_http::init(),
       deno_flash::init::<Permissions>(false), // No --unstable
       deno_wsi::init(None),
+      runtime_extension,
+      // FIXME(bartlomieju): these extensions are specified last, because they
+      // depend on `runtime`, even though it should be other way around
+      deno_node::init::<Permissions>(None),
+      deno_node::init_polyfill(),
     ];
+
+    if let Some(additional_extension) = maybe_additional_extension {
+      extensions_with_js.push(additional_extension);
+    }
 
     create_snapshot(CreateSnapshotOptions {
       cargo_manifest_dir: env!("CARGO_MANIFEST_DIR"),
@@ -160,7 +266,6 @@ mod not_docs {
       startup_snapshot: None,
       extensions: vec![],
       extensions_with_js,
-      additional_files: files,
       compression_cb: Some(Box::new(|vec, snapshot_slice| {
         lzzzz::lz4_hc::compress_to_vec(
           snapshot_slice,
@@ -169,19 +274,31 @@ mod not_docs {
         )
         .expect("snapshot compression failed");
       })),
+      snapshot_module_load_cb: Some(Box::new(transpile_ts_for_snapshotting)),
     });
   }
 
   pub fn build_snapshot(runtime_snapshot_path: PathBuf) {
-    #[allow(unused_mut)]
-    let mut js_files = get_js_files(env!("CARGO_MANIFEST_DIR"), "js");
+    #[allow(unused_mut, unused_assignments)]
+    let mut maybe_additional_extension = None;
+
     #[cfg(not(feature = "snapshot_from_snapshot"))]
     {
-      let manifest = env!("CARGO_MANIFEST_DIR");
-      let path = PathBuf::from(manifest);
-      js_files.push(path.join("js").join("99_main.js"));
+      use deno_core::ExtensionFileSourceCode;
+      maybe_additional_extension = Some(
+        Extension::builder("runtime_main")
+          .dependencies(vec!["runtime"])
+          .esm(vec![ExtensionFileSource {
+            specifier: "js/99_main.js".to_string(),
+            code: ExtensionFileSourceCode::IncludedInBinary(include_str!(
+              "js/99_main.js"
+            )),
+          }])
+          .build(),
+      );
     }
-    create_runtime_snapshot(runtime_snapshot_path, js_files);
+
+    create_runtime_snapshot(runtime_snapshot_path, maybe_additional_extension);
   }
 }
 
@@ -201,9 +318,13 @@ fn main() {
   // doesn't actually compile on docs.rs
   if env::var_os("DOCS_RS").is_some() {
     let snapshot_slice = &[];
+    #[allow(clippy::needless_borrow)]
     std::fs::write(&runtime_snapshot_path, snapshot_slice).unwrap();
   }
 
-  #[cfg(not(feature = "docsrs"))]
-  not_docs::build_snapshot(runtime_snapshot_path)
+  #[cfg(all(
+    not(feature = "docsrs"),
+    not(feature = "dont_create_runtime_snapshot")
+  ))]
+  startup_snapshot::build_snapshot(runtime_snapshot_path)
 }
