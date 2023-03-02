@@ -1356,7 +1356,7 @@ dependencies = [
 
 [[package]]
 name = "denog"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "async-trait",
  "atty",
@@ -1442,7 +1442,7 @@ dependencies = [
 
 [[package]]
 name = "denog_runtime"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "atty",
  "deno_ast",
@@ -1495,7 +1495,7 @@ dependencies = [
 
 [[package]]
 name = "denog_webgpu"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "deno_core",
  "raw-window-handle",
@@ -1507,7 +1507,7 @@ dependencies = [
 
 [[package]]
 name = "denog_wsi"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "deno_core",
  "denog_webgpu",
