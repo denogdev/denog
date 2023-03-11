@@ -4,7 +4,7 @@
 // @ts-check
 /// <reference path="../web/internal.d.ts" />
 
-import * as webidl from "internal:deno_webidl/00_webidl.js";
+import * as webidl from "ext:deno_webidl/00_webidl.js";
 import {
   GPU,
   GPUAdapter,
@@ -37,7 +37,7 @@ import {
   GPUTextureUsage,
   GPUTextureView,
   GPUValidationError,
-} from "internal:deno_webgpu/01_webgpu.js";
+} from "ext:deno_webgpu/01_webgpu.js";
 const primordials = globalThis.__bootstrap.primordials;
 const { SymbolIterator, TypeError } = primordials;
 

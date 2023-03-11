@@ -2,8 +2,8 @@
 
 const core = globalThis.Deno.core;
 const ops = core.ops;
-import * as webgpu from "internal:deno_webgpu/01_webgpu.js";
-import * as webidl from "internal:deno_webidl/00_webidl.js";
+import * as webgpu from "ext:deno_webgpu/01_webgpu.js";
+import * as webidl from "ext:deno_webidl/00_webidl.js";
 
 const _wid = Symbol("wid");
 const _gpuSurface = Symbol("gpuSurface");

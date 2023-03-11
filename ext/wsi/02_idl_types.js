@@ -1,6 +1,6 @@
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
-import * as webidl from "internal:deno_webidl/00_webidl.js";
+import * as webidl from "ext:deno_webidl/00_webidl.js";
 
 // ENUM: WSICursorGrabMode
 webidl.converters["WSICursorGrabMode"] = webidl.createEnumConverter(

@@ -18,7 +18,10 @@ use crate::{
     WsiUserAttentionType, WsiWindowLevel, WsiWindowTheme,
   },
 };
-use deno_core::{anyhow, include_js_files, op, Extension, OpState, ResourceId};
+use deno_core::{
+  anyhow, include_js_files, op, Extension, ExtensionBuilder, OpState,
+  ResourceId,
+};
 use deno_webgpu::surface::WebGpuSurface;
 use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
 use std::{cell::RefCell, rc::Rc};
@@ -27,10 +30,15 @@ use winit::{
   window::{Fullscreen, WindowBuilder, WindowButtons},
 };
 
-pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
-  Extension::builder("deno_wsi")
-    .dependencies(vec!["deno_webgpu", "deno_webidl"])
-    .esm(include_js_files!("01_wsi.js", "02_idl_types.js",))
+fn ext() -> ExtensionBuilder {
+  Extension::builder_with_deps("deno_wsi", &["deno_webgpu", "deno_webidl"])
+}
+
+fn ops(
+  ext: &mut ExtensionBuilder,
+  event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
+) -> &mut ExtensionBuilder {
+  ext
     .ops(vec![
       op_wsi_next_event::decl(),
       op_wsi_set_device_event_filter::decl(),
@@ -88,9 +96,19 @@ pub fn init(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
       if let Some(event_loop_proxy) = &event_loop_proxy {
         state.put(event_loop_proxy.clone());
       }
-      Ok(())
     })
+}
+
+pub fn init_ops_and_esm(
+  event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
+) -> Extension {
+  ops(&mut ext(), event_loop_proxy)
+    .esm(include_js_files!("01_wsi.js", "02_idl_types.js",))
     .build()
+}
+
+pub fn init_ops(event_loop_proxy: Option<Rc<WsiEventLoopProxy>>) -> Extension {
+  ops(&mut ext(), event_loop_proxy).build()
 }
 
 fn try_borrow_event_loop_proxy<'a>(
