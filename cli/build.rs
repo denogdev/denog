@@ -180,16 +180,6 @@ mod ts {
     }
 
     #[op]
-    fn op_cwd() -> String {
-      "cache:///".into()
-    }
-
-    #[op]
-    fn op_exists() -> bool {
-      false
-    }
-
-    #[op]
     fn op_is_node_file() -> bool {
       false
     }
@@ -256,8 +246,6 @@ mod ts {
     let tsc_extension = Extension::builder("deno_tsc")
       .ops(vec![
         op_build_info::decl(),
-        op_cwd::decl(),
-        op_exists::decl(),
         op_is_node_file::decl(),
         op_load::decl(),
         op_script_version::decl(),

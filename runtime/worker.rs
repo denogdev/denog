@@ -133,7 +133,6 @@ pub struct WorkerOptions {
   /// `WebAssembly.Module` objects cannot be serialized.
   pub compiled_wasm_module_store: Option<CompiledWasmModuleStore>,
   pub stdio: Stdio,
-  pub leak_isolate: bool,
   pub wsi_event_loop_proxy: Option<Rc<WsiEventLoopProxy>>,
 }
 
@@ -170,7 +169,6 @@ impl Default for WorkerOptions {
       startup_snapshot: Default::default(),
       bootstrap: Default::default(),
       stdio: Default::default(),
-      leak_isolate: false,
       wsi_event_loop_proxy: None,
     }
   }
@@ -295,7 +293,6 @@ impl MainWorker {
       extensions,
       inspector: options.maybe_inspector_server.is_some(),
       is_main: true,
-      leak_isolate: options.leak_isolate,
       ..Default::default()
     });
 

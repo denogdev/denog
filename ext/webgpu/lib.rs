@@ -97,10 +97,9 @@ pub type Instance =
   wgpu_core::hub::Global<wgpu_core::hub::IdentityManagerFactory>;
 
 fn choose_backends() -> wgpu_types::Backends {
-  std::env::var("DENO_WEBGPU_BACKEND").map_or_else(
-    |_| wgpu_types::Backends::all(),
-    |s| wgpu_core::instance::parse_backends_from_comma_list(&s),
-  )
+  std::env::var("DENO_WEBGPU_BACKEND")
+    .map(|s| wgpu_core::instance::parse_backends_from_comma_list(&s))
+    .unwrap_or_else(|_| wgpu_types::Backends::all())
 }
 
 pub fn create_instance() -> Instance {

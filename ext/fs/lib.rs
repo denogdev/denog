@@ -1410,13 +1410,16 @@ where
           name,
           is_file: entry
             .file_type()
-            .map_or(false, |file_type| file_type.is_file()),
+            .map(|file_type| file_type.is_file())
+            .unwrap_or(false),
           is_directory: entry
             .file_type()
-            .map_or(false, |file_type| file_type.is_dir()),
+            .map(|file_type| file_type.is_dir())
+            .unwrap_or(false),
           is_symlink: entry
             .file_type()
-            .map_or(false, |file_type| file_type.is_symlink()),
+            .map(|file_type| file_type.is_symlink())
+            .unwrap_or(false),
         })
       } else {
         None
@@ -1457,13 +1460,16 @@ where
             name,
             is_file: entry
               .file_type()
-              .map_or(false, |file_type| file_type.is_file()),
+              .map(|file_type| file_type.is_file())
+              .unwrap_or(false),
             is_directory: entry
               .file_type()
-              .map_or(false, |file_type| file_type.is_dir()),
+              .map(|file_type| file_type.is_dir())
+              .unwrap_or(false),
             is_symlink: entry
               .file_type()
-              .map_or(false, |file_type| file_type.is_symlink()),
+              .map(|file_type| file_type.is_symlink())
+              .unwrap_or(false),
           })
         } else {
           None
@@ -1875,7 +1881,8 @@ fn make_temp(
   }
   .join("_");
   let mut rng = thread_rng();
-  loop {
+  const MAX_TRIES: u32 = 10;
+  for _ in 0..MAX_TRIES {
     let unique = rng.gen::<u32>();
     buf.set_file_name(format!("{prefix_}{unique:08x}{suffix_}"));
     let r = if is_dir {
@@ -1895,8 +1902,7 @@ fn make_temp(
         use std::os::unix::fs::OpenOptionsExt;
         open_options.mode(0o600);
       }
-      open_options.open(buf.as_path())?;
-      Ok(())
+      open_options.open(buf.as_path()).map(drop)
     };
     match r {
       Err(ref e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -1904,6 +1910,10 @@ fn make_temp(
       Err(e) => return Err(e),
     }
   }
+  Err(io::Error::new(
+    io::ErrorKind::AlreadyExists,
+    "too many temp files exist",
+  ))
 }
 
 #[derive(Deserialize)]

@@ -1,6 +1,7 @@
 // Copyright 2018-2023 the Deno authors. All rights reserved. MIT license.
 // Copyright 2023 Jo Bates. All rights reserved. MIT license.
 
+use deno_core::anyhow::Context;
 use deno_core::error::AnyError;
 use deno_core::FsModuleLoader;
 use denog_runtime::deno_broadcast_channel::InMemoryBroadcastChannel;
@@ -66,13 +67,15 @@ async fn main() -> Result<(), AnyError> {
     shared_array_buffer_store: None,
     compiled_wasm_module_store: None,
     stdio: Default::default(),
-    leak_isolate: true,
     wsi_event_loop_proxy: None,
   };
 
   let js_path =
     Path::new(env!("CARGO_MANIFEST_DIR")).join("examples/hello_runtime.js");
-  let main_module = deno_core::resolve_path(&js_path.to_string_lossy())?;
+  let main_module = deno_core::resolve_path(
+    &js_path.to_string_lossy(),
+    &std::env::current_dir().context("Unable to get CWD")?,
+  )?;
   let permissions = PermissionsContainer::allow_all();
 
   let mut worker = MainWorker::bootstrap_from_options(
