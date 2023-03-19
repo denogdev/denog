@@ -19,4 +19,4 @@ deno_webgpu.workspace = true
 raw-window-handle.workspace = true
 serde.workspace = true
 tokio.workspace = true
-winit = "0.28.2"
+winit = "0.28.3"
