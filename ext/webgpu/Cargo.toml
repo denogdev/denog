@@ -3,7 +3,7 @@
 
 [package]
 name = "denog_webgpu"
-version = "0.7.2"
+version = "0.7.3"
 authors = ["the Deno authors", "Jo Bates"]
 edition.workspace = true
 license = "MIT"

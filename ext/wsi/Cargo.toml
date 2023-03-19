@@ -2,7 +2,7 @@
 
 [package]
 name = "denog_wsi"
-version = "0.7.2"
+version = "0.7.3"
 authors = ["Jo Bates"]
 edition.workspace = true
 license.workspace = true
